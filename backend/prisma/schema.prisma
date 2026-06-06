@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  relationMode = "prisma"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String?  @unique
+  phone        String   @unique
+  name         String
+  role         String   @default("PASSENGER")
+  status       String   @default("ACTIVE")
+  passwordHash String?
+  otpCode      String?
+  otpExpiresAt DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  wallet       Wallet?
+}
+
+model Wallet {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id])
+  balanceZar Float    @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Ride {
+  id             String   @id @default(uuid())
+  passengerId    String
+  pickupAddress  String
+  dropoffAddress String
+  pickupLat      Float
+  pickupLng      Float
+  dropoffLat     Float
+  dropoffLng     Float
+  zone           String
+  totalFare      Float
+  status         String   @default("REQUESTED")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
