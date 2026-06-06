@@ -1,9 +1,4 @@
 {
-"homepage": ".",
-  "name": "projo-group-frontend",
-  "version": "1.0.0",
-  "description": "PROJO GROUP Frontend — Rustenburg's Own. Ride. Shop. Deliver.",
-  "private": true,{
   "name": "projo-group-frontend",
   "version": "1.0.0",
   "description": "PROJO GROUP Frontend — Rustenburg's Own. Ride. Shop. Deliver.",
@@ -22,17 +17,22 @@
     "socket.io-client": "^4.7.4",
     "zustand": "^4.5.2"
   },
-  "scripts": {"predeploy": "npm run build",
-"deploy": "gh-pages -d build",
+  "scripts": {
     "start": "react-scripts start",
-    "build": "node node_modules/.bin/react-scripts build",
+    "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
   },
   "browserslist": {
     "production": [
       ">0.2%",
-     "not dead",
+      "not dead",
       "not op_mini all"
     ],
     "development": [
@@ -41,11 +41,7 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:5000",
-  "devDependencies": {
-    "gh-pages": "^6.3.0"
-  },
   "engines": {
-    "node": "18.x"
+    "node": "20.x"
   }
 }
