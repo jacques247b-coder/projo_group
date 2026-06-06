@@ -1,9 +1,4 @@
-// ============================================================
-// PROJO GROUP — Auth Controller
-// Register, OTP, Login, JWT — SA phone numbers (+27)
-// ============================================================
 const { PrismaClient } = require("@prisma/client");
-const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const { generateOTP, sendOTPSms, getOTPExpiry } = require("../services/otp.service");
@@ -11,232 +6,119 @@ const { generateOTP, sendOTPSms, getOTPExpiry } = require("../services/otp.servi
 const prisma = new PrismaClient();
 
 function signToken(userId) {
-  return jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
-  });
+  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 }
 function signRefresh(userId) {
-  return jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "30d",
-  });
+  return jwt.sign({ userId }, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET, { expiresIn: "30d" });
+}
+function sanitizeUser(user) {
+  const { passwordHash, otpCode, otpExpiresAt, ...safe } = user;
+  return safe;
 }
 
-// ── POST /api/auth/send-otp ──────────────────────────────────
-// Works for both new AND existing users
-// Returns isNewUser so frontend knows whether to collect name/role
-exports.sendOTP = async (req, res) => {
+// Register
+exports.register = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+  const { phone, name, role = "PASSENGER" } = req.body;
+  try {
+    let user = await prisma.user.findUnique({ where: { phone } });
+    if (user && user.status !== "PENDING_VERIFICATION") {
+      return res.status(409).json({ error: "Phone number already registered. Please sign in." });
+    }
+    if (!user) {
+      user = await prisma.user.create({
+        data: { phone, name: name.trim(), role: role === "DRIVER" ? "DRIVER" : "PASSENGER", status: "PENDING_VERIFICATION" },
+      });
+      await prisma.wallet.create({ data: { userId: user.id, balanceZar: 0 } });
+    } else {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { name: name.trim(), role: role === "DRIVER" ? "DRIVER" : "PASSENGER" }
+      });
+    }
+    const otp = generateOTP();
+    await prisma.user.update({ where: { id: user.id }, data: { otpCode: otp, otpExpiresAt: getOTPExpiry() } });
+    await sendOTPSms(phone, otp);
+    res.status(201).json({ message: "OTP sent. Check your phone.", userId: user.id, phone });
+  } catch (err) {
+    console.error("[PROJO Auth] register error:", err.message);
+    res.status(500).json({ error: "Registration failed: " + err.message });
+  }
+};
 
+// Send OTP
+exports.sendOTP = async (req, res) => {
   const { phone } = req.body;
   try {
     let user = await prisma.user.findUnique({ where: { phone } });
     const isNewUser = !user;
-
     if (!user) {
-      // Create a placeholder user so OTP can be stored
       user = await prisma.user.create({
-        data: {
-          phone,
-          name: "PROJO User",   // updated after OTP verify
-          role: "PASSENGER",
-          status: "PENDING_VERIFICATION",
-        },
+        data: { phone, name: "PROJO User", role: "PASSENGER", status: "PENDING_VERIFICATION" }
       });
-      // Create wallet immediately
-      await prisma.wallet.create({
-        data: { userId: user.id, balanceZar: 0, loyaltyPoints: 0 },
-      });
+      await prisma.wallet.create({ data: { userId: user.id, balanceZar: 0 } });
     }
-
     const otp = generateOTP();
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { otpCode: otp, otpExpiresAt: getOTPExpiry() },
-    });
+    await prisma.user.update({ where: { id: user.id }, data: { otpCode: otp, otpExpiresAt: getOTPExpiry() } });
     await sendOTPSms(phone, otp);
-
-    res.json({ message: `OTP sent to ${phone}`, isNewUser, phone });
+    res.json({ message: "OTP sent", isNewUser, phone });
   } catch (err) {
-    console.error("[PROJO Auth] sendOTP error:", err);
-    res.status(500).json({ error: err.message || "Failed to send OTP" });
+    console.error("[PROJO Auth] sendOTP error:", err.message);
+    res.status(500).json({ error: "Failed to send OTP: " + err.message });
   }
 };
 
-// ── POST /api/auth/verify-otp ────────────────────────────────
+// Verify OTP
 exports.verifyOTP = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-
   const { phone, otp, name, role } = req.body;
   try {
     const user = await prisma.user.findUnique({ where: { phone } });
     if (!user) return res.status(404).json({ error: "User not found" });
-
-    if (user.otpCode !== otp)
-      return res.status(400).json({ error: "Incorrect OTP code" });
-    if (!user.otpExpiresAt || new Date() > user.otpExpiresAt)
-      return res.status(400).json({ error: "OTP has expired. Request a new one." });
-
-    // If new user, update their name and role
-    const updateData = {
-      status: "ACTIVE",
-      otpCode: null,
-      otpExpiresAt: null,
-      lastLoginAt: new Date(),
-    };
+    if (user.otpCode !== otp) return res.status(400).json({ error: "Incorrect OTP" });
+    if (!user.otpExpiresAt || new Date() > user.otpExpiresAt) return res.status(400).json({ error: "OTP expired" });
+    const updateData = { status: "ACTIVE", otpCode: null, otpExpiresAt: null, lastLoginAt: new Date() };
     if (name) updateData.name = name.trim();
     if (role && ["PASSENGER", "DRIVER"].includes(role)) updateData.role = role;
-
     await prisma.user.update({ where: { id: user.id }, data: updateData });
-
-    // If registering as driver, create driver profile
-    if (role === "DRIVER") {
-      const existing = await prisma.driver.findUnique({ where: { userId: user.id } });
-      if (!existing) {
-        await prisma.driver.create({
-          data: { userId: user.id, approvalStatus: "PENDING", status: "OFFLINE" },
-        });
-      }
-    }
-
-    const token = signToken(user.id);
-    const refreshToken = signRefresh(user.id);
-
-    const fullUser = await prisma.user.findUnique({
-      where: { id: user.id },
-      include: { wallet: true, driverProfile: true },
-    });
-
-    res.json({
-      message: "Verified successfully. Welcome to PROJO GROUP!",
-      token,
-      refreshToken,
-      user: sanitizeUser(fullUser),
-    });
+    const fullUser = await prisma.user.findUnique({ where: { id: user.id }, include: { wallet: true } });
+    res.json({ message: "Welcome to PROJO GROUP!", token: signToken(user.id), refreshToken: signRefresh(user.id), user: sanitizeUser(fullUser) });
   } catch (err) {
-    console.error("[PROJO Auth] verifyOTP error:", err);
-    res.status(500).json({ error: "Verification failed" });
+    console.error("[PROJO Auth] verifyOTP error:", err.message);
+    res.status(500).json({ error: "Verification failed: " + err.message });
   }
 };
 
-// ── POST /api/auth/register ──────────────────────────────────
-exports.register = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-
-  const { phone, name, role = "PASSENGER", referralCode } = req.body;
-  try {
-    const existing = await prisma.user.findUnique({ where: { phone } });
-    if (existing && existing.status !== "PENDING_VERIFICATION") {
-      return res.status(409).json({ error: "Phone number already registered" });
-    }
-
-    let referredById = null;
-    if (referralCode) {
-      const referrer = await prisma.user.findUnique({ where: { referralCode } });
-      if (referrer) referredById = referrer.id;
-    }
-
-    const user = existing
-      ? await prisma.user.update({ where: { id: existing.id },
-          data: { name: name.trim(), role: role === "DRIVER" ? "DRIVER" : "PASSENGER", referredById } })
-      : await prisma.user.create({
-          data: { phone, name: name.trim(), role: role === "DRIVER" ? "DRIVER" : "PASSENGER",
-            status: "PENDING_VERIFICATION", referredById },
-        });
-
-    // Wallet with referral bonus
-    const walletExists = await prisma.wallet.findUnique({ where: { userId: user.id } });
-    if (!walletExists) {
-      await prisma.wallet.create({
-        data: { userId: user.id, balanceZar: referredById ? 50.0 : 0, loyaltyPoints: 0 },
-      });
-    }
-
-    if (referredById) {
-      await prisma.wallet.update({
-        where: { userId: referredById },
-        data: { balanceZar: { increment: 50 } },
-      });
-    }
-
-    const otp = generateOTP();
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { otpCode: otp, otpExpiresAt: getOTPExpiry() },
-    });
-    await sendOTPSms(phone, otp);
-
-    res.status(201).json({ message: "OTP sent. Verify your phone.", userId: user.id, phone });
-  } catch (err) {
-    console.error("[PROJO Auth] register error:", err);
-    res.status(500).json({ error: "Registration failed" });
-  }
-};
-
-// ── POST /api/auth/login ─────────────────────────────────────
+// Login
 exports.login = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-  const { phone, password } = req.body;
+  const { phone } = req.body;
   try {
-    const user = await prisma.user.findUnique({ where: { phone },
-      include: { wallet: true, driverProfile: true } });
+    const user = await prisma.user.findUnique({ where: { phone }, include: { wallet: true } });
     if (!user) return res.status(401).json({ error: "Phone number not found" });
-    if (user.status === "BANNED") return res.status(403).json({ error: "Account banned" });
-
-    if (password && user.passwordHash) {
-      const valid = await bcrypt.compare(password, user.passwordHash);
-      if (!valid) return res.status(401).json({ error: "Incorrect password" });
-      await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-      const token = signToken(user.id);
-      const refreshToken = signRefresh(user.id);
-      return res.json({ token, refreshToken, user: sanitizeUser(user) });
-    }
-
-    // Passwordless OTP flow
     const otp = generateOTP();
-    await prisma.user.update({ where: { id: user.id },
-      data: { otpCode: otp, otpExpiresAt: getOTPExpiry() } });
+    await prisma.user.update({ where: { id: user.id }, data: { otpCode: otp, otpExpiresAt: getOTPExpiry() } });
     await sendOTPSms(phone, otp);
-    res.json({ requiresOTP: true, message: "OTP sent to your phone", isNewUser: false });
+    res.json({ requiresOTP: true, message: "OTP sent", isNewUser: false });
   } catch (err) {
-    console.error("[PROJO Auth] login error:", err);
     res.status(500).json({ error: "Login failed" });
   }
 };
 
-// ── POST /api/auth/refresh ───────────────────────────────────
+// Refresh
 exports.refresh = async (req, res) => {
   const { refreshToken } = req.body;
   if (!refreshToken) return res.status(401).json({ error: "No refresh token" });
   try {
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET);
-    const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
-    if (!user) return res.status(401).json({ error: "User not found" });
-    res.json({ token: signToken(user.id) });
+    res.json({ token: signToken(decoded.userId) });
   } catch {
     res.status(401).json({ error: "Invalid refresh token" });
   }
 };
 
-// ── POST /api/auth/logout ────────────────────────────────────
-exports.logout = async (req, res) => {
-  await prisma.user.update({ where: { id: req.user.id }, data: { fcmToken: null } }).catch(() => {});
-  res.json({ message: "Logged out successfully" });
-};
+exports.logout = async (req, res) => res.json({ message: "Logged out" });
 
-// ── GET /api/auth/me ─────────────────────────────────────────
 exports.getMe = async (req, res) => {
-  const user = await prisma.user.findUnique({
-    where: { id: req.user.id },
-    include: { wallet: true, driverProfile: true },
-  });
+  const user = await prisma.user.findUnique({ where: { id: req.user.id }, include: { wallet: true } });
   res.json({ user: sanitizeUser(user) });
 };
-
-function sanitizeUser(user) {
-  const { passwordHash, otpCode, otpExpiresAt, ...safe } = user;
-  return safe;
-}

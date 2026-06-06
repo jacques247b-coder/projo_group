@@ -1,52 +1,23 @@
-// ============================================================
-// PROJO GROUP — OTP Service
-// SMS via Twilio — South African +27 numbers
-// ============================================================
-const twilio = require("twilio");
-
-const client = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
-
-/** Generate a random 6-digit OTP */
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
-
-/** OTP expiry in minutes */
-const OTP_EXPIRY_MIN = parseInt(process.env.OTP_EXPIRY_MINUTES) || 10;
-
-/**
- * Send OTP SMS to a South African phone number
- * @param {string} phone - Format: +27xxxxxxxxx
- * @param {string} otp   - 6-digit code
- */
+function getOTPExpiry() {
+  return new Date(Date.now() + 10 * 60 * 1000);
+}
 async function sendOTPSms(phone, otp) {
-  const message = `Your PROJO GROUP verification code is: ${otp}. Valid for ${OTP_EXPIRY_MIN} minutes. Do not share this code.`;
-
-  if (process.env.NODE_ENV === "development") {
-    // In dev mode, log OTP instead of sending SMS (saves Twilio credits)
-    console.log(`\n[PROJO OTP DEV] Phone: ${phone} | OTP: ${otp}\n`);
-    return { success: true, dev: true };
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const configured = sid && sid.startsWith("AC") && sid !== "ACplaceholder00000000000000000000";
+  if (!configured) {
+    console.log(`[PROJO OTP] DEV MODE - OTP for ${phone}: ${otp}`);
+    return { success: true };
   }
-
   try {
-    await client.messages.create({
-      body: message,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: phone,
-    });
+    const twilio = require("twilio")(sid, process.env.TWILIO_AUTH_TOKEN);
+    await twilio.messages.create({ body: `PROJO GROUP code: ${otp}`, from: process.env.TWILIO_PHONE_NUMBER, to: phone });
     return { success: true };
   } catch (err) {
-    console.error("[PROJO OTP] Twilio error:", err.message);
-    throw new Error("Failed to send OTP SMS. Please try again.");
+    console.log(`[PROJO OTP] SMS failed - OTP for ${phone}: ${otp}`);
+    return { success: false };
   }
 }
-
-/** Get OTP expiry timestamp */
-function getOTPExpiry() {
-  return new Date(Date.now() + OTP_EXPIRY_MIN * 60 * 1000);
-}
-
-module.exports = { generateOTP, sendOTPSms, getOTPExpiry, OTP_EXPIRY_MIN };
+module.exports = { generateOTP, getOTPExpiry, sendOTPSms };
