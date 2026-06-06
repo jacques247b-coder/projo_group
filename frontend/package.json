@@ -1,8 +1,14 @@
+{
 "homepage": ".",
   "name": "projo-group-frontend",
   "version": "1.0.0",
   "description": "PROJO GROUP Frontend — Rustenburg's Own. Ride. Shop. Deliver.",
+  "private": true,{
+  "name": "projo-group-frontend",
+  "version": "1.0.0",
+  "description": "PROJO GROUP Frontend — Rustenburg's Own. Ride. Shop. Deliver.",
   "private": true,
+  "homepage": ".",
   "dependencies": {
     "axios": "^1.6.8",
     "date-fns": "^3.6.0",
