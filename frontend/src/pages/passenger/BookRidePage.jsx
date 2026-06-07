@@ -52,7 +52,7 @@ function LocationPicker({ label, icon, value, onChange }) {
     setCustomText("");
   }
 
-  function useCustomAddress() {
+  function applyCustomAddress() {
     if (!customText.trim()) return;
     // Use Rustenburg CBD coordinates as fallback for custom addresses
     onChange({
@@ -142,13 +142,13 @@ function LocationPicker({ label, icon, value, onChange }) {
                 autoFocus
                 value={customText}
                 onChange={e => setCustomText(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && useCustomAddress()}
+                onKeyDown={e => e.key === "Enter" && applyCustomAddress()}
                 placeholder="Type your address..."
                 style={{ flex: 1, background: BG3, border: `1px solid ${BORDER}`,
                   color: "#f5ede8", borderRadius: "8px", padding: "10px 12px",
                   fontSize: "13px", fontFamily: "'DM Sans',sans-serif", outline: "none" }}
               />
-              <button onClick={useCustomAddress} style={{
+              <button onClick={applyCustomAddress} style={{
                 background: G, color: "#1a0808", border: "none",
                 borderRadius: "8px", padding: "10px 16px", fontSize: "13px",
                 fontWeight: "700", cursor: "pointer",
