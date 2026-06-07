@@ -1,7 +1,7 @@
 {
   "name": "projo-group-frontend",
   "version": "1.0.0",
-  "description": "PROJO GROUP Frontend — Rustenburg's Own. Ride. Shop. Deliver.",
+  "description": "PROJO GROUP Frontend — Rustenburg's Own. Ride. Shop. Deliver & Services.",
   "private": true,
   "homepage": ".",
   "dependencies": {
