@@ -34,6 +34,7 @@ export default function Navbar() {
 
   const passengerLinks = [
     { label: "Book Ride", path: "/book" },
+{ label: "Shop", path: "/shop" },
     { label: "My Rides",  path: "/rides" },
     { label: "Wallet",    path: "/wallet" },
     { label: "Courier",   path: "/courier" },

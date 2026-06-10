@@ -2,6 +2,7 @@
 // PROJO GROUP — App Router (Complete)
 // All routes: landing, auth, passenger, driver, admin
 // ============================================================
+import ShopPage from "./pages/shop/ShopPage";
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
@@ -63,6 +64,9 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Public landing page */}
+<Route path="/shop" element={
+  <Protected><ShopPage /></Protected>
+} />
       <Route path="/home" element={<LandingPage />} />
       <Route path="/" element={<Navigate to={homeRoute} replace />} />
 
