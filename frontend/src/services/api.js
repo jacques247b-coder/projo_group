@@ -82,3 +82,14 @@ export const deliveryAPI = {
 };
 
 export default api;
+
+export const adminAPI = {
+  getDashboardStats: () => api.get("/admin/stats"),
+  getAllDrivers: () => api.get("/admin/drivers"),
+  approveDriver: (driverId) => api.post(`/admin/drivers/${driverId}/approve`),
+  rejectDriver: (driverId, note) => api.post(`/admin/drivers/${driverId}/reject`, { note }),
+  getSurgeZones: () => api.get("/admin/surge-zones"),
+  updateSurgeZone: (id, data) => api.put(`/admin/surge-zones/${id}`, data),
+  getUsers: (page = 1) => api.get(`/admin/users?page=${page}`),
+  getLiveRides: () => api.get("/admin/rides/live"),
+};
