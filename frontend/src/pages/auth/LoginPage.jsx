@@ -1,6 +1,6 @@
 // ============================================================
-// PROJO GROUP — Login Page
-// Colours: Gold on Amber Red | Real logo
+// PROJO GROUP — Login Page with Email OTP
+// Collects email for marketing + sends OTP via Gmail
 // ============================================================
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -17,14 +17,16 @@ const BORDER = "rgba(232,184,75,0.18)";
 export default function LoginPage() {
   const { sendOTP, verifyOTP } = useAuth();
   const navigate = useNavigate();
-  const [step, setStep]       = useState("phone");
+  const [step, setStep]         = useState("phone");
   const [rawPhone, setRawPhone] = useState("");
-  const [phone, setPhone]     = useState("");
-  const [otp, setOtp]         = useState("");
-  const [name, setName]       = useState("");
-  const [role, setRole]       = useState("PASSENGER");
-  const [loading, setLoading] = useState(false);
+  const [phone, setPhone]       = useState("");
+  const [email, setEmail]       = useState("");
+  const [otp, setOtp]           = useState("");
+  const [name, setName]         = useState("");
+  const [role, setRole]         = useState("PASSENGER");
+  const [loading, setLoading]   = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
+  const [otpVia, setOtpVia]     = useState("email");
 
   function formatPhone(raw) {
     const digits = raw.replace(/\D/g, "");
@@ -40,13 +42,18 @@ export default function LoginPage() {
       toast.error("Enter a valid SA number e.g. 083 123 4567");
       return;
     }
+    if (!email || !email.includes("@")) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
     setPhone(formatted);
     setLoading(true);
     try {
-      const res = await sendOTP(formatted);
+      const res = await sendOTP(formatted, email);
       setIsNewUser(res?.isNewUser || false);
+      setOtpVia(res?.via || "email");
       setStep("otp");
-      toast.success("OTP sent to " + formatted);
+      toast.success(`OTP sent to ${email}`);
     } catch (err) {
       toast.error(err?.error || "Failed to send OTP");
     } finally { setLoading(false); }
@@ -56,36 +63,32 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const user = await verifyOTP(
-        phone, otp,
-        isNewUser ? name : undefined,
-        isNewUser ? role : undefined
-      );
+      const user = await verifyOTP(phone, otp, isNewUser ? name : undefined, isNewUser ? role : undefined, email);
       toast.success("Welcome to PROJO GROUP!");
       if (user.role === "DRIVER")     navigate("/driver");
       else if (user.role === "ADMIN") navigate("/admin");
       else                            navigate("/book");
     } catch (err) {
-      toast.error(err?.error || "Invalid OTP");
+      toast.error(err?.error || "Invalid OTP code");
     } finally { setLoading(false); }
   }
 
   const inputStyle = {
-    width: "100%", background: BG3,
-    border: `1px solid ${BORDER}`, color: "#f5ede8",
-    borderRadius: "10px", padding: "14px 16px",
-    fontSize: "16px", fontFamily: "'DM Sans',sans-serif",
-    outline: "none", boxSizing: "border-box",
+    width: "100%", background: BG3, border: `1px solid ${BORDER}`,
+    color: "#f5ede8", borderRadius: "10px", padding: "13px 16px",
+    fontSize: "15px", fontFamily: "'DM Sans',sans-serif",
+    outline: "none", boxSizing: "border-box", marginTop: "6px",
   };
-
+  const labelStyle = {
+    fontSize: "11px", fontWeight: "700", color: "#7a5a55",
+    letterSpacing: "0.8px", textTransform: "uppercase",
+  };
   const btnStyle = {
-    width: "100%", background: G, color: "#1a0808",
-    border: "none", borderRadius: "10px", padding: "15px",
-    fontSize: "15px", fontWeight: "700",
-    cursor: loading ? "not-allowed" : "pointer",
-    opacity: loading ? 0.7 : 1,
-    fontFamily: "'DM Sans',sans-serif", marginTop: "8px",
-    transition: "all .2s",
+    width: "100%", background: G, color: "#1a0808", border: "none",
+    borderRadius: "10px", padding: "15px", fontSize: "15px",
+    fontWeight: "800", cursor: loading ? "not-allowed" : "pointer",
+    opacity: loading ? 0.7 : 1, fontFamily: "'DM Sans',sans-serif",
+    marginTop: "8px",
   };
 
   return (
@@ -97,127 +100,92 @@ export default function LoginPage() {
     }}>
       <div style={{ width: "100%", maxWidth: "420px" }}>
 
-        {/* Logo + Brand */}
+        {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: "2.5rem" }}>
-          <img
-            src="/assets/logo/PROJO_LOGO.png"
-            alt="PROJO GROUP"
-            style={{
-              width: "100px", height: "100px", borderRadius: "50%",
-              objectFit: "cover", background: "transparent",
-              filter: "drop-shadow(0 0 16px rgba(232,184,75,0.5))",
-              marginBottom: "1rem",
-            }}
-            onError={(e) => {
-              e.target.style.display = "none";
-              document.getElementById("fallback-coin").style.display = "flex";
-            }}
-          />
-          {/* Fallback */}
-          <div id="fallback-coin" style={{
-            display: "none", width: "80px", height: "80px", borderRadius: "50%",
-            background: "radial-gradient(circle at 35% 35%,#f5d078,#e8b84b,#c49a2f,#9a7520)",
-            margin: "0 auto 1rem", alignItems: "center", justifyContent: "center",
-            fontSize: "12px", fontWeight: "800", color: "#2a1a00",
-            boxShadow: "0 0 24px rgba(232,184,75,0.4)",
-            fontFamily: "'Syne',sans-serif",
-          }}>PROJO</div>
-
-          <h1 style={{
-            fontFamily: "'Syne',sans-serif", fontSize: "1.6rem",
-            fontWeight: "800", color: G, letterSpacing: "2px", margin: 0,
-          }}>PROJO GROUP</h1>
-          <p style={{ color: "#7a5a55", fontSize: "13px", marginTop: "6px" }}>
-            Rustenburg's Own. Ride. Shop. Deliver.
+          <img src="/assets/logo/PROJO_LOGO.png" alt="PROJO GROUP"
+            style={{ width: "90px", height: "90px", borderRadius: "50%",
+              objectFit: "cover", filter: "drop-shadow(0 0 16px rgba(232,184,75,0.5))",
+              marginBottom: "1rem" }}
+            onError={e => e.target.style.display = "none"} />
+          <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.6rem",
+            fontWeight: "800", color: G, letterSpacing: "2px", margin: 0 }}>
+            PROJO GROUP
+          </h1>
+          <p style={{ color: "#7a5a55", fontSize: "12px", marginTop: "6px" }}>
+            Rustenburg's Own. Ride. Shop. Deliver & Services.
           </p>
         </div>
 
         {/* Card */}
-        <div style={{
-          background: BG2,
-          border: `1px solid ${BORDER}`,
+        <div style={{ background: BG2, border: `1px solid ${BORDER}`,
           borderRadius: "20px", padding: "2rem",
-          boxShadow: "0 8px 40px rgba(0,0,0,0.5)",
-        }}>
+          boxShadow: "0 8px 40px rgba(0,0,0,0.5)" }}>
 
-          {/* Red accent bar at top */}
-          <div style={{
-            height: "3px", borderRadius: "2px",
+          <div style={{ height: "3px", borderRadius: "2px",
             background: `linear-gradient(90deg, ${RED}, ${G}, ${RED})`,
-            marginBottom: "1.5rem", marginTop: "-0.5rem",
-          }} />
+            marginBottom: "1.5rem", marginTop: "-0.5rem" }} />
 
           {step === "phone" && (
             <form onSubmit={handleSendOTP}>
-              <h2 style={{
-                fontFamily: "'Syne',sans-serif", fontSize: "1.2rem",
-                fontWeight: "700", color: "#f5ede8", marginBottom: "0.4rem",
-              }}>Sign In or Register</h2>
+              <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.2rem",
+                fontWeight: "700", color: "#f5ede8", marginBottom: "0.4rem" }}>
+                Sign In or Register
+              </h2>
               <p style={{ color: "#7a5a55", fontSize: "13px", marginBottom: "1.5rem" }}>
-                Enter your South African mobile number
+                Enter your details to receive a verification code
               </p>
 
-              <label style={{
-                fontSize: "11px", color: "#7a5a55", fontWeight: "700",
-                letterSpacing: "0.8px", textTransform: "uppercase",
-              }}>Phone Number</label>
-
-              <div style={{ display: "flex", marginTop: "6px", marginBottom: "1rem", gap: "8px" }}>
-                <div style={{
-                  ...inputStyle, width: "70px", flexShrink: 0,
-                  color: G, fontWeight: "800", textAlign: "center",
-                }}>+27</div>
-                <input
-                  style={inputStyle}
-                  placeholder="83 123 4567"
-                  value={rawPhone}
+              <label style={labelStyle}>SA Phone Number</label>
+              <div style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
+                <div style={{ ...inputStyle, width: "70px", flexShrink: 0,
+                  color: G, fontWeight: "800", textAlign: "center", marginTop: "6px" }}>+27</div>
+                <input style={{ ...inputStyle, flex: 1 }}
+                  placeholder="83 123 4567" value={rawPhone}
                   onChange={e => setRawPhone(e.target.value)}
-                  type="tel" maxLength={12} required
-                />
+                  type="tel" maxLength={12} required />
               </div>
 
-              <button style={btnStyle} type="submit" disabled={loading}>
-                {loading ? "Sending OTP..." : "Send OTP →"}
+              <label style={labelStyle}>Email Address</label>
+              <input style={inputStyle} placeholder="your@email.com"
+                value={email} onChange={e => setEmail(e.target.value)}
+                type="email" required />
+              <p style={{ fontSize: "11px", color: "#7a5a55", marginTop: "4px" }}>
+                📧 OTP sent to your email · Used for booking confirmations & offers
+              </p>
+
+              <button style={{ ...btnStyle, marginTop: "16px" }}
+                type="submit" disabled={loading}>
+                {loading ? "Sending OTP..." : "Send Verification Code →"}
               </button>
             </form>
           )}
 
           {step === "otp" && (
             <form onSubmit={handleVerifyOTP}>
-              <h2 style={{
-                fontFamily: "'Syne',sans-serif", fontSize: "1.2rem",
-                fontWeight: "700", color: "#f5ede8", marginBottom: "0.4rem",
-              }}>Enter OTP Code</h2>
+              <h2 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.2rem",
+                fontWeight: "700", color: "#f5ede8", marginBottom: "0.4rem" }}>
+                Enter Verification Code
+              </h2>
               <p style={{ color: "#7a5a55", fontSize: "13px", marginBottom: "1.5rem" }}>
                 6-digit code sent to{" "}
-                <strong style={{ color: G }}>{phone}</strong>
+                <strong style={{ color: G }}>{email}</strong>
               </p>
 
               {isNewUser && (
                 <>
-                  <label style={{
-                    fontSize: "11px", color: "#7a5a55", fontWeight: "700",
-                    letterSpacing: "0.8px", textTransform: "uppercase",
-                  }}>Your Name</label>
-                  <input
-                    style={{ ...inputStyle, marginTop: "6px", marginBottom: "12px" }}
-                    placeholder="Full name" value={name}
-                    onChange={e => setName(e.target.value)} required
-                  />
+                  <label style={labelStyle}>Your Name</label>
+                  <input style={inputStyle} placeholder="Full name"
+                    value={name} onChange={e => setName(e.target.value)} required />
 
-                  <label style={{
-                    fontSize: "11px", color: "#7a5a55", fontWeight: "700",
-                    letterSpacing: "0.8px", textTransform: "uppercase",
-                  }}>I am a</label>
-                  <div style={{ display: "flex", gap: "8px", marginTop: "6px", marginBottom: "12px" }}>
+                  <label style={{ ...labelStyle, marginTop: "14px", display: "block" }}>I am a</label>
+                  <div style={{ display: "flex", gap: "8px", marginTop: "6px", marginBottom: "14px" }}>
                     {["PASSENGER", "DRIVER"].map(r => (
                       <button key={r} type="button" onClick={() => setRole(r)} style={{
                         flex: 1, padding: "10px", borderRadius: "8px", cursor: "pointer",
                         border: `1px solid ${role === r ? G : BORDER}`,
                         background: role === r ? "rgba(232,184,75,0.1)" : BG3,
                         color: role === r ? G : "#b8a09a",
-                        fontWeight: "700", fontSize: "13px",
-                        transition: "all .15s",
+                        fontWeight: "700", fontSize: "13px", transition: "all .15s",
                       }}>
                         {r === "PASSENGER" ? "🧑 Passenger" : "🚗 Driver"}
                       </button>
@@ -226,40 +194,28 @@ export default function LoginPage() {
                 </>
               )}
 
-              <label style={{
-                fontSize: "11px", color: "#7a5a55", fontWeight: "700",
-                letterSpacing: "0.8px", textTransform: "uppercase",
-              }}>OTP Code</label>
-              <input
-                style={{
-                  ...inputStyle, marginTop: "6px", marginBottom: "1rem",
-                  fontSize: "28px", letterSpacing: "10px",
-                  textAlign: "center", fontWeight: "800",
-                }}
+              <label style={labelStyle}>Verification Code</label>
+              <input style={{ ...inputStyle, fontSize: "28px",
+                letterSpacing: "10px", textAlign: "center", fontWeight: "800" }}
                 placeholder="000000" value={otp}
                 onChange={e => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                type="tel" maxLength={6} required
-              />
+                type="tel" maxLength={6} required />
 
               <button style={btnStyle} type="submit" disabled={loading}>
-                {loading ? "Verifying..." : "Verify & Enter →"}
+                {loading ? "Verifying..." : "Verify & Enter App →"}
               </button>
 
               <button type="button" onClick={() => setStep("phone")} style={{
                 width: "100%", background: "transparent", border: "none",
                 color: "#7a5a55", fontSize: "13px", cursor: "pointer",
                 marginTop: "12px", textDecoration: "underline",
-              }}>
-                ← Change number
-              </button>
+              }}>← Change details</button>
             </form>
           )}
         </div>
 
-        <p style={{
-          textAlign: "center", color: "#3d1a1a",
-          fontSize: "11px", marginTop: "1.5rem",
-        }}>
+        <p style={{ textAlign: "center", color: "#3d1a1a",
+          fontSize: "11px", marginTop: "1.5rem" }}>
           © 2023–2026 PROJO GROUP · Rustenburg, North West Province
         </p>
       </div>
