@@ -93,3 +93,10 @@ export const adminAPI = {
   getUsers: (page = 1) => api.get(`/admin/users?page=${page}`),
   getLiveRides: () => api.get("/admin/rides/live"),
 };
+
+export const driverAPI = {
+  getProfile: () => api.get("/drivers/me"),
+  updateStatus: (status) => api.post("/drivers/status", { status }),
+  getEarnings: (period) => api.get(`/drivers/earnings?period=${period}`),
+  getPendingRides: () => api.get("/drivers/pending-rides"),
+};
