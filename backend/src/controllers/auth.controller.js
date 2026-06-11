@@ -1,7 +1,12 @@
+// ============================================================
+// PROJO GROUP — Auth Controller
+// Email OTP — free forever + collects emails for marketing
+// ============================================================
 const { PrismaClient } = require("@prisma/client");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
-const { generateOTP, sendOTPSms, getOTPExpiry } = require("../services/otp.service");
+const { generateOTP, getOTPExpiry } = require("../services/otp.service");
+const { sendOTPEmail, sendWelcomeEmail } = require("../services/email.service");
 
 const prisma = new PrismaClient();
 
@@ -20,7 +25,7 @@ function sanitizeUser(user) {
 exports.register = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-  const { phone, name, role = "PASSENGER" } = req.body;
+  const { phone, name, role = "PASSENGER", email } = req.body;
   try {
     let user = await prisma.user.findUnique({ where: { phone } });
     if (user && user.status !== "PENDING_VERIFICATION") {
@@ -28,19 +33,42 @@ exports.register = async (req, res) => {
     }
     if (!user) {
       user = await prisma.user.create({
-        data: { phone, name: name.trim(), role: role === "DRIVER" ? "DRIVER" : "PASSENGER", status: "PENDING_VERIFICATION" },
+        data: {
+          phone,
+          name: name.trim(),
+          role: role === "DRIVER" ? "DRIVER" : "PASSENGER",
+          status: "PENDING_VERIFICATION",
+          email: email || null,
+        },
       });
       await prisma.wallet.create({ data: { userId: user.id, balanceZar: 0 } });
     } else {
       user = await prisma.user.update({
         where: { id: user.id },
-        data: { name: name.trim(), role: role === "DRIVER" ? "DRIVER" : "PASSENGER" }
+        data: {
+          name: name.trim(),
+          role: role === "DRIVER" ? "DRIVER" : "PASSENGER",
+          email: email || user.email,
+        }
       });
     }
+
     const otp = generateOTP();
-    await prisma.user.update({ where: { id: user.id }, data: { otpCode: otp, otpExpiresAt: getOTPExpiry() } });
-    await sendOTPSms(phone, otp);
-    res.status(201).json({ message: "OTP sent. Check your phone.", userId: user.id, phone });
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { otpCode: otp, otpExpiresAt: getOTPExpiry() }
+    });
+
+    // Send OTP via email if provided, else via SMS fallback
+    if (email) {
+      await sendOTPEmail(email, otp, name);
+      res.status(201).json({ message: `OTP sent to ${email}`, userId: user.id, phone, via: "email" });
+    } else {
+      // SMS fallback
+      const { sendOTPSms } = require("../services/otp.service");
+      await sendOTPSms(phone, otp);
+      res.status(201).json({ message: "OTP sent to your phone", userId: user.id, phone, via: "sms" });
+    }
   } catch (err) {
     console.error("[PROJO Auth] register error:", err.message);
     res.status(500).json({ error: "Registration failed: " + err.message });
@@ -49,20 +77,32 @@ exports.register = async (req, res) => {
 
 // Send OTP
 exports.sendOTP = async (req, res) => {
-  const { phone } = req.body;
+  const { phone, email } = req.body;
   try {
     let user = await prisma.user.findUnique({ where: { phone } });
     const isNewUser = !user;
     if (!user) {
       user = await prisma.user.create({
-        data: { phone, name: "PROJO User", role: "PASSENGER", status: "PENDING_VERIFICATION" }
+        data: { phone, name: "PROJO User", role: "PASSENGER", status: "PENDING_VERIFICATION", email: email || null }
       });
       await prisma.wallet.create({ data: { userId: user.id, balanceZar: 0 } });
+    } else if (email && !user.email) {
+      // Update email if not set
+      user = await prisma.user.update({ where: { id: user.id }, data: { email } });
     }
+
     const otp = generateOTP();
     await prisma.user.update({ where: { id: user.id }, data: { otpCode: otp, otpExpiresAt: getOTPExpiry() } });
-    await sendOTPSms(phone, otp);
-    res.json({ message: "OTP sent", isNewUser, phone });
+
+    const contactEmail = email || user.email;
+    if (contactEmail) {
+      await sendOTPEmail(contactEmail, otp, user.name);
+      res.json({ message: `OTP sent to ${contactEmail}`, isNewUser, phone, via: "email" });
+    } else {
+      const { sendOTPSms } = require("../services/otp.service");
+      await sendOTPSms(phone, otp);
+      res.json({ message: "OTP sent to your phone", isNewUser, phone, via: "sms" });
+    }
   } catch (err) {
     console.error("[PROJO Auth] sendOTP error:", err.message);
     res.status(500).json({ error: "Failed to send OTP: " + err.message });
@@ -71,18 +111,33 @@ exports.sendOTP = async (req, res) => {
 
 // Verify OTP
 exports.verifyOTP = async (req, res) => {
-  const { phone, otp, name, role } = req.body;
+  const { phone, otp, name, role, email } = req.body;
   try {
     const user = await prisma.user.findUnique({ where: { phone } });
     if (!user) return res.status(404).json({ error: "User not found" });
-    if (user.otpCode !== otp) return res.status(400).json({ error: "Incorrect OTP" });
-    if (!user.otpExpiresAt || new Date() > user.otpExpiresAt) return res.status(400).json({ error: "OTP expired" });
+    if (user.otpCode !== otp) return res.status(400).json({ error: "Incorrect OTP code" });
+    if (!user.otpExpiresAt || new Date() > user.otpExpiresAt) return res.status(400).json({ error: "OTP expired. Request a new one." });
+
     const updateData = { status: "ACTIVE", otpCode: null, otpExpiresAt: null, lastLoginAt: new Date() };
     if (name) updateData.name = name.trim();
     if (role && ["PASSENGER", "DRIVER"].includes(role)) updateData.role = role;
+    if (email) updateData.email = email;
     await prisma.user.update({ where: { id: user.id }, data: updateData });
+
+    // Send welcome email to new users
+    const isNewUser = user.status === "PENDING_VERIFICATION";
+    const contactEmail = email || user.email;
+    if (isNewUser && contactEmail) {
+      sendWelcomeEmail(contactEmail, name || user.name).catch(() => {});
+    }
+
     const fullUser = await prisma.user.findUnique({ where: { id: user.id }, include: { wallet: true } });
-    res.json({ message: "Welcome to PROJO GROUP!", token: signToken(user.id), refreshToken: signRefresh(user.id), user: sanitizeUser(fullUser) });
+    res.json({
+      message: "Welcome to PROJO GROUP!",
+      token: signToken(user.id),
+      refreshToken: signRefresh(user.id),
+      user: sanitizeUser(fullUser)
+    });
   } catch (err) {
     console.error("[PROJO Auth] verifyOTP error:", err.message);
     res.status(500).json({ error: "Verification failed: " + err.message });
@@ -91,14 +146,23 @@ exports.verifyOTP = async (req, res) => {
 
 // Login
 exports.login = async (req, res) => {
-  const { phone } = req.body;
+  const { phone, email } = req.body;
   try {
     const user = await prisma.user.findUnique({ where: { phone }, include: { wallet: true } });
-    if (!user) return res.status(401).json({ error: "Phone number not found" });
+    if (!user) return res.status(401).json({ error: "Phone number not found. Please register first." });
+
     const otp = generateOTP();
     await prisma.user.update({ where: { id: user.id }, data: { otpCode: otp, otpExpiresAt: getOTPExpiry() } });
-    await sendOTPSms(phone, otp);
-    res.json({ requiresOTP: true, message: "OTP sent", isNewUser: false });
+
+    const contactEmail = email || user.email;
+    if (contactEmail) {
+      await sendOTPEmail(contactEmail, otp, user.name);
+      res.json({ requiresOTP: true, message: `OTP sent to ${contactEmail}`, isNewUser: false, via: "email" });
+    } else {
+      const { sendOTPSms } = require("../services/otp.service");
+      await sendOTPSms(phone, otp);
+      res.json({ requiresOTP: true, message: "OTP sent to your phone", isNewUser: false, via: "sms" });
+    }
   } catch (err) {
     res.status(500).json({ error: "Login failed" });
   }
@@ -116,7 +180,7 @@ exports.refresh = async (req, res) => {
   }
 };
 
-exports.logout = async (req, res) => res.json({ message: "Logged out" });
+exports.logout = async (req, res) => res.json({ message: "Logged out successfully" });
 
 exports.getMe = async (req, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.user.id }, include: { wallet: true } });
