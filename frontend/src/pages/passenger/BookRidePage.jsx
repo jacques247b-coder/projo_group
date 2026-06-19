@@ -9,7 +9,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { rideAPI } from "../../services/api";
+import { rideAPI, deliveryAPI } from "../../services/api";
 import { VEHICLE_INFO, formatFare, CONTACT } from "../../utils/constants";
 import toast from "react-hot-toast";
 import Navbar from "../../components/ui/Navbar";
@@ -195,13 +195,22 @@ export default function BookRidePage() {
     if (bookingType === "delivery" && !recipientName) return toast.error("Please enter recipient name");
     setLoading(true);
     try {
-      await rideAPI.bookRide({
-        pickupAddress: pickup.name, pickupLat: pickup.lat, pickupLng: pickup.lng,
-        dropoffAddress: dropoff.name, dropoffLat: dropoff.lat, dropoffLng: dropoff.lng,
-        vehicleType, scheduledFor: scheduledFor || null,
-        paidWithWallet: payWithWallet, bookingType,
-        recipientName, recipientPhone, packageDesc,
-      });
+      if (bookingType === "delivery") {
+        await deliveryAPI.bookDelivery({
+          description: packageDesc || "Package",
+          pickupAddress: pickup.name, pickupLat: pickup.lat, pickupLng: pickup.lng,
+          recipientName, recipientPhone,
+          dropoffAddress: dropoff.name, dropoffLat: dropoff.lat, dropoffLng: dropoff.lng,
+          distanceKm: fareResult?.distanceKm || 0,
+        });
+      } else {
+        await rideAPI.bookRide({
+          pickupAddress: pickup.name, pickupLat: pickup.lat, pickupLng: pickup.lng,
+          dropoffAddress: dropoff.name, dropoffLat: dropoff.lat, dropoffLng: dropoff.lng,
+          vehicleType, scheduledFor: scheduledFor || null,
+          paidWithWallet: payWithWallet,
+        });
+      }
       const points = calcLoyaltyPoints(fareResult?.totalFare || 60);
       toast.success(`🎉 Booked! You earned ${points} loyalty point${points !== 1 ? "s" : ""}!`);
       navigate("/rides");
