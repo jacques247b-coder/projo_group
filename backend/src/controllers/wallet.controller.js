@@ -11,10 +11,7 @@ const PF = {
   merchantId:  process.env.PAYFAST_MERCHANT_ID  || "21297782",
   merchantKey: process.env.PAYFAST_MERCHANT_KEY || "ydqnuyty9ndei",
   passphrase:  process.env.PAYFAST_PASSPHRASE   || "",
-  // Use sandbox for testing, live for production
-  host: process.env.PAYFAST_SANDBOX === "true"
-    ? "sandbox.payfast.co.za"
-    : "www.payfast.co.za",
+  host: "www.payfast.co.za", // Live payments
 };
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "https://projo-group.onrender.com";
