@@ -99,8 +99,8 @@ exports.topUp = async (req, res) => {
       amount:        parseFloat(amountZar).toFixed(2),
       item_name:     "PROJO GROUP Wallet Top Up",
       item_description: `Top up R${amountZar} to PROJO GROUP Wallet`,
-      custom_int1:   req.user.id,     // store user ID for ITN
       custom_str1:   wallet.id,       // store wallet ID for ITN
+      custom_str2:   req.user.id,     // store user ID for ITN
     };
 
     // Generate signature
