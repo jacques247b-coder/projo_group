@@ -1,19 +1,20 @@
-// PROJO GROUP — Service Worker
-const CACHE_NAME = "projo-v1";
+// PROJO GROUP — Service Worker v2
+const CACHE_NAME = "projo-v2";
 
-// Install — cache nothing for now, just activate
 self.addEventListener("install", (e) => {
   self.skipWaiting();
 });
 
-// Activate
 self.addEventListener("activate", (e) => {
-  e.waitUntil(clients.claim());
+  // Delete old caches
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    ).then(() => clients.claim())
+  );
 });
 
-// Fetch — network first, no caching of API calls
 self.addEventListener("fetch", (e) => {
-  // Don't intercept API calls or cross-origin requests
   if (
     e.request.url.includes("/api/") ||
     e.request.url.includes("onrender.com") ||
@@ -23,6 +24,5 @@ self.addEventListener("fetch", (e) => {
   ) {
     return;
   }
-  // Network first for everything else
   e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
 });
