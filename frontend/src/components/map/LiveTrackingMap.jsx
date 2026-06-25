@@ -1,134 +1,143 @@
 // ============================================================
-// PROJO GROUP — Live Ride Tracking Map
-// Real-time driver position via Socket.io + Leaflet
-// No API key required
+// PROJO GROUP — Live Tracking Map
+// Leaflet + OpenStreetMap (FREE — no API key needed)
+// Shows: pickup pin, dropoff pin, driver location (live)
 // ============================================================
-
 import React, { useEffect, useRef, useState } from "react";
-import { Marker, Popup, Polyline } from "react-leaflet";
-import ProjoMap, { driverIcon, pickupIcon, dropoffIcon } from "./ProjoMap";
-import { RIDE_STATUS_LABELS } from "../../utils/constants";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
+import L from "leaflet";
+import { RUSTENBURG_CENTER, DEFAULT_MAP_ZOOM } from "../../utils/constants";
 
-/**
- * LiveTrackingMap — shown to passenger during an active ride
- *
- * Props:
- *   ride         — ride object with pickup/dropoff coords
- *   socket       — Socket.io instance
- *   rideStatus   — current status string
- */
-export default function LiveTrackingMap({ ride, socket, rideStatus }) {
-  const [driverPos, setDriverPos] = useState(null);
-  const [routePoints, setRoutePoints] = useState([]);
-  const lastUpdate = useRef(null);
+// ─── Custom map icons ─────────────────────────────────────────
+function makeIcon(emoji, size = 36) {
+  return L.divIcon({
+    className: "",
+    html: `<div style="
+      font-size:${size}px;
+      line-height:1;
+      filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    ">${emoji}</div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size],
+    popupAnchor: [0, -size],
+  });
+}
 
+const ICONS = {
+  pickup:  makeIcon("📍", 36),
+  dropoff: makeIcon("🏁", 36),
+  driver:  makeIcon("🚗", 32),
+};
+
+// ─── Auto-fit map bounds to all visible pins ──────────────────
+function FitBounds({ positions }) {
+  const map = useMap();
   useEffect(() => {
-    if (!socket || !ride) return;
+    if (positions.length >= 2) {
+      const bounds = L.latLngBounds(positions);
+      map.fitBounds(bounds, { padding: [48, 48] });
+    } else if (positions.length === 1) {
+      map.setView(positions[0], DEFAULT_MAP_ZOOM);
+    }
+  }, [positions.map(p => p.join(",")).join("|")]);
+  return null;
+}
 
-    // Join ride room for real-time updates
-    socket.emit("passenger:join_ride", { rideId: ride.id });
+// ─── Main component ───────────────────────────────────────────
+export default function LiveTrackingMap({ ride, socket, rideStatus }) {
+  const [driverPos, setDriverPos] = useState(
+    ride?.driver?.latitude && ride?.driver?.longitude
+      ? [ride.driver.latitude, ride.driver.longitude]
+      : null
+  );
 
-    // Listen for driver location updates
-    socket.on("driver:location", (data) => {
-      if (data.rideId !== ride.id) return;
-      setDriverPos({ lat: data.lat, lng: data.lng });
-      lastUpdate.current = new Date();
-
-      // Keep a trail of driver positions for route line
-      setRoutePoints((prev) => {
-        const next = [...prev, [data.lat, data.lng]];
-        return next.slice(-50); // keep last 50 points
-      });
-    });
-
-    return () => {
-      socket.off("driver:location");
+  // Listen for live driver location updates from socket
+  useEffect(() => {
+    if (!socket) return;
+    const handler = ({ lat, lng }) => {
+      setDriverPos([lat, lng]);
     };
-  }, [socket, ride]);
+    socket.on("driver:location", handler);
+    return () => socket.off("driver:location", handler);
+  }, [socket]);
 
-  if (!ride) return null;
+  const pickupPos  = ride?.pickupLat  && ride?.pickupLng
+    ? [ride.pickupLat,  ride.pickupLng]  : null;
+  const dropoffPos = ride?.dropoffLat && ride?.dropoffLng
+    ? [ride.dropoffLat, ride.dropoffLng] : null;
 
-  const pickup = { lat: ride.pickupLat, lng: ride.pickupLng, label: ride.pickupAddress };
-  const dropoff = { lat: ride.dropoffLat, lng: ride.dropoffLng, label: ride.dropoffAddress };
+  // All valid positions for FitBounds
+  const allPositions = [pickupPos, dropoffPos, driverPos].filter(Boolean);
 
-  // Center map on driver if we have position, else center between pickup/dropoff
-  const mapCenter = driverPos || {
-    lat: (pickup.lat + dropoff.lat) / 2,
-    lng: (pickup.lng + dropoff.lng) / 2,
-  };
+  // Route line: driver → pickup (before ride starts) or pickup → dropoff (in progress)
+  const routeLine = (() => {
+    if (driverPos && pickupPos && ["DRIVER_EN_ROUTE", "DRIVER_ASSIGNED"].includes(rideStatus)) {
+      return [driverPos, pickupPos];
+    }
+    if (pickupPos && dropoffPos && ["IN_PROGRESS", "ARRIVED_AT_PICKUP"].includes(rideStatus)) {
+      return [pickupPos, dropoffPos];
+    }
+    if (pickupPos && dropoffPos) return [pickupPos, dropoffPos];
+    return null;
+  })();
+
+  const center = pickupPos || [RUSTENBURG_CENTER.lat, RUSTENBURG_CENTER.lng];
 
   return (
-    <div>
-      {/* Status banner */}
-      <div style={{
-        background: "#1a1a1a", border: "1px solid rgba(232,184,75,0.25)",
-        borderRadius: "10px", padding: "12px 16px", marginBottom: "12px",
-        display: "flex", alignItems: "center", gap: "10px",
-      }}>
-        <div style={{
-          width: "8px", height: "8px", borderRadius: "50%", background: "#e8b84b",
-          animation: "pulse 1.5s infinite", flexShrink: 0,
-        }} />
-        <div>
-          <div style={{ fontSize: "14px", fontWeight: "700", color: "#f0ede8" }}>
-            {RIDE_STATUS_LABELS[rideStatus] || rideStatus}
-          </div>
-          {lastUpdate.current && (
-            <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "2px" }}>
-              Driver location updated {Math.round((Date.now() - lastUpdate.current) / 1000)}s ago
-            </div>
-          )}
-        </div>
-      </div>
+    <div style={{ height: "280px", width: "100%", borderRadius: "14px", overflow: "hidden",
+      border: "1px solid rgba(232,184,75,0.2)" }}>
+      <MapContainer
+        center={center}
+        zoom={DEFAULT_MAP_ZOOM}
+        style={{ height: "100%", width: "100%" }}
+        zoomControl={true}
+        scrollWheelZoom={false}>
 
-      {/* Map */}
-      <ProjoMap
-        center={mapCenter}
-        zoom={14}
-        height="420px"
-        driverPos={driverPos}
-        routePoints={routePoints}
-      >
-        <Marker position={[pickup.lat, pickup.lng]} icon={pickupIcon}>
-          <Popup><strong>📍 Your Pickup</strong><br />{pickup.label}</Popup>
-        </Marker>
-        <Marker position={[dropoff.lat, dropoff.lng]} icon={dropoffIcon}>
-          <Popup><strong>🏁 Dropoff</strong><br />{dropoff.label}</Popup>
-        </Marker>
-        {driverPos && (
-          <Marker position={[driverPos.lat, driverPos.lng]} icon={driverIcon}>
-            <Popup><strong style={{ color: "#e8b84b" }}>🚗 Your Driver</strong><br />Live location</Popup>
+        {/* Dark-ish OSM tile layer */}
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        />
+
+        {/* Auto-fit bounds */}
+        {allPositions.length > 0 && <FitBounds positions={allPositions} />}
+
+        {/* Pickup pin */}
+        {pickupPos && (
+          <Marker position={pickupPos} icon={ICONS.pickup}>
+            <Popup>
+              <strong>📍 Pickup</strong><br />{ride?.pickupAddress}
+            </Popup>
           </Marker>
         )}
-        {/* Gold route line */}
-        {routePoints.length > 1 && (
+
+        {/* Dropoff pin */}
+        {dropoffPos && (
+          <Marker position={dropoffPos} icon={ICONS.dropoff}>
+            <Popup>
+              <strong>🏁 Dropoff</strong><br />{ride?.dropoffAddress}
+            </Popup>
+          </Marker>
+        )}
+
+        {/* Live driver pin */}
+        {driverPos && (
+          <Marker position={driverPos} icon={ICONS.driver}>
+            <Popup>
+              <strong>🚗 Driver</strong>
+              {ride?.driver?.user?.name && <><br />{ride.driver.user.name}</>}
+            </Popup>
+          </Marker>
+        )}
+
+        {/* Route line */}
+        {routeLine && (
           <Polyline
-            positions={routePoints}
-            pathOptions={{ color: "#e8b84b", weight: 3, opacity: 0.6, dashArray: "6 6" }}
+            positions={routeLine}
+            pathOptions={{ color: "#e8b84b", weight: 3, opacity: 0.7, dashArray: "8 4" }}
           />
         )}
-      </ProjoMap>
-
-      {/* Fare summary */}
-      <div style={{
-        marginTop: "12px", background: "#1a1a1a",
-        border: "1px solid rgba(232,184,75,0.15)", borderRadius: "10px",
-        padding: "14px 16px", display: "flex", justifyContent: "space-between",
-      }}>
-        <div>
-          <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "2px" }}>Total Fare</div>
-          <div style={{ fontSize: "1.4rem", fontWeight: "800", color: "#e8b84b",
-            fontFamily: "'Syne', sans-serif" }}>
-            R{ride.totalFare?.toFixed(2) || "60.00"}
-          </div>
-        </div>
-        <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "2px" }}>Distance</div>
-          <div style={{ fontSize: "14px", fontWeight: "600", color: "#f0ede8" }}>
-            {ride.distanceKm ? `${ride.distanceKm}km` : "Rustenburg Flat"}
-          </div>
-        </div>
-      </div>
+      </MapContainer>
     </div>
   );
 }

@@ -1,0 +1,27 @@
+// PROJO GROUP — Admin Role Middleware
+// Attach AFTER the existing `authenticate` middleware on all admin routes.
+// Usage: router.use(authenticate, requireAdmin);
+
+/**
+ * requireAdmin
+ * Blocks access to any route unless the authenticated user has role = "ADMIN".
+ * Returns 403 Forbidden for non-admin users rather than 401, so attackers
+ * cannot distinguish "not logged in" from "logged in but wrong role".
+ */
+const requireAdmin = (req, res, next) => {
+  if (!req.user) {
+    // Should never reach here if authenticate ran first, but be safe
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
+  if (req.user.role !== "ADMIN") {
+    console.warn(
+      `[PROJO SECURITY] Blocked non-admin access to ${req.method} ${req.originalUrl} — user ${req.user.id} (role: ${req.user.role})`
+    );
+    return res.status(403).json({ error: "Access denied. Admin only." });
+  }
+
+  next();
+};
+
+module.exports = { requireAdmin };

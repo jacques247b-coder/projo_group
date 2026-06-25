@@ -1,0 +1,204 @@
+/* ============================================================
+   PROJO GROUP — Global Styles
+   Primary colours: Gold #e8b84b on Amber Red #8B1A1A
+   Dark premium theme with red + gold accents
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* ── Brand colours ── */
+  --gold:        #e8b84b;
+  --gold-light:  #f0c96a;
+  --gold-dark:   #c49a2f;
+  --gold-dim:    rgba(232,184,75,0.12);
+  --gold-glow:   rgba(232,184,75,0.30);
+
+  --red:         #8B1A1A;
+  --red-light:   #a82020;
+  --red-dark:    #6b1414;
+  --red-dim:     rgba(139,26,26,0.15);
+  --red-glow:    rgba(139,26,26,0.35);
+  --amber:       #c0392b;
+
+  /* ── Backgrounds ── */
+  --bg:          #0d0505;
+  --bg2:         #120808;
+  --bg3:         #1c0f0f;
+  --bg4:         #251414;
+  --slate:       #1e0e0e;
+
+  /* ── Text ── */
+  --text:        #f5ede8;
+  --text2:       #b8a09a;
+  --text3:       #7a5a55;
+
+  /* ── Borders ── */
+  --border:      rgba(232,184,75,0.18);
+  --border-red:  rgba(139,26,26,0.30);
+
+  /* ── Misc ── */
+  --radius:      12px;
+  --radius-lg:   20px;
+  --shadow:      0 4px 24px rgba(0,0,0,0.5);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,h2,h3,h4,h5,h6 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+}
+
+/* ── Leaflet dark red theme ───────────────────────────────── */
+.leaflet-container {
+  background: #1c0f0f !important;
+  font-family: 'DM Sans', sans-serif !important;
+}
+.leaflet-popup-content-wrapper {
+  background: #1c0f0f !important;
+  border: 1px solid rgba(232,184,75,0.25) !important;
+  border-radius: 10px !important;
+  color: #f5ede8 !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6) !important;
+}
+.leaflet-popup-tip { background: #1c0f0f !important; }
+.leaflet-popup-content { font-family: 'DM Sans', sans-serif !important; font-size: 13px !important; }
+.leaflet-control-attribution { background: rgba(13,5,5,0.85) !important; color: #7a5a55 !important; }
+.leaflet-control-attribution a { color: #e8b84b !important; }
+.leaflet-bar a {
+  background: #1c0f0f !important;
+  color: #e8b84b !important;
+  border-color: rgba(232,184,75,0.2) !important;
+}
+.leaflet-bar a:hover { background: #251414 !important; }
+
+/* ── Scrollbar ────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(232,184,75,0.3); }
+
+/* ── Animations ───────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+@keyframes goldPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(232,184,75,0.5); }
+  50%     { box-shadow: 0 0 0 14px rgba(232,184,75,0); }
+}
+@keyframes redPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(139,26,26,0.5); }
+  50%     { box-shadow: 0 0 0 14px rgba(139,26,26,0); }
+}
+
+.animate-fadeInUp  { animation: fadeInUp 0.5s ease both; }
+.animate-fadeIn    { animation: fadeIn 0.3s ease both; }
+.animate-pulse     { animation: pulse 2s infinite; }
+.animate-goldPulse { animation: goldPulse 1.5s infinite; }
+.animate-redPulse  { animation: redPulse 1.5s infinite; }
+
+/* ── Utility ──────────────────────────────────────────────── */
+.gold { color: var(--gold); }
+.red  { color: var(--red-light); }
+.syne { font-family: 'Syne', sans-serif; }
+
+/* ── Inputs ───────────────────────────────────────────────── */
+input, select, textarea {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+input::placeholder, textarea::placeholder { color: var(--text3); }
+
+/* ── Buttons ──────────────────────────────────────────────── */
+.btn-gold {
+  background: var(--gold);
+  color: #1a0808;
+  border: none;
+  border-radius: var(--radius);
+  padding: 13px 28px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-gold:hover { background: var(--gold-light); transform: translateY(-1px); box-shadow: 0 6px 20px var(--gold-glow); }
+.btn-gold:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.btn-red {
+  background: var(--red);
+  color: var(--gold);
+  border: none;
+  border-radius: var(--radius);
+  padding: 13px 28px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-red:hover { background: var(--red-light); transform: translateY(-1px); box-shadow: 0 6px 20px var(--red-glow); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid rgba(232,184,75,0.25);
+  border-radius: var(--radius);
+  padding: 13px 28px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ── Cards ───────────────────────────────────────────────── */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+.card-red {
+  background: var(--bg2);
+  border: 1px solid var(--border-red);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+
+/* ── Mobile ───────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .hide-mobile  { display: none !important; }
+}
+@media (min-width: 769px) {
+  .hide-desktop { display: none !important; }
+}

@@ -1,183 +1,107 @@
 // ============================================================
-// PROJO GROUP — Base Map Component
-// Leaflet + OpenStreetMap dark theme, centered on Rustenburg
-// No API key required
+// PROJO GROUP — ProjoMap (Driver Dashboard Map)
+// Leaflet + OpenStreetMap — shows driver pos, pickup, dropoff
 // ============================================================
-
 import React, { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-import { RUSTENBURG, DARK_TILE_URL, DARK_ATTRIBUTION } from "../../services/maps";
+import { RUSTENBURG_CENTER, DEFAULT_MAP_ZOOM } from "../../utils/constants";
 
-// Fix Leaflet default icon paths (broken in Webpack/CRA by default)
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-});
+// Custom icons
+function makeIcon(emoji, size = 36) {
+  return L.divIcon({
+    className: "",
+    html: `<div style="font-size:${size}px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5))">${emoji}</div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size],
+    popupAnchor: [0, -size],
+  });
+}
 
-// ── Custom gold marker for PROJO GROUP ──────────────────────
-export const goldIcon = new L.DivIcon({
-  html: `<div style="
-    width:20px;height:20px;
-    background:radial-gradient(circle at 35% 35%,#f5d078,#e8b84b,#c49a2f);
-    border-radius:50% 50% 50% 0;
-    transform:rotate(-45deg);
-    border:2px solid #c49a2f;
-    box-shadow:0 2px 8px rgba(232,184,75,0.5);
-  "></div>`,
-  iconSize: [20, 20],
-  iconAnchor: [10, 20],
-  popupAnchor: [0, -20],
-  className: "",
-});
+const ICONS = {
+  driver:  makeIcon("🚗", 36),
+  pickup:  makeIcon("📍", 34),
+  dropoff: makeIcon("🏁", 34),
+};
 
-export const pickupIcon = new L.DivIcon({
-  html: `<div style="
-    width:16px;height:16px;
-    background:#4ade80;
-    border-radius:50%;
-    border:3px solid #166534;
-    box-shadow:0 0 0 4px rgba(74,222,128,0.2);
-  "></div>`,
-  iconSize: [16, 16],
-  iconAnchor: [8, 8],
-  className: "",
-});
-
-export const dropoffIcon = new L.DivIcon({
-  html: `<div style="
-    width:16px;height:16px;
-    background:#f87171;
-    border-radius:50%;
-    border:3px solid #991b1b;
-    box-shadow:0 0 0 4px rgba(248,113,113,0.2);
-  "></div>`,
-  iconSize: [16, 16],
-  iconAnchor: [8, 8],
-  className: "",
-});
-
-export const driverIcon = new L.DivIcon({
-  html: `<div style="
-    background:#e8b84b;
-    border-radius:50%;
-    width:36px;height:36px;
-    display:flex;align-items:center;justify-content:center;
-    font-size:18px;
-    border:3px solid #c49a2f;
-    box-shadow:0 0 12px rgba(232,184,75,0.6);
-  ">🚗</div>`,
-  iconSize: [36, 36],
-  iconAnchor: [18, 18],
-  className: "",
-});
-
-// ── Re-center map helper ─────────────────────────────────────
-function SetView({ center, zoom }) {
+function FitBounds({ positions }) {
   const map = useMap();
   useEffect(() => {
-    if (center) map.setView(center, zoom || map.getZoom());
-  }, [center, zoom, map]);
+    if (positions.length >= 2) {
+      map.fitBounds(L.latLngBounds(positions), { padding: [48, 48] });
+    } else if (positions.length === 1) {
+      map.setView(positions[0], DEFAULT_MAP_ZOOM);
+    }
+  }, [positions.map(p => p.join(",")).join("|")]);
   return null;
 }
 
-/**
- * ProjoMap — main reusable map component
- *
- * Props:
- *   center       {lat, lng}   — defaults to Rustenburg
- *   zoom         number       — default 13
- *   height       string       — CSS height, default "400px"
- *   pickup       {lat, lng, label}
- *   dropoff      {lat, lng, label}
- *   driverPos    {lat, lng}
- *   routePoints  [[lat,lng]]  — array for drawing route line
- *   markers      [{lat, lng, label, icon}]
- *   onClick      fn(lat, lng) — called when map clicked
- */
-export default function ProjoMap({
-  center,
-  zoom = RUSTENBURG.zoom,
-  height = "400px",
-  pickup,
-  dropoff,
-  driverPos,
-  routePoints,
-  markers = [],
-  onClick,
-  children,
-}) {
-  const mapCenter = center
-    ? [center.lat, center.lng]
-    : [RUSTENBURG.lat, RUSTENBURG.lng];
+export default function ProjoMap({ height = "400px", driverPos, pickup, dropoff }) {
+  const center = driverPos
+    ? [driverPos.lat, driverPos.lng]
+    : [RUSTENBURG_CENTER.lat, RUSTENBURG_CENTER.lng];
+
+  const allPositions = [
+    driverPos  ? [driverPos.lat,  driverPos.lng]  : null,
+    pickup     ? [pickup.lat,     pickup.lng]      : null,
+    dropoff    ? [dropoff.lat,    dropoff.lng]     : null,
+  ].filter(Boolean);
+
+  // Route line: driver → pickup, or pickup → dropoff
+  const routeLine = driverPos && pickup
+    ? [[driverPos.lat, driverPos.lng], [pickup.lat, pickup.lng]]
+    : pickup && dropoff
+    ? [[pickup.lat, pickup.lng], [dropoff.lat, dropoff.lng]]
+    : null;
 
   return (
-    <MapContainer
-      center={mapCenter}
-      zoom={zoom}
-      style={{ height, width: "100%", borderRadius: "12px", zIndex: 1 }}
-      onClick={onClick ? (e) => onClick(e.latlng.lat, e.latlng.lng) : undefined}
-    >
-      {/* Dark premium tile layer — fits PROJO GROUP dark theme */}
-      <TileLayer url={DARK_TILE_URL} attribution={DARK_ATTRIBUTION} />
+    <div style={{
+      height, width: "100%", borderRadius: "16px", overflow: "hidden",
+      border: "1px solid rgba(232,184,75,0.2)",
+    }}>
+      <MapContainer
+        center={center}
+        zoom={DEFAULT_MAP_ZOOM}
+        style={{ height: "100%", width: "100%" }}
+        scrollWheelZoom={false}
+        zoomControl={true}>
 
-      {center && <SetView center={mapCenter} zoom={zoom} />}
-
-      {/* Pickup marker */}
-      {pickup && (
-        <Marker position={[pickup.lat, pickup.lng]} icon={pickupIcon}>
-          <Popup>
-            <strong style={{ color: "#166534" }}>📍 Pickup</strong>
-            <br />{pickup.label || "Pickup location"}
-          </Popup>
-        </Marker>
-      )}
-
-      {/* Dropoff marker */}
-      {dropoff && (
-        <Marker position={[dropoff.lat, dropoff.lng]} icon={dropoffIcon}>
-          <Popup>
-            <strong style={{ color: "#991b1b" }}>🏁 Dropoff</strong>
-            <br />{dropoff.label || "Dropoff location"}
-          </Popup>
-        </Marker>
-      )}
-
-      {/* Driver marker */}
-      {driverPos && (
-        <Marker position={[driverPos.lat, driverPos.lng]} icon={driverIcon}>
-          <Popup>
-            <strong style={{ color: "#e8b84b" }}>🚗 Your Driver</strong>
-            <br />On the way to you
-          </Popup>
-        </Marker>
-      )}
-
-      {/* Route line (gold) */}
-      {routePoints && routePoints.length > 1 && (
-        <Polyline
-          positions={routePoints}
-          pathOptions={{ color: "#e8b84b", weight: 4, opacity: 0.8 }}
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
-      )}
 
-      {/* Extra markers */}
-      {markers.map((m, i) => (
-        <Marker
-          key={i}
-          position={[m.lat, m.lng]}
-          icon={m.icon || goldIcon}
-        >
-          {m.label && (
-            <Popup>{m.label}</Popup>
-          )}
-        </Marker>
-      ))}
+        {allPositions.length > 0 && <FitBounds positions={allPositions} />}
 
-      {children}
-    </MapContainer>
+        {/* Driver pin */}
+        {driverPos && (
+          <Marker position={[driverPos.lat, driverPos.lng]} icon={ICONS.driver}>
+            <Popup><strong>🚗 You</strong></Popup>
+          </Marker>
+        )}
+
+        {/* Pickup pin */}
+        {pickup && (
+          <Marker position={[pickup.lat, pickup.lng]} icon={ICONS.pickup}>
+            <Popup><strong>📍 Pickup point</strong></Popup>
+          </Marker>
+        )}
+
+        {/* Dropoff pin */}
+        {dropoff && (
+          <Marker position={[dropoff.lat, dropoff.lng]} icon={ICONS.dropoff}>
+            <Popup><strong>🏁 Dropoff point</strong></Popup>
+          </Marker>
+        )}
+
+        {/* Route line */}
+        {routeLine && (
+          <Polyline
+            positions={routeLine}
+            pathOptions={{ color: "#e8b84b", weight: 3, opacity: 0.7, dashArray: "8 4" }}
+          />
+        )}
+      </MapContainer>
+    </div>
   );
 }

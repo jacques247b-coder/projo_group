@@ -1,4 +1,5 @@
 // PROJO GROUP — Auth Controller (Resend Email OTP)
+// SECURITY FIX: Added OTP brute-force protection + attempt tracking
 const { PrismaClient } = require("@prisma/client");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
@@ -6,6 +7,55 @@ const { generateOTP, getOTPExpiry } = require("../services/otp.service");
 
 const prisma = new PrismaClient();
 
+// ─── OTP Brute-Force Protection ─────────────────────────────────────────────
+// In-memory store (use Redis in production for multi-instance support)
+const otpAttempts = new Map(); // key: phone, value: { count, firstAttempt, lockedUntil }
+
+const MAX_OTP_ATTEMPTS = 5;       // max wrong attempts before lockout
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+const ATTEMPT_WINDOW_MS = 10 * 60 * 1000;   // reset attempt count after 10 min
+
+function checkOTPRateLimit(phone) {
+  const now = Date.now();
+  const record = otpAttempts.get(phone);
+
+  if (!record) return { allowed: true };
+
+  // Locked out?
+  if (record.lockedUntil && now < record.lockedUntil) {
+    const remainingMs = record.lockedUntil - now;
+    const remainingMin = Math.ceil(remainingMs / 60000);
+    return { allowed: false, lockedFor: remainingMin };
+  }
+
+  // Reset if window has passed
+  if (now - record.firstAttempt > ATTEMPT_WINDOW_MS) {
+    otpAttempts.delete(phone);
+    return { allowed: true };
+  }
+
+  return { allowed: true };
+}
+
+function recordFailedOTPAttempt(phone) {
+  const now = Date.now();
+  const record = otpAttempts.get(phone) || { count: 0, firstAttempt: now };
+
+  record.count += 1;
+
+  if (record.count >= MAX_OTP_ATTEMPTS) {
+    record.lockedUntil = now + LOCKOUT_DURATION_MS;
+    console.warn(`[PROJO SECURITY] OTP lockout triggered for phone: ${phone}`);
+  }
+
+  otpAttempts.set(phone, record);
+}
+
+function clearOTPAttempts(phone) {
+  otpAttempts.delete(phone);
+}
+
+// ─── Token Helpers ───────────────────────────────────────────────────────────
 function signToken(userId) {
   return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 }
@@ -17,7 +67,7 @@ function sanitizeUser(user) {
   return safe;
 }
 
-// Send email via Resend API (HTTPS — works on Render free tier)
+// ─── Email via Resend ────────────────────────────────────────────────────────
 async function sendOTPEmail(email, otp, name = "") {
   const apiKey = process.env.RESEND_API_KEY;
   const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
@@ -77,7 +127,7 @@ async function sendOTPEmail(email, otp, name = "") {
   }
 }
 
-// Send OTP
+// ─── Send OTP ────────────────────────────────────────────────────────────────
 exports.sendOTP = async (req, res) => {
   const { phone, email } = req.body;
   try {
@@ -110,7 +160,7 @@ exports.sendOTP = async (req, res) => {
   }
 };
 
-// Register
+// ─── Register ────────────────────────────────────────────────────────────────
 exports.register = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
@@ -148,27 +198,60 @@ exports.register = async (req, res) => {
   }
 };
 
-// Verify OTP
+// ─── Verify OTP — SECURITY FIX: Rate limiting + lockout ─────────────────────
 exports.verifyOTP = async (req, res) => {
   const { phone, otp, name, role, email } = req.body;
+
+  // Check lockout BEFORE hitting the database
+  const rateCheck = checkOTPRateLimit(phone);
+  if (!rateCheck.allowed) {
+    return res.status(429).json({
+      error: `Too many incorrect attempts. Try again in ${rateCheck.lockedFor} minute(s).`
+    });
+  }
+
   try {
     const user = await prisma.user.findUnique({ where: { phone } });
     if (!user) return res.status(404).json({ error: "User not found" });
-    if (user.otpCode !== otp) return res.status(400).json({ error: "Incorrect OTP code" });
-    if (!user.otpExpiresAt || new Date() > user.otpExpiresAt) return res.status(400).json({ error: "OTP expired" });
+
+    // Wrong OTP — record the failed attempt
+    if (user.otpCode !== otp) {
+      recordFailedOTPAttempt(phone);
+      const record = otpAttempts.get(phone);
+      const attemptsLeft = MAX_OTP_ATTEMPTS - (record?.count || 0);
+      return res.status(400).json({
+        error: "Incorrect OTP code",
+        attemptsLeft: Math.max(0, attemptsLeft)
+      });
+    }
+
+    // OTP expired
+    if (!user.otpExpiresAt || new Date() > user.otpExpiresAt) {
+      return res.status(400).json({ error: "OTP expired. Please request a new one." });
+    }
+
+    // ✅ Success — clear the attempt counter
+    clearOTPAttempts(phone);
+
     const updateData = { status: "ACTIVE", otpCode: null, otpExpiresAt: null, lastLoginAt: new Date() };
     if (name) updateData.name = name.trim();
     if (role && ["PASSENGER", "DRIVER"].includes(role)) updateData.role = role;
     if (email) updateData.email = email;
     await prisma.user.update({ where: { id: user.id }, data: updateData });
     const fullUser = await prisma.user.findUnique({ where: { id: user.id }, include: { wallet: true } });
-    res.json({ message: "Welcome to PROJO GROUP!", token: signToken(user.id), refreshToken: signRefresh(user.id), user: sanitizeUser(fullUser) });
+    res.json({
+      message: "Welcome to PROJO GROUP!",
+      token: signToken(user.id),
+      refreshToken: signRefresh(user.id),
+      user: sanitizeUser(fullUser)
+    });
   } catch (err) {
     console.error("[PROJO Auth] verifyOTP error:", err.message);
     res.status(500).json({ error: "Verification failed: " + err.message });
   }
 };
 
+// ─── Login ───────────────────────────────────────────────────────────────────
 exports.login = async (req, res) => {
   const { phone, email } = req.body;
   try {
@@ -190,13 +273,16 @@ exports.login = async (req, res) => {
   }
 };
 
+// ─── Refresh Token ───────────────────────────────────────────────────────────
 exports.refresh = async (req, res) => {
   const { refreshToken } = req.body;
   if (!refreshToken) return res.status(401).json({ error: "No refresh token" });
   try {
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET);
     res.json({ token: signToken(decoded.userId) });
-  } catch { res.status(401).json({ error: "Invalid refresh token" }); }
+  } catch {
+    res.status(401).json({ error: "Invalid refresh token" });
+  }
 };
 
 exports.logout = async (req, res) => res.json({ message: "Logged out successfully" });

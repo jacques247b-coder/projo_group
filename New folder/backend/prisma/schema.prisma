@@ -1,0 +1,120 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String?   @unique
+  phone        String    @unique
+  name         String
+  role         String    @default("PASSENGER")
+  status       String    @default("PENDING_VERIFICATION")
+  avatarUrl    String?
+  passwordHash String?
+  otpCode      String?
+  otpExpiresAt DateTime?
+  lastLoginAt  DateTime?
+  fcmToken     String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  wallet       Wallet?
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model Wallet {
+  id            String        @id @default(uuid())
+  userId        String        @unique
+  user          User          @relation(fields: [userId], references: [id])
+  balanceZar    Float         @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  transactions  Transaction[]
+
+  @@map("wallets")
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  walletId    String
+  wallet      Wallet   @relation(fields: [walletId], references: [id])
+  type        String
+  status      String   @default("PENDING")
+  amountZar   Float
+  description String
+  referenceId String?
+  paymentRef  String?
+  createdAt   DateTime @default(now())
+
+  @@map("transactions")
+}
+
+model Ride {
+  id             String    @id @default(uuid())
+  passengerId    String
+  driverId       String?
+  pickupAddress  String
+  pickupLat      Float
+  pickupLng      Float
+  dropoffAddress String
+  dropoffLat     Float
+  dropoffLng     Float
+  zone           String    @default("ZONE_1_FLAT")
+  distanceKm     Float?
+  baseFare       Float     @default(0)
+  totalFare      Float     @default(60)
+  driverPayout   Float     @default(48)
+  status         String    @default("REQUESTED")
+  isScheduled    Boolean   @default(false)
+  scheduledFor   DateTime?
+  shareToken     String?   @unique @default(cuid())
+  paidWithWallet Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("rides")
+}
+
+model Delivery {
+  id             String   @id @default(uuid())
+  trackingNumber String   @unique @default(cuid())
+  senderId       String
+  driverId       String?
+  description    String   @default("Package")
+  pickupAddress  String
+  pickupLat      Float    @default(0)
+  pickupLng      Float    @default(0)
+  recipientName  String
+  recipientPhone String
+  dropoffAddress String
+  dropoffLat     Float    @default(0)
+  dropoffLng     Float    @default(0)
+  distanceKm     Float    @default(0)
+  fare           Float    @default(60)
+  status         String   @default("PENDING")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("deliveries")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  body      String
+  type      String   @default("general")
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}

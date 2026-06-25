@@ -1,0 +1,22 @@
+{
+  "name": "projo-group",
+  "version": "1.0.0",
+  "description": "PROJO GROUP — Rustenburg's Own. Ride. Shop. Deliver.",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "build": "cd frontend && npm run build",
+    "db:migrate": "cd backend && npx prisma migrate dev",
+    "db:seed": "cd backend && npx prisma db seed",
+    "db:studio": "cd backend && npx prisma studio"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": ["ride-hailing", "rustenburg", "south-africa", "projo-group"],
+  "author": "PROJO GROUP",
+  "license": "UNLICENSED"
+}

@@ -1,211 +1,188 @@
 // ============================================================
-// PROJO GROUP — Navigation Bar
-// Logo: PROJO_LOGO.png | Colours: Gold on Amber Red
+// PROJO GROUP — Top Navigation Bar (FIXED)
+// FIX: Shop nav link → take.app/projogroup (external)
 // ============================================================
 import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { CONTACT } from "../../utils/constants";
 import toast from "react-hot-toast";
 
-const G = "#e8b84b";
-const RED = "#8B1A1A";
+const GOLD   = "#e8b84b";
+const TAKE_APP = "https://take.app/projogroup";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const navigate         = useNavigate();
+  const location         = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Safe cart count — won't crash if CartContext doesn't exist
+  let cartCount = 0;
+  try {
+    const { useCart } = require("../../context/CartContext");
+    cartCount = useCart()?.count || 0;
+  } catch {}
+
+  const isActive = (path) => location.pathname.startsWith(path);
 
   async function handleLogout() {
     await logout();
     navigate("/");
-    toast.success("Logged out. See you soon!");
+    toast.success("Logged out");
   }
 
-  const isActive = (path) => location.pathname === path;
-
-  const linkStyle = (path) => ({
-    fontSize: "13px", fontWeight: "600", cursor: "pointer", padding: "6px 0",
-    color: isActive(path) ? G : "#b8a09a",
-    borderBottom: isActive(path) ? `2px solid ${G}` : "2px solid transparent",
-    textDecoration: "none", transition: "color .2s",
-  });
-
-  const passengerLinks = [
-    { label: "Book Ride", path: "/book" },
-{ label: "Shop", path: "/shop" },
-    { label: "My Rides",  path: "/rides" },
-    { label: "Wallet",    path: "/wallet" },
-    { label: "Courier",   path: "/courier" },
-  ];
-  const driverLinks = [
-    { label: "Dashboard", path: "/driver" },
-    { label: "Earnings",  path: "/driver/earnings" },
-    { label: "Wallet",    path: "/wallet" },
-  ];
-  const adminLinks = [
-    { label: "Dashboard", path: "/admin" },
-  ];
-
-  const links =
-    user?.role === "DRIVER" ? driverLinks :
-    user?.role === "ADMIN"  ? adminLinks  :
-    passengerLinks;
-
-  const homeRoute =
-    user?.role === "DRIVER" ? "/driver" :
-    user?.role === "ADMIN"  ? "/admin"  : "/book";
+  const navLink = (to, label) => (
+    <Link to={to} style={{
+      color: isActive(to) ? GOLD : "#a8a49e",
+      fontWeight: isActive(to) ? "700" : "500",
+      textDecoration: "none", fontSize: "14px",
+      borderBottom: isActive(to) ? `2px solid ${GOLD}` : "2px solid transparent",
+      paddingBottom: "2px", transition: "all .2s",
+    }}>{label}</Link>
+  );
 
   return (
-    <nav style={{
-      position: "fixed", top: 0, left: 0, right: 0, zIndex: 999,
-      height: "64px", display: "flex", alignItems: "center",
-      justifyContent: "space-between", padding: "0 1.5rem",
-      background: "rgba(13,5,5,0.96)",
-      borderBottom: "1px solid rgba(232,184,75,0.18)",
-      backdropFilter: "blur(16px)",
-      fontFamily: "'DM Sans', sans-serif",
-    }}>
+    <>
+      <nav style={{
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000,
+        height: "64px", background: "rgba(10,10,10,0.95)",
+        borderBottom: "1px solid rgba(232,184,75,0.15)",
+        backdropFilter: "blur(16px)",
+        display: "flex", alignItems: "center",
+        justifyContent: "space-between", padding: "0 1.5rem",
+        fontFamily: "'DM Sans',sans-serif",
+      }}>
 
-      {/* ── Brand / Logo ── */}
-      <div
-        onClick={() => navigate(user ? homeRoute : "/")}
-        style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}
-      >
-        <img
-          src="/assets/logo/PROJO_LOGO.png"
-          alt="PROJO GROUP Logo"
-          style={{
-            width: "42px", height: "42px",
-            borderRadius: "50%",
-            objectFit: "cover",
-            background: "transparent",
-            filter: "drop-shadow(0 0 8px rgba(232,184,75,0.45))",
-            flexShrink: 0,
-          }}
-          onError={(e) => {
-            // Fallback to gold coin if logo not found
-            e.target.style.display = "none";
-            e.target.nextSibling.style.display = "flex";
-          }}
-        />
-        {/* Fallback coin (hidden by default) */}
-        <div style={{
-          display: "none", width: "42px", height: "42px", borderRadius: "50%",
-          background: "radial-gradient(circle at 35% 35%,#f5d078,#e8b84b,#c49a2f,#9a7520)",
-          alignItems: "center", justifyContent: "center",
-          fontSize: "9px", fontWeight: "800", color: "#2a1a00",
-          boxShadow: "0 0 12px rgba(232,184,75,0.4)", flexShrink: 0,
-          fontFamily: "'Syne', sans-serif",
-        }}>PROJO</div>
-
-        <span style={{
-          fontFamily: "'Syne', sans-serif", fontSize: "15px",
-          fontWeight: "800", color: G, letterSpacing: "1.5px",
-        }}>
-          PROJO GROUP
-        </span>
-      </div>
-
-      {/* ── Desktop nav links ── */}
-      <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
-        {links.map((l) => (
-          <span key={l.path} style={linkStyle(l.path)} onClick={() => navigate(l.path)}>
-            {l.label}
+        {/* Brand */}
+        <Link to="/" style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
+          <div style={{
+            width: "38px", height: "38px", borderRadius: "50%", flexShrink: 0,
+            background: "radial-gradient(circle at 35% 35%,#f5d078,#e8b84b,#c49a2f,#9a7520)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: "9px", fontWeight: "800", color: "#2a1a00",
+            fontFamily: "'Syne',sans-serif", letterSpacing: "0.5px",
+            boxShadow: "0 0 12px rgba(232,184,75,0.3)",
+            border: "2px solid #c49a2f",
+          }}>PROJO</div>
+          <span style={{ fontFamily: "'Syne',sans-serif", fontSize: "15px",
+            fontWeight: "800", color: GOLD, letterSpacing: "1.5px" }}>
+            PROJO GROUP
           </span>
-        ))}
-      </div>
+        </Link>
 
-      {/* ── Right side ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        {/* Desktop nav links */}
+        <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
+          {navLink("/book", "Book Ride")}
 
-        {/* Wallet balance */}
-        {user?.wallet?.balanceZar !== undefined && (
-          <div onClick={() => navigate("/wallet")} style={{
-            background: "rgba(139,26,26,0.2)",
-            border: "1px solid rgba(232,184,75,0.25)",
-            borderRadius: "50px", padding: "5px 14px", cursor: "pointer",
-            fontSize: "13px", fontWeight: "700", color: G,
-          }}>
-            R{(user.wallet.balanceZar || 0).toFixed(2)}
-          </div>
-        )}
+          {/* Shop → external take.app */}
+          <a href={TAKE_APP} target="_blank" rel="noopener noreferrer" style={{
+            color: "#a8a49e", fontWeight: "500",
+            textDecoration: "none", fontSize: "14px",
+            borderBottom: "2px solid transparent",
+            paddingBottom: "2px", transition: "all .2s",
+            display: "flex", alignItems: "center", gap: "3px",
+          }}
+          onMouseOver={e => { e.currentTarget.style.color = GOLD; }}
+          onMouseOut={e => { e.currentTarget.style.color = "#a8a49e"; }}>
+            Shop <span style={{ fontSize: "10px", opacity: 0.6 }}>↗</span>
+          </a>
 
-        {/* User menu */}
-        <div style={{ position: "relative" }}>
-          <div
-            onClick={() => setMenuOpen(!menuOpen)}
-            style={{
-              display: "flex", alignItems: "center", gap: "8px",
-              background: "rgba(139,26,26,0.2)",
-              border: "1px solid rgba(232,184,75,0.2)",
-              borderRadius: "50px", padding: "5px 14px 5px 5px", cursor: "pointer",
-            }}
-          >
-            <div style={{
-              width: "30px", height: "30px", borderRadius: "50%",
-              background: `radial-gradient(circle at 35% 35%, #a82020, ${RED}, #6b1414)`,
-              border: "2px solid rgba(232,184,75,0.5)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "12px", fontWeight: "800", color: G,
+          {navLink("/courier", "Courier")}
+          {user?.role === "DRIVER" && navLink("/driver", "Driver Dashboard")}
+          {user?.role === "ADMIN"  && navLink("/admin",  "Admin")}
+        </div>
+
+        {/* Right actions */}
+        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          {cartCount > 0 && (
+            <a href={TAKE_APP} target="_blank" rel="noopener noreferrer" style={{
+              textDecoration: "none",
+              background: "#1a1a1a", border: "1px solid rgba(232,184,75,0.2)",
+              borderRadius: "8px", padding: "6px 12px",
+              color: GOLD, fontSize: "14px", fontWeight: "700",
             }}>
-              {user?.name?.[0]?.toUpperCase() || "P"}
-            </div>
-            <span style={{ fontSize: "13px", fontWeight: "600", color: "#f5ede8" }}>
-              {user?.name?.split(" ")[0] || "User"}
-            </span>
-            <span style={{ color: "#7a5a55", fontSize: "10px" }}>▾</span>
-          </div>
+              🛍️ {cartCount}
+            </a>
+          )}
 
-          {menuOpen && (
-            <div style={{
-              position: "absolute", right: 0, top: "calc(100% + 8px)",
-              background: "#120808",
-              border: "1px solid rgba(232,184,75,0.2)",
-              borderRadius: "14px", padding: "8px", minWidth: "200px", zIndex: 100,
-              boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
-            }}>
-              <div style={{
-                padding: "10px 14px",
-                borderBottom: "1px solid rgba(232,184,75,0.1)",
-                marginBottom: "4px",
+          {user ? (
+            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              <Link to="/wallet" style={{
+                background: "rgba(232,184,75,0.1)", border: "1px solid rgba(232,184,75,0.2)",
+                borderRadius: "8px", padding: "6px 12px",
+                color: GOLD, fontSize: "13px", fontWeight: "700", textDecoration: "none",
+              }}>💰 Wallet</Link>
+              <div onClick={() => setMenuOpen(!menuOpen)} style={{
+                width: "36px", height: "36px", borderRadius: "50%",
+                background: GOLD, display: "flex", alignItems: "center",
+                justifyContent: "center", cursor: "pointer",
+                fontWeight: "800", color: "#0a0a0a", fontSize: "13px",
+                fontFamily: "'Syne',sans-serif",
               }}>
-                <div style={{ fontSize: "13px", fontWeight: "700", color: "#f5ede8" }}>{user?.name}</div>
-                <div style={{ fontSize: "11px", color: "#7a5a55", marginTop: "2px" }}>{user?.phone}</div>
-                <div style={{
-                  fontSize: "10px", color: G, fontWeight: "700", marginTop: "4px",
-                  textTransform: "uppercase", letterSpacing: "0.5px",
-                }}>{user?.role}</div>
-              </div>
-
-              <div
-                onClick={() => { window.open(CONTACT.whatsappLink, "_blank"); setMenuOpen(false); }}
-                style={{
-                  padding: "9px 14px", fontSize: "13px", color: "#b8a09a",
-                  cursor: "pointer", borderRadius: "8px", transition: "background .15s",
-                }}
-                onMouseOver={e => e.target.style.background = "rgba(139,26,26,0.2)"}
-                onMouseOut={e => e.target.style.background = "transparent"}
-              >
-                💬 WhatsApp Support
-              </div>
-
-              <div
-                onClick={() => { handleLogout(); setMenuOpen(false); }}
-                style={{
-                  padding: "9px 14px", fontSize: "13px", color: "#f87171",
-                  cursor: "pointer", borderRadius: "8px", marginTop: "2px",
-                }}
-                onMouseOver={e => e.target.style.background = "rgba(248,113,113,0.08)"}
-                onMouseOut={e => e.target.style.background = "transparent"}
-              >
-                ← Log Out
+                {user.name?.[0]?.toUpperCase() || "U"}
               </div>
             </div>
+          ) : (
+            <Link to="/login" style={{
+              background: GOLD, color: "#0a0a0a",
+              borderRadius: "8px", padding: "9px 20px",
+              fontSize: "13px", fontWeight: "700", textDecoration: "none",
+            }}>Sign In</Link>
           )}
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* User dropdown */}
+      {menuOpen && user && (
+        <div onClick={() => setMenuOpen(false)} style={{
+          position: "fixed", top: "64px", right: "1.5rem", zIndex: 999,
+          background: "#111111", border: "1px solid rgba(232,184,75,0.2)",
+          borderRadius: "12px", padding: "8px",
+          minWidth: "200px", boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+          fontFamily: "'DM Sans',sans-serif",
+        }}>
+          <div style={{ padding: "10px 12px",
+            borderBottom: "1px solid rgba(232,184,75,0.1)", marginBottom: "6px" }}>
+            <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "14px" }}>{user.name}</div>
+            <div style={{ fontSize: "12px", color: "#6b6760" }}>{user.phone}</div>
+            <div style={{ fontSize: "11px", color: GOLD, marginTop: "2px",
+              textTransform: "uppercase", letterSpacing: "0.5px" }}>{user.role}</div>
+          </div>
+          {[
+            { to: "/rides",  label: "🚗 Ride History" },
+            { to: "/wallet", label: "💰 Wallet" },
+            { to: "/courier", label: "📦 Courier" },
+          ].map(item => (
+            <Link key={item.to} to={item.to} style={{
+              display: "block", padding: "9px 12px", color: "#a8a49e",
+              textDecoration: "none", fontSize: "13px", borderRadius: "8px",
+              transition: "all .15s",
+            }}
+            onMouseOver={e => { e.currentTarget.style.background = "rgba(232,184,75,0.08)"; e.currentTarget.style.color = GOLD; }}
+            onMouseOut={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#a8a49e"; }}>
+              {item.label}
+            </Link>
+          ))}
+          <a href={TAKE_APP} target="_blank" rel="noopener noreferrer" style={{
+            display: "block", padding: "9px 12px", color: "#a8a49e",
+            textDecoration: "none", fontSize: "13px", borderRadius: "8px",
+            transition: "all .15s",
+          }}
+          onMouseOver={e => { e.currentTarget.style.background = "rgba(232,184,75,0.08)"; e.currentTarget.style.color = GOLD; }}
+          onMouseOut={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#a8a49e"; }}>
+            🛍️ Online Shop ↗
+          </a>
+          <button onClick={handleLogout} style={{
+            width: "100%", background: "transparent", border: "none",
+            color: "#f87171", fontSize: "13px", padding: "9px 12px",
+            textAlign: "left", cursor: "pointer", borderRadius: "8px",
+            fontFamily: "'DM Sans',sans-serif",
+          }}>🚪 Sign Out</button>
+        </div>
+      )}
+
+      <div style={{ height: "64px" }} />
+    </>
   );
 }
