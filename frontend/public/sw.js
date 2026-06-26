@@ -1,28 +1,12 @@
-// PROJO GROUP — Service Worker v2
-const CACHE_NAME = "projo-v2";
-
-self.addEventListener("install", (e) => {
-  self.skipWaiting();
-});
-
+// PROJO GROUP — Service Worker (Cache Disabled)
+// Unregisters itself and clears all caches
+self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) => {
-  // Delete old caches
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    ).then(() => clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(keys.map(k => caches.delete(k))))
+      .then(() => clients.matchAll({ type: "window" }))
+      .then(clients => clients.forEach(c => c.navigate(c.url)))
+      .then(() => self.registration.unregister())
   );
-});
-
-self.addEventListener("fetch", (e) => {
-  if (
-    e.request.url.includes("/api/") ||
-    e.request.url.includes("onrender.com") ||
-    e.request.url.includes("payfast") ||
-    e.request.url.includes("resend") ||
-    !e.request.url.startsWith(self.location.origin)
-  ) {
-    return;
-  }
-  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
 });
