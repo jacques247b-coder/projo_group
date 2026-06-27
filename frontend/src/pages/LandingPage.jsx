@@ -348,7 +348,7 @@ export default function LandingPage() {
             gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",
             gap:"10px" }}>
             {[
-              ["🚗","Rides","R60 flat"],
+              ["🚗","Rides","R60 flat", "in-app"],
               ["📦","Courier","Same-day"],
               ["🧹","Cleaning","Quote"],
               ["🔧","Maintenance","R350 callout"],
@@ -360,8 +360,8 @@ export default function LandingPage() {
               ["🔑","Locksmith","Quote"],
               ["🏃","Runners","Errands & shopping"],
               ["🖥️","PC & Console Repair","Quote"],
-            ].map(([icon,name,price])=>(
-              <div key={name} onClick={()=>window.open(TAKE_APP,"_blank")} style={{
+            ].map(([icon,name,price,type])=>(
+              <div key={name} onClick={()=>type==="in-app" ? navigate("/login") : window.open(TAKE_APP,"_blank")} style={{
                 background:"#1c0f0f", border:"1px solid rgba(232,184,75,0.12)",
                 borderRadius:"14px", padding:"1.25rem 1rem", textAlign:"center",
                 cursor:"pointer", transition:"all .2s",
