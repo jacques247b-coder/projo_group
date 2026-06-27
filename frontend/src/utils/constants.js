@@ -124,6 +124,7 @@ export const CONTACT = {
   shopLink: "https://take.app/projogroup",
   facebook: "https://www.facebook.com/projogroup247",
   instagram: "https://www.instagram.com/projogroup?igsh=dGNsdTk3NmlvMjh2",
+  tiktok: "https://www.tiktok.com/@projo.group?_r=1&_t=ZS-94cnPR6ohsX",
   address: "Rustenburg, North West Province, South Africa",
 };
 
