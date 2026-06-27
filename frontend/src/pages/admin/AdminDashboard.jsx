@@ -1,453 +1,500 @@
 // ============================================================
 // PROJO GROUP — Admin Dashboard
-// Stats, users, rides, deliveries, products management
+// Tabs: Stats · Users · Rides · Deliveries · Products
+// Admin can add, edit, delete products/services
 // ============================================================
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import toast from "react-hot-toast";
 import Navbar from "../../components/ui/Navbar";
+import { adminAPI } from "../../services/api";
+import api from "../../services/api";
+import { formatFare } from "../../utils/constants";
+import toast from "react-hot-toast";
 
-const G = "#e8b84b";
-const BG = "#0d0505";
-const BG2 = "#120808";
-const BG3 = "#1c0f0f";
-const BORDER = "rgba(232,184,75,0.18)";
-
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
-
-function authFetch(path, options = {}) {
-  const token = localStorage.getItem("projo_token");
-  return fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...options.headers,
-    },
-  }).then(res => res.json());
-}
+const G      = "#e8b84b";
+const BG     = "#0a0a0a";
+const BG2    = "#111111";
+const BG3    = "#1a1a1a";
+const BORDER = "rgba(232,184,75,0.15)";
 
 const TABS = [
-  { id: "overview",   label: "📊 Overview" },
-  { id: "users",      label: "👥 Users" },
-  { id: "drivers",    label: "🚗 Drivers" },
-  { id: "rides",      label: "🛣️ Rides" },
-  { id: "deliveries", label: "📦 Deliveries" },
-  { id: "products",   label: "🛍️ Products" },
+  { key: "stats",      label: "📊 Stats" },
+  { key: "users",      label: "👥 Users" },
+  { key: "rides",      label: "🚗 Rides" },
+  { key: "deliveries", label: "📦 Deliveries" },
+  { key: "products",   label: "🛠️ Products" },
 ];
 
-const STATUS_COLORS = {
-  ACTIVE: "#4ade80", PENDING_VERIFICATION: "#fbbf24", SUSPENDED: "#f87171", BANNED: "#dc2626",
-  REQUESTED: "#fbbf24", DRIVER_ASSIGNED: "#60a5fa", IN_PROGRESS: "#60a5fa",
-  COMPLETED: "#4ade80", CANCELLED: "#f87171",
-  PENDING: "#fbbf24", PICKED_UP: "#60a5fa", DELIVERED: "#4ade80", FAILED: "#f87171",
+const STATUS_COLOR = {
+  ACTIVE: "#4ade80", SUSPENDED: "#f59e0b", BANNED: "#ef4444",
+  PENDING_VERIFICATION: "#60a5fa",
+  COMPLETED: "#4ade80", CANCELLED: "#ef4444", REQUESTED: "#f59e0b",
+  PENDING: "#f59e0b", DELIVERED: "#4ade80",
 };
 
-function StatusBadge({ status }) {
-  const color = STATUS_COLORS[status] || "#7a5a55";
-  return (
-    <span style={{
-      display: "inline-block", padding: "3px 10px", borderRadius: "50px",
-      fontSize: "11px", fontWeight: "700", color,
-      background: `${color}15`, border: `1px solid ${color}30`,
-    }}>{status}</span>
-  );
-}
+// ── Product Form Modal ────────────────────────────────────────
+function ProductModal({ product, onClose, onSaved }) {
+  const [form, setForm] = useState(product || {
+    name: "", category: "", priceZar: 0, description: "", isActive: true,
+  });
+  const [saving, setSaving] = useState(false);
 
-function StatCard({ icon, label, value, sub, color = G }) {
-  return (
-    <div style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "1.25rem" }}>
-      <div style={{ fontSize: "24px", marginBottom: "8px" }}>{icon}</div>
-      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.6rem", fontWeight: "800", color }}>
-        {value}
-      </div>
-      <div style={{ fontSize: "12px", color: "#b8a09a", fontWeight: "600", marginTop: "2px" }}>{label}</div>
-      {sub && <div style={{ fontSize: "11px", color: "#7a5a55", marginTop: "4px" }}>{sub}</div>}
-    </div>
-  );
-}
+  const CATEGORIES = [
+    "Cleaning", "Maintenance", "Painting", "Pest Control",
+    "CCTV", "Web & App Development", "Marketing",
+    "Runners & Deliveries", "Pet Care", "Other",
+  ];
 
-// ── Overview Tab ──────────────────────────────────────────
-function OverviewTab() {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    authFetch("/admin/stats").then(data => { setStats(data.stats); setLoading(false); });
-  }, []);
-
-  if (loading) return <div style={{ textAlign: "center", padding: "3rem", color: "#7a5a55" }}>Loading stats...</div>;
-  if (!stats) return null;
-
-  return (
-    <div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: "12px", marginBottom: "12px" }}>
-        <StatCard icon="👥" label="Total Passengers" value={stats.totalUsers} />
-        <StatCard icon="🚗" label="Total Drivers" value={stats.totalDrivers} />
-        <StatCard icon="🛣️" label="Total Rides" value={stats.totalRides} sub={`${stats.completedRides} completed`} />
-        <StatCard icon="📦" label="Total Deliveries" value={stats.totalDeliveries} sub={`${stats.pendingDeliveries} pending`} />
-      </div>
-      <div style={{ background: "rgba(232,184,75,0.06)", border: `1px solid ${BORDER}`,
-        borderRadius: "16px", padding: "1.5rem", marginTop: "12px" }}>
-        <div style={{ fontSize: "11px", fontWeight: "700", color: G, letterSpacing: "1px",
-          textTransform: "uppercase", marginBottom: "1rem" }}>💰 Revenue Breakdown</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "16px" }}>
-          <div>
-            <div style={{ fontSize: "11px", color: "#7a5a55" }}>Total Revenue</div>
-            <div style={{ fontSize: "1.6rem", fontWeight: "800", color: G, fontFamily: "'Syne',sans-serif" }}>
-              R{stats.totalRevenue}
-            </div>
-          </div>
-          <div>
-            <div style={{ fontSize: "11px", color: "#7a5a55" }}>Driver Earnings (80%)</div>
-            <div style={{ fontSize: "1.6rem", fontWeight: "800", color: "#4ade80", fontFamily: "'Syne',sans-serif" }}>
-              R{stats.driverEarnings}
-            </div>
-          </div>
-          <div>
-            <div style={{ fontSize: "11px", color: "#7a5a55" }}>PROJO Commission (20%)</div>
-            <div style={{ fontSize: "1.6rem", fontWeight: "800", color: "#60a5fa", fontFamily: "'Syne',sans-serif" }}>
-              R{stats.projoCommission}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Users Tab ─────────────────────────────────────────────
-function UsersTab() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => { load(); }, []);
-  function load() {
-    authFetch("/admin/users").then(data => { setUsers(data.users || []); setLoading(false); });
-  }
-
-  async function changeStatus(id, status) {
-    await authFetch(`/admin/users/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) });
-    toast.success("Status updated");
-    load();
-  }
-
-  if (loading) return <div style={{ textAlign: "center", padding: "2rem", color: "#7a5a55" }}>Loading...</div>;
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-      {users.map(u => (
-        <div key={u.id} style={{ background: BG2, border: `1px solid ${BORDER}`,
-          borderRadius: "12px", padding: "1rem", display: "flex",
-          justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
-          <div>
-            <div style={{ fontWeight: "700", color: "#f5ede8", fontSize: "14px" }}>
-              {u.name} <span style={{ fontSize: "10px", color: "#7a5a55", fontWeight: "600" }}>({u.role})</span>
-            </div>
-            <div style={{ fontSize: "12px", color: "#7a5a55", marginTop: "2px" }}>
-              {u.phone} {u.email && `· ${u.email}`}
-            </div>
-            <div style={{ fontSize: "11px", color: G, marginTop: "2px" }}>
-              Wallet: R{(u.wallet?.balanceZar || 0).toFixed(2)}
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-            <StatusBadge status={u.status} />
-            <select value={u.status} onChange={e => changeStatus(u.id, e.target.value)} style={{
-              background: BG3, border: `1px solid ${BORDER}`, color: "#f5ede8",
-              borderRadius: "6px", padding: "4px 8px", fontSize: "11px",
-            }}>
-              <option value="ACTIVE">Active</option>
-              <option value="SUSPENDED">Suspended</option>
-              <option value="BANNED">Banned</option>
-            </select>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Drivers Tab ───────────────────────────────────────────
-function DriversTab() {
-  const [drivers, setDrivers] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    authFetch("/admin/drivers").then(data => { setDrivers(data.drivers || []); setLoading(false); });
-  }, []);
-
-  if (loading) return <div style={{ textAlign: "center", padding: "2rem", color: "#7a5a55" }}>Loading...</div>;
-  if (drivers.length === 0) return (
-    <div style={{ textAlign: "center", padding: "3rem", color: "#7a5a55" }}>
-      No drivers registered yet
-    </div>
-  );
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-      {drivers.map(d => (
-        <div key={d.id} style={{ background: BG2, border: `1px solid ${BORDER}`,
-          borderRadius: "12px", padding: "1rem" }}>
-          <div style={{ fontWeight: "700", color: "#f5ede8", fontSize: "14px" }}>{d.name}</div>
-          <div style={{ fontSize: "12px", color: "#7a5a55", marginTop: "2px" }}>{d.phone}</div>
-          <StatusBadge status={d.status} />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Rides Tab ─────────────────────────────────────────────
-function RidesTab() {
-  const [rides, setRides] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    authFetch("/admin/rides").then(data => { setRides(data.rides || []); setLoading(false); });
-  }, []);
-
-  if (loading) return <div style={{ textAlign: "center", padding: "2rem", color: "#7a5a55" }}>Loading...</div>;
-  if (rides.length === 0) return (
-    <div style={{ textAlign: "center", padding: "3rem", color: "#7a5a55" }}>No rides yet</div>
-  );
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-      {rides.map(r => (
-        <div key={r.id} style={{ background: BG2, border: `1px solid ${BORDER}`,
-          borderRadius: "12px", padding: "1rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div>
-              <div style={{ fontSize: "13px", color: "#f5ede8", fontWeight: "600" }}>
-                {r.pickupAddress} → {r.dropoffAddress}
-              </div>
-              <div style={{ fontSize: "11px", color: "#7a5a55", marginTop: "4px" }}>
-                {new Date(r.createdAt).toLocaleString()}
-              </div>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: "16px", fontWeight: "800", color: G }}>R{r.totalFare?.toFixed(2)}</div>
-              <StatusBadge status={r.status} />
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Deliveries Tab ────────────────────────────────────────
-function DeliveriesTab() {
-  const [deliveries, setDeliveries] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => { load(); }, []);
-  function load() {
-    authFetch("/admin/deliveries").then(data => { setDeliveries(data.deliveries || []); setLoading(false); });
-  }
-
-  async function changeStatus(id, status) {
-    await authFetch(`/admin/deliveries/${id}/status`, { method: "PUT", body: JSON.stringify({ status }) });
-    toast.success("Status updated");
-    load();
-  }
-
-  if (loading) return <div style={{ textAlign: "center", padding: "2rem", color: "#7a5a55" }}>Loading...</div>;
-  if (deliveries.length === 0) return (
-    <div style={{ textAlign: "center", padding: "3rem", color: "#7a5a55" }}>No deliveries yet</div>
-  );
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-      {deliveries.map(d => (
-        <div key={d.id} style={{ background: BG2, border: `1px solid ${BORDER}`,
-          borderRadius: "12px", padding: "1rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
-            <div>
-              <div style={{ fontSize: "13px", color: "#f5ede8", fontWeight: "600" }}>
-                {d.pickupAddress} → {d.dropoffAddress}
-              </div>
-              <div style={{ fontSize: "11px", color: "#7a5a55", marginTop: "2px" }}>
-                To: {d.recipientName} ({d.recipientPhone})
-              </div>
-              <div style={{ fontSize: "10px", color: "#7a5a55", marginTop: "2px" }}>
-                #{d.trackingNumber}
-              </div>
-            </div>
-            <div style={{ fontSize: "16px", fontWeight: "800", color: G }}>R{d.fare?.toFixed(2)}</div>
-          </div>
-          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-            <StatusBadge status={d.status} />
-            <select value={d.status} onChange={e => changeStatus(d.id, e.target.value)} style={{
-              background: BG3, border: `1px solid ${BORDER}`, color: "#f5ede8",
-              borderRadius: "6px", padding: "4px 8px", fontSize: "11px",
-            }}>
-              <option value="PENDING">Pending</option>
-              <option value="PICKED_UP">Picked Up</option>
-              <option value="DELIVERED">Delivered</option>
-              <option value="FAILED">Failed</option>
-            </select>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Products Tab ──────────────────────────────────────────
-function ProductsTab() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", description: "", category: "", priceZar: "" });
-
-  useEffect(() => { load(); }, []);
-  function load() {
-    authFetch("/admin/products").then(data => { setProducts(data.products || []); setLoading(false); });
-  }
-
-  async function createProduct() {
+  async function handleSave() {
     if (!form.name || !form.category) return toast.error("Name and category required");
-    await authFetch("/admin/products", { method: "POST", body: JSON.stringify(form) });
-    toast.success("Product created!");
-    setForm({ name: "", description: "", category: "", priceZar: "" });
-    setShowForm(false);
-    load();
-  }
-
-  async function toggleActive(p) {
-    await authFetch(`/admin/products/${p.id}`, {
-      method: "PUT",
-      body: JSON.stringify({ ...p, isActive: !p.isActive }),
-    });
-    load();
-  }
-
-  async function deleteProduct(id) {
-    if (!window.confirm("Delete this product?")) return;
-    await authFetch(`/admin/products/${id}`, { method: "DELETE" });
-    toast.success("Product deleted");
-    load();
+    setSaving(true);
+    try {
+      if (product?.id) {
+        await api.put(`/admin/products/${product.id}`, form);
+        toast.success("Product updated");
+      } else {
+        await api.post("/admin/products", form);
+        toast.success("Product added");
+      }
+      onSaved();
+      onClose();
+    } catch (err) {
+      toast.error(err?.error || "Failed to save product");
+    } finally { setSaving(false); }
   }
 
   const inp = {
     width: "100%", background: BG3, border: `1px solid ${BORDER}`,
-    color: "#f5ede8", borderRadius: "8px", padding: "10px 12px",
-    fontSize: "13px", outline: "none", boxSizing: "border-box", marginTop: "4px",
+    borderRadius: "10px", color: "#f0ede8", padding: "11px 14px",
+    fontSize: "14px", outline: "none", fontFamily: "'DM Sans',sans-serif",
+    boxSizing: "border-box", marginTop: "6px",
+  };
+  const lbl = {
+    fontSize: "11px", fontWeight: "700", color: "#6b6760",
+    letterSpacing: "0.8px", textTransform: "uppercase",
+    display: "block", marginTop: "12px",
   };
 
-  if (loading) return <div style={{ textAlign: "center", padding: "2rem", color: "#7a5a55" }}>Loading...</div>;
-
   return (
-    <div>
-      <button onClick={() => setShowForm(!showForm)} style={{
-        background: G, color: "#1a0808", border: "none", borderRadius: "10px",
-        padding: "10px 18px", fontSize: "13px", fontWeight: "800", cursor: "pointer", marginBottom: "12px",
-      }}>{showForm ? "✕ Cancel" : "+ Add Product"}</button>
+    <div style={{ position: "fixed", inset: 0, zIndex: 1000,
+      background: "rgba(0,0,0,0.8)", display: "flex",
+      alignItems: "center", justifyContent: "center", padding: "1rem" }}
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={{ background: BG2, border: `1px solid ${BORDER}`,
+        borderRadius: "16px", padding: "1.5rem", width: "100%",
+        maxWidth: "500px", maxHeight: "90vh", overflowY: "auto" }}>
 
-      {showForm && (
-        <div style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "12px",
-          padding: "1rem", marginBottom: "12px" }}>
-          <input style={inp} placeholder="Product name" value={form.name}
-            onChange={e => setForm({ ...form, name: e.target.value })} />
-          <input style={inp} placeholder="Category" value={form.category}
-            onChange={e => setForm({ ...form, category: e.target.value })} />
-          <input style={inp} placeholder="Price (ZAR, 0 for quote)" type="number" value={form.priceZar}
-            onChange={e => setForm({ ...form, priceZar: e.target.value })} />
-          <textarea style={{ ...inp, resize: "vertical" }} placeholder="Description" rows={3}
-            value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
-          <button onClick={createProduct} style={{
-            background: G, color: "#1a0808", border: "none", borderRadius: "8px",
-            padding: "10px 20px", fontSize: "13px", fontWeight: "800", cursor: "pointer", marginTop: "8px",
-          }}>Create Product</button>
+        <div style={{ display: "flex", justifyContent: "space-between",
+          alignItems: "center", marginBottom: "1rem" }}>
+          <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#f0ede8",
+            fontSize: "1.1rem", fontWeight: "700" }}>
+            {product?.id ? "Edit Product" : "Add New Product"}
+          </h3>
+          <button onClick={onClose} style={{ background: "none", border: "none",
+            color: "#6b6760", cursor: "pointer", fontSize: "20px" }}>✕</button>
         </div>
-      )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        {products.map(p => (
-          <div key={p.id} style={{ background: BG2, border: `1px solid ${BORDER}`,
-            borderRadius: "12px", padding: "1rem", opacity: p.isActive ? 1 : 0.5 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-              <div>
-                <div style={{ fontSize: "10px", color: G, fontWeight: "700" }}>{p.category}</div>
-                <div style={{ fontSize: "14px", color: "#f5ede8", fontWeight: "700", marginTop: "2px" }}>{p.name}</div>
-                <div style={{ fontSize: "12px", color: "#7a5a55", marginTop: "4px", maxWidth: "400px" }}>
-                  {p.description?.slice(0, 100)}{p.description?.length > 100 ? "..." : ""}
-                </div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: "16px", fontWeight: "800", color: G }}>
-                  {p.priceZar > 0 ? `R${p.priceZar}` : "Quote"}
-                </div>
-                <div style={{ display: "flex", gap: "6px", marginTop: "6px" }}>
-                  <button onClick={() => toggleActive(p)} style={{
-                    background: "transparent", border: `1px solid ${BORDER}`, color: "#b8a09a",
-                    borderRadius: "6px", padding: "4px 10px", fontSize: "10px", cursor: "pointer",
-                  }}>{p.isActive ? "Hide" : "Show"}</button>
-                  <button onClick={() => deleteProduct(p.id)} style={{
-                    background: "transparent", border: "1px solid rgba(248,113,113,0.3)", color: "#f87171",
-                    borderRadius: "6px", padding: "4px 10px", fontSize: "10px", cursor: "pointer",
-                  }}>Delete</button>
-                </div>
-              </div>
-            </div>
+        <label style={lbl}>Service / Product Name *</label>
+        <input style={inp} placeholder="e.g. Standard Cleaning"
+          value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+
+        <label style={lbl}>Category *</label>
+        <select style={{ ...inp, cursor: "pointer" }}
+          value={form.category}
+          onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
+          <option value="">Select category...</option>
+          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+
+        <label style={lbl}>Price (ZAR) — enter 0 for "Get Quote"</label>
+        <input style={inp} type="number" min="0" step="0.01"
+          placeholder="0" value={form.priceZar}
+          onChange={e => setForm(f => ({ ...f, priceZar: parseFloat(e.target.value) || 0 }))} />
+
+        <label style={lbl}>Description</label>
+        <textarea style={{ ...inp, resize: "vertical", minHeight: "100px" }}
+          placeholder="Describe the service..."
+          value={form.description}
+          onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+
+        <div style={{ display: "flex", alignItems: "center", gap: "10px",
+          marginTop: "14px", cursor: "pointer" }}
+          onClick={() => setForm(f => ({ ...f, isActive: !f.isActive }))}>
+          <div style={{ width: "44px", height: "24px", borderRadius: "12px",
+            background: form.isActive ? G : BG3,
+            border: `1px solid ${BORDER}`, position: "relative", transition: "background .2s" }}>
+            <div style={{ width: "18px", height: "18px", borderRadius: "50%",
+              background: "#0a0a0a", position: "absolute", top: "3px",
+              left: form.isActive ? "23px" : "3px", transition: "left .2s" }} />
           </div>
-        ))}
+          <span style={{ fontSize: "13px", color: form.isActive ? G : "#6b6760" }}>
+            {form.isActive ? "Active — visible to customers" : "Inactive — hidden from customers"}
+          </span>
+        </div>
+
+        <div style={{ display: "flex", gap: "10px", marginTop: "1.25rem" }}>
+          <button onClick={handleSave} disabled={saving} style={{
+            flex: 1, background: G, color: "#0a0a0a", border: "none",
+            borderRadius: "10px", padding: "13px", fontSize: "14px",
+            fontWeight: "700", cursor: saving ? "not-allowed" : "pointer",
+            opacity: saving ? 0.7 : 1,
+          }}>{saving ? "Saving..." : product?.id ? "Update Product" : "Add Product"}</button>
+          <button onClick={onClose} style={{
+            background: BG3, color: "#6b6760", border: `1px solid ${BORDER}`,
+            borderRadius: "10px", padding: "13px 20px", cursor: "pointer",
+          }}>Cancel</button>
+        </div>
       </div>
     </div>
   );
 }
 
-// ── Main Dashboard ────────────────────────────────────────
+// ── Main Dashboard ────────────────────────────────────────────
 export default function AdminDashboard() {
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [tab, setTab]           = useState("stats");
+  const [stats, setStats]       = useState(null);
+  const [users, setUsers]       = useState([]);
+  const [rides, setRides]       = useState([]);
+  const [deliveries, setDeliveries] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading]   = useState(false);
+  const [editProduct, setEditProduct] = useState(null); // null=closed, {}=new, {id,...}=edit
+  const [search, setSearch]     = useState("");
 
-  useEffect(() => {
-    if (user && user.role !== "ADMIN") navigate("/book");
-  }, [user, navigate]);
+  useEffect(() => { loadTab(tab); }, [tab]);
+
+  async function loadTab(t) {
+    setLoading(true);
+    try {
+      if (t === "stats") {
+        const res = await api.get("/admin/stats");
+        setStats(res.stats);
+      } else if (t === "users") {
+        const res = await api.get("/admin/users");
+        setUsers(res.users || []);
+      } else if (t === "rides") {
+        const res = await api.get("/admin/rides");
+        setRides(res.rides || []);
+      } else if (t === "deliveries") {
+        const res = await api.get("/admin/deliveries");
+        setDeliveries(res.deliveries || []);
+      } else if (t === "products") {
+        const res = await api.get("/admin/products");
+        setProducts(res.products || []);
+      }
+    } catch (err) {
+      toast.error("Could not load data");
+    } finally { setLoading(false); }
+  }
+
+  async function updateUserStatus(id, status) {
+    try {
+      await api.put(`/admin/users/${id}/status`, { status });
+      toast.success("User status updated");
+      loadTab("users");
+    } catch { toast.error("Failed to update user"); }
+  }
+
+  async function deleteProduct(id) {
+    if (!window.confirm("Delete this product?")) return;
+    try {
+      await api.delete(`/admin/products/${id}`);
+      toast.success("Product deleted");
+      loadTab("products");
+    } catch { toast.error("Failed to delete product"); }
+  }
+
+  const card = {
+    background: BG2, border: `1px solid ${BORDER}`,
+    borderRadius: "14px", padding: "1.25rem",
+  };
+
+  const filteredProducts = products.filter(p =>
+    !search || p.name.toLowerCase().includes(search.toLowerCase()) ||
+    p.category.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <div style={{ background: BG, minHeight: "100vh", fontFamily: "'DM Sans',sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: BG,
+      fontFamily: "'DM Sans',sans-serif", paddingTop: "64px" }}>
       <Navbar />
-      <div style={{ maxWidth: "900px", margin: "0 auto", padding: "84px 1rem 2rem" }}>
+      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "1.5rem 1rem" }}>
 
+        {/* Header */}
         <div style={{ marginBottom: "1.5rem" }}>
           <div style={{ fontSize: "11px", fontWeight: "700", color: G,
             letterSpacing: "2px", textTransform: "uppercase", marginBottom: "4px" }}>
-            Admin Panel
+            PROJO GROUP
           </div>
-          <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.8rem",
-            fontWeight: "800", color: "#f5ede8" }}>
-            PROJO GROUP Dashboard
-          </h1>
+          <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.6rem",
+            fontWeight: "800", color: "#f0ede8", margin: 0 }}>Admin Dashboard</h1>
         </div>
 
         {/* Tabs */}
         <div style={{ display: "flex", gap: "6px", overflowX: "auto",
-          marginBottom: "1.5rem", paddingBottom: "4px" }}>
-          {TABS.map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
-              background: activeTab === tab.id ? G : BG2,
-              color: activeTab === tab.id ? "#1a0808" : "#b8a09a",
-              border: `1px solid ${activeTab === tab.id ? G : BORDER}`,
-              borderRadius: "50px", padding: "8px 16px", fontSize: "12px",
+          paddingBottom: "4px", marginBottom: "1.5rem", scrollbarWidth: "none" }}>
+          {TABS.map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)} style={{
+              padding: "9px 16px", borderRadius: "50px", fontSize: "13px",
               fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
-            }}>{tab.label}</button>
+              background: tab === t.key ? G : BG3,
+              color: tab === t.key ? "#0a0a0a" : "#a8a49e",
+              border: tab === t.key ? "none" : `1px solid ${BORDER}`,
+            }}>{t.label}</button>
           ))}
         </div>
 
-        {/* Tab content */}
-        {activeTab === "overview"   && <OverviewTab />}
-        {activeTab === "users"      && <UsersTab />}
-        {activeTab === "drivers"    && <DriversTab />}
-        {activeTab === "rides"      && <RidesTab />}
-        {activeTab === "deliveries" && <DeliveriesTab />}
-        {activeTab === "products"   && <ProductsTab />}
+        {loading && (
+          <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>
+            Loading...
+          </div>
+        )}
+
+        {/* ── STATS ── */}
+        {!loading && tab === "stats" && stats && (
+          <div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
+              gap: "12px", marginBottom: "1.5rem" }}>
+              {[
+                { label: "Passengers",   value: stats.totalUsers,     icon: "👥" },
+                { label: "Drivers",      value: stats.totalDrivers,   icon: "🚗" },
+                { label: "Total Rides",  value: stats.totalRides,     icon: "🛣️" },
+                { label: "Deliveries",   value: stats.totalDeliveries,icon: "📦" },
+                { label: "Revenue",      value: `R${stats.totalRevenue}`, icon: "💰" },
+                { label: "Commission",   value: `R${stats.projoCommission}`, icon: "📈" },
+              ].map(s => (
+                <div key={s.label} style={{ ...card, textAlign: "center" }}>
+                  <div style={{ fontSize: "24px", marginBottom: "6px" }}>{s.icon}</div>
+                  <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.4rem",
+                    fontWeight: "800", color: G }}>{s.value}</div>
+                  <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "4px",
+                    fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    {s.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ ...card }}>
+              <div style={{ fontSize: "13px", color: "#6b6760" }}>
+                Completed rides: <strong style={{ color: "#f0ede8" }}>{stats.completedRides}</strong>
+                {" · "}Pending deliveries: <strong style={{ color: "#f0ede8" }}>{stats.pendingDeliveries}</strong>
+                {" · "}Driver earnings: <strong style={{ color: G }}>R{stats.driverEarnings}</strong>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── USERS ── */}
+        {!loading && tab === "users" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {users.map(u => (
+              <div key={u.id} style={{ ...card, display: "flex",
+                justifyContent: "space-between", alignItems: "center",
+                flexWrap: "wrap", gap: "10px" }}>
+                <div>
+                  <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "14px" }}>
+                    {u.name}
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#6b6760", marginTop: "2px" }}>
+                    {u.phone} · {u.email || "no email"} · {u.role}
+                  </div>
+                  <div style={{ fontSize: "11px", marginTop: "4px",
+                    color: STATUS_COLOR[u.status] || "#a8a49e", fontWeight: "700" }}>
+                    {u.status}
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                  {u.status !== "ACTIVE" && (
+                    <button onClick={() => updateUserStatus(u.id, "ACTIVE")} style={{
+                      background: "rgba(74,222,128,0.1)", color: "#4ade80",
+                      border: "1px solid rgba(74,222,128,0.3)", borderRadius: "6px",
+                      padding: "5px 10px", fontSize: "12px", cursor: "pointer",
+                    }}>Activate</button>
+                  )}
+                  {u.status !== "SUSPENDED" && (
+                    <button onClick={() => updateUserStatus(u.id, "SUSPENDED")} style={{
+                      background: "rgba(245,158,11,0.1)", color: "#f59e0b",
+                      border: "1px solid rgba(245,158,11,0.3)", borderRadius: "6px",
+                      padding: "5px 10px", fontSize: "12px", cursor: "pointer",
+                    }}>Suspend</button>
+                  )}
+                  {u.status !== "BANNED" && (
+                    <button onClick={() => updateUserStatus(u.id, "BANNED")} style={{
+                      background: "rgba(239,68,68,0.1)", color: "#ef4444",
+                      border: "1px solid rgba(239,68,68,0.3)", borderRadius: "6px",
+                      padding: "5px 10px", fontSize: "12px", cursor: "pointer",
+                    }}>Ban</button>
+                  )}
+                </div>
+              </div>
+            ))}
+            {users.length === 0 && (
+              <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>No users yet</div>
+            )}
+          </div>
+        )}
+
+        {/* ── RIDES ── */}
+        {!loading && tab === "rides" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {rides.map(r => (
+              <div key={r.id} style={{ ...card }}>
+                <div style={{ display: "flex", justifyContent: "space-between",
+                  marginBottom: "6px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: "700",
+                    color: STATUS_COLOR[r.status] || "#a8a49e",
+                    textTransform: "uppercase" }}>{r.status}</div>
+                  <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "800",
+                    color: G }}>{formatFare(r.totalFare)}</div>
+                </div>
+                <div style={{ fontSize: "13px", color: "#f0ede8" }}>📍 {r.pickupAddress}</div>
+                <div style={{ fontSize: "13px", color: "#a8a49e" }}>🏁 {r.dropoffAddress}</div>
+                <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "6px" }}>
+                  {new Date(r.createdAt).toLocaleString("en-ZA")} · {r.zone}
+                </div>
+              </div>
+            ))}
+            {rides.length === 0 && (
+              <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>No rides yet</div>
+            )}
+          </div>
+        )}
+
+        {/* ── DELIVERIES ── */}
+        {!loading && tab === "deliveries" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {deliveries.map(d => (
+              <div key={d.id} style={{ ...card }}>
+                <div style={{ display: "flex", justifyContent: "space-between",
+                  marginBottom: "6px" }}>
+                  <div style={{ fontFamily: "monospace", fontSize: "12px", color: G }}>
+                    {d.trackingNumber}
+                  </div>
+                  <div style={{ fontSize: "11px", fontWeight: "700",
+                    color: STATUS_COLOR[d.status] || "#a8a49e" }}>{d.status}</div>
+                </div>
+                <div style={{ fontSize: "13px", color: "#f0ede8" }}>{d.description}</div>
+                <div style={{ fontSize: "12px", color: "#a8a49e", marginTop: "4px" }}>
+                  {d.pickupAddress} → {d.dropoffAddress}
+                </div>
+                <div style={{ fontSize: "12px", color: G, marginTop: "4px", fontWeight: "700" }}>
+                  {formatFare(d.fare || 60)}
+                </div>
+              </div>
+            ))}
+            {deliveries.length === 0 && (
+              <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>No deliveries yet</div>
+            )}
+          </div>
+        )}
+
+        {/* ── PRODUCTS ── */}
+        {!loading && tab === "products" && (
+          <div>
+            {/* Toolbar */}
+            <div style={{ display: "flex", gap: "10px", marginBottom: "1rem",
+              flexWrap: "wrap" }}>
+              <input
+                placeholder="Search products..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{ flex: 1, minWidth: "180px", background: BG3,
+                  border: `1px solid ${BORDER}`, borderRadius: "10px",
+                  color: "#f0ede8", padding: "10px 14px", fontSize: "14px",
+                  outline: "none", fontFamily: "'DM Sans',sans-serif" }}
+              />
+              <button onClick={() => setEditProduct({})} style={{
+                background: G, color: "#0a0a0a", border: "none",
+                borderRadius: "10px", padding: "10px 20px", fontSize: "14px",
+                fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap",
+              }}>+ Add Product</button>
+            </div>
+
+            {/* Product count */}
+            <div style={{ fontSize: "12px", color: "#6b6760", marginBottom: "10px" }}>
+              {filteredProducts.length} product{filteredProducts.length !== 1 ? "s" : ""}
+              {search && ` matching "${search}"`}
+            </div>
+
+            {/* Product list */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {filteredProducts.map(p => (
+                <div key={p.id} style={{ ...card,
+                  display: "flex", justifyContent: "space-between",
+                  alignItems: "flex-start", gap: "12px",
+                  opacity: p.isActive ? 1 : 0.5 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px",
+                      marginBottom: "4px", flexWrap: "wrap" }}>
+                      <span style={{ fontWeight: "700", color: "#f0ede8", fontSize: "14px" }}>
+                        {p.name}
+                      </span>
+                      {!p.isActive && (
+                        <span style={{ fontSize: "10px", color: "#f59e0b",
+                          background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)",
+                          borderRadius: "4px", padding: "2px 6px", fontWeight: "700" }}>
+                          INACTIVE
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: "11px", color: G, fontWeight: "700",
+                      textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>
+                      {p.category}
+                    </div>
+                    <div style={{ fontSize: "12px", color: "#6b6760",
+                      display: "-webkit-box", WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                      {p.description}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.1rem",
+                      fontWeight: "800", color: G, marginBottom: "8px" }}>
+                      {p.priceZar > 0 ? `R${p.priceZar}` : "Quote"}
+                    </div>
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      <button onClick={() => setEditProduct(p)} style={{
+                        background: "rgba(232,184,75,0.1)", color: G,
+                        border: `1px solid rgba(232,184,75,0.25)`,
+                        borderRadius: "6px", padding: "5px 10px",
+                        fontSize: "12px", cursor: "pointer", fontWeight: "600",
+                      }}>Edit</button>
+                      <button onClick={() => deleteProduct(p.id)} style={{
+                        background: "rgba(239,68,68,0.1)", color: "#ef4444",
+                        border: "1px solid rgba(239,68,68,0.3)",
+                        borderRadius: "6px", padding: "5px 10px",
+                        fontSize: "12px", cursor: "pointer",
+                      }}>Del</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {filteredProducts.length === 0 && (
+                <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>
+                  <div style={{ fontSize: "40px", marginBottom: "1rem" }}>🛠️</div>
+                  {search ? `No products matching "${search}"` : "No products yet"}
+                  <br />
+                  <button onClick={() => setEditProduct({})} style={{
+                    marginTop: "1rem", background: G, color: "#0a0a0a",
+                    border: "none", borderRadius: "10px", padding: "10px 20px",
+                    fontWeight: "700", cursor: "pointer",
+                  }}>Add First Product</button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Product modal */}
+      {editProduct !== null && (
+        <ProductModal
+          product={editProduct?.id ? editProduct : null}
+          onClose={() => setEditProduct(null)}
+          onSaved={() => loadTab("products")}
+        />
+      )}
     </div>
   );
 }
