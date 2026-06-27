@@ -357,7 +357,9 @@ export default function LandingPage() {
               ["📷","CCTV","Quote"],
               ["💻","Web & App","From R2100"],
               ["📣","Marketing","Quote"],
-              ["🐾","Pet Care","Quote"],
+              ["🔑","Locksmith","Quote"],
+              ["🏃","Runners","Errands & shopping"],
+              ["🖥️","PC & Console Repair","Quote"],
             ].map(([icon,name,price])=>(
               <div key={name} onClick={()=>window.open(TAKE_APP,"_blank")} style={{
                 background:"#1c0f0f", border:"1px solid rgba(232,184,75,0.12)",
@@ -477,7 +479,7 @@ export default function LandingPage() {
               <h4 style={{ fontSize:"12px", fontWeight:"700", color:"#b8a09a",
                 letterSpacing:"1px", textTransform:"uppercase", marginBottom:"1rem" }}>Services</h4>
               {["Rides","Courier","Cleaning","Maintenance","Painting","CCTV",
-                "Pest Control","Web & App","Marketing","Pet Care"].map(s=>(
+                "Pest Control","Web & App","Marketing","Locksmith","Runners","PC & Console Repair"].map(s=>(
                 <a key={s} href={TAKE_APP} target="_blank" rel="noreferrer"
                   style={{ display:"block", fontSize:"12px", color:"#7a5a55",
                   textDecoration:"none", marginBottom:"5px" }}
