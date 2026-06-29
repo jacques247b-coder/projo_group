@@ -693,7 +693,13 @@ export default function LandingPage() {
               padding:"1rem", marginBottom:"10px" }}>
               <div style={{ fontSize:"13px", fontWeight:"700", color:"#4ade80",
                 marginBottom:"10px" }}>🤖 Android (Chrome)</div>
-              {["Open Chrome and visit app.projogroup.co.za","Tap the 3-dot menu at top right","Tap: Add to Home screen","Tap: Add to confirm"].map((s,i) => (
+              <div style={{ display:"flex", gap:"10px", marginBottom:"6px", fontSize:"13px", color:"#b8a09a" }}>
+                <span style={{ color:"#60a5fa", fontWeight:"700", flexShrink:0 }}>1.</span>
+                Open Safari and visit{" "}
+                <a href="https://app.projogroup.co.za" target="_blank" rel="noreferrer"
+                  style={{ color:"#60a5fa", fontWeight:"700" }}>app.projogroup.co.za</a>
+              </div>
+              {["Tap the 3-dot menu at top right","Tap: Add to Home screen","Tap: Add to confirm"].map((s,i) => (
                 <div key={i} style={{ display:"flex", gap:"10px", marginBottom:"6px",
                   fontSize:"13px", color:"#b8a09a" }}>
                   <span style={{ color:"#4ade80", fontWeight:"700", flexShrink:0 }}>{i+1}.</span>{s}
@@ -705,7 +711,7 @@ export default function LandingPage() {
               padding:"1rem", marginBottom:"1.25rem" }}>
               <div style={{ fontSize:"13px", fontWeight:"700", color:"#60a5fa",
                 marginBottom:"10px" }}>🍎 iPhone (Safari)</div>
-              {["Open Safari and visit app.projogroup.co.za",
+              {[null,
                 "Tap the Share button (□↑) at the bottom",
                 "Tap: Add to Home Screen",
                 "Tap: Add — icon appears on home screen!"].map((s,i) => (
