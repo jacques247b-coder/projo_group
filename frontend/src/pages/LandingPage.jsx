@@ -124,6 +124,8 @@ export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
 
+  const [showInstallModal, setShowInstallModal] = useState(false);
+
   useEffect(() => {
     const handler = (e) => { e.preventDefault(); setInstallPrompt(e); };
     window.addEventListener("beforeinstallprompt", handler);
@@ -131,12 +133,27 @@ export default function LandingPage() {
   }, []);
 
   function handleInstall() {
+    // Try native prompt first (Android Chrome when criteria met)
     if (installPrompt) {
       installPrompt.prompt();
       installPrompt.userChoice.then(() => setInstallPrompt(null));
+      return;
+    }
+    // Detect iOS
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    if (isIOS) {
+      setShowInstallModal(true);
+      return;
+    }
+    // Android fallback — open in Chrome and trigger add to homescreen
+    const isChrome = /chrome/i.test(navigator.userAgent);
+    if (isChrome) {
+      // Force Chrome's mini-infobar by navigating to the app URL
+      // This works when the PWA criteria are met
+      window.location.href = "https://projo-group.onrender.com/?install=1";
     } else {
-      // Fallback for iOS or already installed
-      alert("To install: tap the Share button in your browser then \"Add to Home Screen\"");
+      // Not Chrome on Android — open in Chrome
+      window.open("googlechrome://navigate?url=https://projo-group.onrender.com", "_blank");
     }
   }
   const [mobileMenu, setMobileMenu] = useState(false);
