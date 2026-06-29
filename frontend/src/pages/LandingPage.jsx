@@ -667,6 +667,65 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Install Guide Modal */}
+      {showInstallModal && (
+        <>
+          <div onClick={() => setShowInstallModal(false)} style={{
+            position:"fixed", inset:0, zIndex:2000, background:"rgba(0,0,0,0.85)",
+          }} />
+          <div style={{
+            position:"fixed", bottom:0, left:0, right:0, zIndex:2001,
+            background:"#120808", borderTop:"2px solid rgba(232,184,75,0.3)",
+            borderRadius:"20px 20px 0 0", padding:"1.5rem 1.25rem 2.5rem",
+            fontFamily:"'DM Sans',sans-serif",
+          }}>
+            <div style={{ display:"flex", justifyContent:"space-between",
+              alignItems:"center", marginBottom:"1.25rem" }}>
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:"1.1rem",
+                fontWeight:"800", color:"#e8b84b" }}>📲 Install PROJO GROUP</div>
+              <button onClick={() => setShowInstallModal(false)} style={{
+                background:"none", border:"none", color:"#6b6760",
+                fontSize:"22px", cursor:"pointer" }}>✕</button>
+            </div>
+            <div style={{ background:"rgba(74,222,128,0.06)",
+              border:"1px solid rgba(74,222,128,0.2)", borderRadius:"14px",
+              padding:"1rem", marginBottom:"10px" }}>
+              <div style={{ fontSize:"13px", fontWeight:"700", color:"#4ade80",
+                marginBottom:"10px" }}>🤖 Android (Chrome)</div>
+              {["Open Chrome and visit projo-group.onrender.com",
+                "Tap the 3-dot menu (⋮) at top right",
+                "Tap "Add to Home screen"",
+                "Tap "Add" to confirm"].map((s,i) => (
+                <div key={i} style={{ display:"flex", gap:"10px", marginBottom:"6px",
+                  fontSize:"13px", color:"#b8a09a" }}>
+                  <span style={{ color:"#4ade80", fontWeight:"700", flexShrink:0 }}>{i+1}.</span>{s}
+                </div>
+              ))}
+            </div>
+            <div style={{ background:"rgba(96,165,250,0.06)",
+              border:"1px solid rgba(96,165,250,0.2)", borderRadius:"14px",
+              padding:"1rem", marginBottom:"1.25rem" }}>
+              <div style={{ fontSize:"13px", fontWeight:"700", color:"#60a5fa",
+                marginBottom:"10px" }}>🍎 iPhone (Safari)</div>
+              {["Open Safari and visit projo-group.onrender.com",
+                "Tap the Share button (□↑) at the bottom",
+                "Tap "Add to Home Screen"",
+                "Tap "Add" — icon appears on home screen!"].map((s,i) => (
+                <div key={i} style={{ display:"flex", gap:"10px", marginBottom:"6px",
+                  fontSize:"13px", color:"#b8a09a" }}>
+                  <span style={{ color:"#60a5fa", fontWeight:"700", flexShrink:0 }}>{i+1}.</span>{s}
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setShowInstallModal(false)} style={{
+              width:"100%", background:"#e8b84b", color:"#1a0808", border:"none",
+              borderRadius:"10px", padding:"13px", fontSize:"14px",
+              fontWeight:"700", cursor:"pointer",
+            }}>Got it!</button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
