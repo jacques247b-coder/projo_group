@@ -331,6 +331,12 @@ export default function LandingPage() {
             borderRadius:"10px", padding:"14px 28px",
             fontSize:"15px", fontWeight:"700", cursor:"pointer",
           }}>Browse Services ↗</button>
+          <button onClick={()=>navigate("/driver/signup")} style={{
+            background:"transparent", color:"#4ade80",
+            border:"1px solid rgba(74,222,128,0.3)",
+            borderRadius:"10px", padding:"14px 28px",
+            fontSize:"15px", fontWeight:"700", cursor:"pointer",
+          }}>🚗 Drive with PROJO</button>
         </div>
 
         <div style={{ width:"100%", maxWidth:"560px", padding:"0 0.5rem" }}>

@@ -1,25 +1,23 @@
-// ============================================================
-// PROJO GROUP — Driver Routes (FIXED)
-// Now uses driver.controller.js — clean separation
-// ============================================================
+// PROJO GROUP — Driver Routes (Updated with application flow)
 const express = require("express");
 const router  = express.Router();
 const { authenticate, requireRole } = require("../middleware/auth.middleware");
 const driver = require("../controllers/driver.controller");
+const driverApp = require("../controllers/driver.application.controller");
 
-// Profile
+// ── Existing driver routes ────────────────────────────────────
 router.get("/me",            authenticate, requireRole("DRIVER"), driver.getProfile);
-
-// Status toggle (online/offline)
 router.post("/status",       authenticate, requireRole("DRIVER"), driver.updateStatus);
-
-// Earnings
 router.get("/earnings",      authenticate, requireRole("DRIVER"), driver.getEarnings);
-
-// Pending ride requests
 router.get("/pending-rides", authenticate, requireRole("DRIVER"), driver.getPendingRides);
 
-// Register as driver (any authenticated user)
-router.post("/register",     authenticate, driver.register);
+// ── Driver application routes ─────────────────────────────────
+// Submit application (any authenticated user)
+router.post("/apply", authenticate, driverApp.applyAsDriver);
+
+// Admin only — view pending, approve, reject
+router.get("/pending",       authenticate, requireRole("ADMIN"), driverApp.getPendingApplications);
+router.post("/:id/approve",  authenticate, requireRole("ADMIN"), driverApp.approveDriver);
+router.post("/:id/reject",   authenticate, requireRole("ADMIN"), driverApp.rejectDriver);
 
 module.exports = router;

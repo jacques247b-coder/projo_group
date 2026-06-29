@@ -214,8 +214,19 @@ export default function LoginPage() {
           )}
         </div>
 
+        {/* Drive with PROJO link */}
+        <div style={{ textAlign: "center", marginTop: "1.25rem" }}>
+          <a href="/driver/signup" style={{
+            display: "inline-flex", alignItems: "center", gap: "6px",
+            color: "#4ade80", fontSize: "13px", fontWeight: "700",
+            textDecoration: "none", background: "rgba(74,222,128,0.08)",
+            border: "1px solid rgba(74,222,128,0.25)", borderRadius: "50px",
+            padding: "8px 18px",
+          }}>🚗 Want to drive with PROJO? Sign up here</a>
+        </div>
+
         <p style={{ textAlign: "center", color: "#3d1a1a",
-          fontSize: "11px", marginTop: "1.5rem" }}>
+          fontSize: "11px", marginTop: "1.25rem" }}>
           © 2023–2026 PROJO GROUP · Rustenburg, North West Province
         </p>
       </div>

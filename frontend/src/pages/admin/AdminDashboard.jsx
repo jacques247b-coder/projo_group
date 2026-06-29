@@ -23,6 +23,7 @@ const TABS = [
   { key: "rides",      label: "🚗 Rides" },
   { key: "deliveries", label: "📦 Deliveries" },
   { key: "products",   label: "🛠️ Products" },
+  { key: "drivers",    label: "🚗 Drivers" },
 ];
 
 const STATUS_COLOR = {
@@ -42,7 +43,7 @@ function ProductModal({ product, onClose, onSaved }) {
   const CATEGORIES = [
     "Cleaning", "Maintenance", "Painting", "Pest Control",
     "CCTV", "Web & App Development", "Marketing",
-    "Runners & Deliveries", "Pet Care", "Other",
+    "Runners & Deliveries", "Locksmith", "Runners", "PC & Console Repair", "Other",
   ];
 
   async function handleSave() {
@@ -159,6 +160,7 @@ export default function AdminDashboard() {
   const [deliveries, setDeliveries] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading]   = useState(false);
+  const [pendingDrivers, setPendingDrivers] = useState([]);
   const [editProduct, setEditProduct] = useState(null); // null=closed, {}=new, {id,...}=edit
   const [search, setSearch]     = useState("");
 
@@ -179,6 +181,9 @@ export default function AdminDashboard() {
       } else if (t === "deliveries") {
         const res = await api.get("/admin/deliveries");
         setDeliveries(res.deliveries || []);
+      } else if (t === "drivers") {
+        const res = await api.get("/drivers/pending");
+        setPendingDrivers(res.drivers || []);
       } else if (t === "products") {
         const res = await api.get("/admin/products");
         setProducts(res.products || []);
@@ -203,6 +208,23 @@ export default function AdminDashboard() {
       toast.success("Product deleted");
       loadTab("products");
     } catch { toast.error("Failed to delete product"); }
+  }
+
+  async function approveDriver(id) {
+    try {
+      await api.post(`/drivers/${id}/approve`);
+      toast.success("Driver approved and activated!");
+      loadTab("drivers");
+    } catch { toast.error("Could not approve driver"); }
+  }
+
+  async function rejectDriver(id) {
+    const reason = window.prompt("Reason for rejection:");
+    try {
+      await api.post(`/drivers/${id}/reject`, { reason: reason || "" });
+      toast.success("Driver application rejected");
+      loadTab("drivers");
+    } catch { toast.error("Could not reject driver"); }
   }
 
   const card = {
@@ -386,6 +408,52 @@ export default function AdminDashboard() {
             {deliveries.length === 0 && (
               <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>No deliveries yet</div>
             )}
+          </div>
+        )}
+
+        {/* ── DRIVERS ── */}
+        {!loading && tab === "drivers" && (
+          <div>
+            <div style={{ fontSize: "13px", color: "#6b6760", marginBottom: "1rem" }}>
+              {pendingDrivers.length} pending application{pendingDrivers.length !== 1 ? "s" : ""}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {pendingDrivers.length === 0 ? (
+                <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>
+                  <div style={{ fontSize: "40px", marginBottom: "1rem" }}>🚗</div>
+                  No pending driver applications
+                </div>
+              ) : pendingDrivers.map(d => (
+                <div key={d.id} style={{ ...card, display: "flex",
+                  justifyContent: "space-between", alignItems: "center",
+                  flexWrap: "wrap", gap: "10px" }}>
+                  <div>
+                    <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "14px" }}>{d.name}</div>
+                    <div style={{ fontSize: "12px", color: "#6b6760", marginTop: "2px" }}>
+                      {d.phone} · {d.email || "no email"}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#f59e0b", marginTop: "4px", fontWeight: "700" }}>
+                      ⏳ PENDING ACTIVATION
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "2px" }}>
+                      Applied: {new Date(d.createdAt).toLocaleDateString("en-ZA")}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button onClick={() => approveDriver(d.id)} style={{
+                      background: "rgba(74,222,128,0.1)", color: "#4ade80",
+                      border: "1px solid rgba(74,222,128,0.3)", borderRadius: "8px",
+                      padding: "8px 16px", fontSize: "13px", fontWeight: "700", cursor: "pointer",
+                    }}>✅ Approve</button>
+                    <button onClick={() => rejectDriver(d.id)} style={{
+                      background: "rgba(239,68,68,0.1)", color: "#ef4444",
+                      border: "1px solid rgba(239,68,68,0.3)", borderRadius: "8px",
+                      padding: "8px 16px", fontSize: "13px", fontWeight: "700", cursor: "pointer",
+                    }}>✕ Reject</button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

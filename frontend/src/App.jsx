@@ -30,6 +30,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 
 // Landing page
 import LandingPage from "./pages/LandingPage";
+import DriverSignupPage from "./pages/driver/DriverSignupPage";
 
 // Protected route wrapper
 function Protected({ children, roles }) {
@@ -114,6 +115,9 @@ function AppRoutes() {
           <AdminDashboard />
         </Protected>
       } />
+
+      {/* Driver signup — public */}
+      <Route path="/driver/signup" element={<DriverSignupPage />} />
 
       {/* 404 */}
       <Route path="*" element={<Navigate to="/" replace />} />
