@@ -122,6 +122,23 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState(null);
+
+  useEffect(() => {
+    const handler = (e) => { e.preventDefault(); setInstallPrompt(e); };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  function handleInstall() {
+    if (installPrompt) {
+      installPrompt.prompt();
+      installPrompt.userChoice.then(() => setInstallPrompt(null));
+    } else {
+      // Fallback for iOS or already installed
+      alert("To install: tap the Share button in your browser then \"Add to Home Screen\"");
+    }
+  }
   const [mobileMenu, setMobileMenu] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -318,6 +335,19 @@ export default function LandingPage() {
           maxWidth:"480px", lineHeight:1.7, marginBottom:"2rem", padding:"0 0.5rem" }}>
           {TAGLINE}
         </p>
+
+        {/* Download App button */}
+        <button onClick={handleInstall} style={{
+          display:"inline-flex", alignItems:"center", gap:"8px",
+          background:`linear-gradient(135deg, ${G}, #c49a2f)`,
+          color:"#1a0808", border:"none", borderRadius:"50px",
+          padding:"12px 28px", fontSize:"14px", fontWeight:"800",
+          cursor:"pointer", marginBottom:"1rem",
+          boxShadow:`0 4px 20px rgba(232,184,75,0.4)`,
+          letterSpacing:"0.5px",
+        }}>
+          📲 DOWNLOAD OUR APP
+        </button>
 
         <div style={{ display:"flex", gap:"10px", flexWrap:"wrap",
           justifyContent:"center", marginBottom:"3rem", padding:"0 1rem" }}>
