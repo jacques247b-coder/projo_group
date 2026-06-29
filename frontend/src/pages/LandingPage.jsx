@@ -421,6 +421,119 @@ export default function LandingPage() {
         </div>
       </section>
 
+
+      {/* ── LOYALTY REWARDS ── */}
+      <section id="loyalty" style={sec("#0d0505")}>
+        <div style={inner}>
+          <Eyebrow text="Family Rewards Program" />
+          <SectionTitle>Loyal Family Rewards</SectionTitle>
+          <SectionSub>
+            Collect Loyalty Points for actions you already take and unlock rewards tailored to your journey with PROJO GROUP.
+            Just by signing up you open up a world of new possibilities only available to our sign up Customers!
+          </SectionSub>
+
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",
+            gap:"16px", maxWidth:"900px", margin:"0 auto" }}>
+
+            {/* Starter */}
+            <div style={{ background:"#120808", border:"1px solid rgba(232,184,75,0.2)",
+              borderRadius:"20px", padding:"1.75rem", display:"flex",
+              flexDirection:"column", gap:"0" }}>
+              <div style={{ fontSize:"11px", fontWeight:"700", color:"#7a5a55",
+                letterSpacing:"1.5px", textTransform:"uppercase", marginBottom:"8px" }}>Starter</div>
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:"2rem",
+                fontWeight:"800", color:G, marginBottom:"2px" }}>500 pts</div>
+              <div style={{ fontSize:"13px", color:"#7a5a55", marginBottom:"1.25rem" }}>
+                R0.00 / Monthly
+              </div>
+              <div style={{ height:"1px", background:"rgba(232,184,75,0.1)", marginBottom:"1.25rem" }} />
+              <div style={{ display:"flex", flexDirection:"column", gap:"8px", flex:1, marginBottom:"1.5rem" }}>
+                {["5% Discount","Monthly insights","Basic rewards","Priority support"].map(f=>(
+                  <div key={f} style={{ display:"flex", gap:"8px", alignItems:"center",
+                    fontSize:"13px", color:"#b8a09a" }}>
+                    <span style={{ color:G, fontWeight:"700", fontSize:"12px" }}>✓</span>{f}
+                  </div>
+                ))}
+              </div>
+              <button onClick={()=>navigate("/login")} style={{
+                width:"100%", background:"transparent", color:G,
+                border:"1px solid rgba(232,184,75,0.3)", borderRadius:"10px",
+                padding:"12px", fontSize:"13px", fontWeight:"700", cursor:"pointer",
+              }}>Get Started →</button>
+            </div>
+
+            {/* Growth — highlighted */}
+            <div style={{ background:"linear-gradient(135deg,rgba(232,184,75,0.1),rgba(232,184,75,0.03))",
+              border:"2px solid rgba(232,184,75,0.5)", borderRadius:"20px",
+              padding:"1.75rem", display:"flex", flexDirection:"column",
+              position:"relative" }}>
+              <div style={{ position:"absolute", top:"-12px", left:"50%",
+                transform:"translateX(-50%)", background:G, color:"#1a0808",
+                fontSize:"10px", fontWeight:"800", padding:"4px 14px",
+                borderRadius:"50px", letterSpacing:"1px", whiteSpace:"nowrap" }}>
+                MOST POPULAR
+              </div>
+              <div style={{ fontSize:"11px", fontWeight:"700", color:G,
+                letterSpacing:"1.5px", textTransform:"uppercase", marginBottom:"8px" }}>Growth</div>
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:"2rem",
+                fontWeight:"800", color:G, marginBottom:"2px" }}>1000 pts</div>
+              <div style={{ fontSize:"13px", color:"#7a5a55", marginBottom:"1.25rem" }}>
+                R0.00 / Monthly
+              </div>
+              <div style={{ height:"1px", background:"rgba(232,184,75,0.2)", marginBottom:"1.25rem" }} />
+              <div style={{ display:"flex", flexDirection:"column", gap:"8px", flex:1, marginBottom:"1.5rem" }}>
+                {["10% Discount","Exclusive events","Free Coupons","Advanced rewards","Priority Support"].map(f=>(
+                  <div key={f} style={{ display:"flex", gap:"8px", alignItems:"center",
+                    fontSize:"13px", color:"#b8a09a" }}>
+                    <span style={{ color:G, fontWeight:"700", fontSize:"12px" }}>✓</span>{f}
+                  </div>
+                ))}
+              </div>
+              <button onClick={()=>navigate("/login")} style={{
+                width:"100%", background:G, color:"#1a0808", border:"none",
+                borderRadius:"10px", padding:"12px", fontSize:"13px",
+                fontWeight:"800", cursor:"pointer",
+              }}>Reach for Growth →</button>
+            </div>
+
+            {/* Elite */}
+            <div style={{ background:"#120808", border:"1px solid rgba(139,26,26,0.4)",
+              borderRadius:"20px", padding:"1.75rem", display:"flex", flexDirection:"column" }}>
+              <div style={{ fontSize:"11px", fontWeight:"700", color:"#a82020",
+                letterSpacing:"1.5px", textTransform:"uppercase", marginBottom:"8px" }}>Elite</div>
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:"2rem",
+                fontWeight:"800", color:G, marginBottom:"2px" }}>1500 pts</div>
+              <div style={{ fontSize:"13px", color:"#7a5a55", marginBottom:"8px" }}>
+                R0.00 / Support R25.00 Monthly
+              </div>
+              <div style={{ background:"rgba(139,26,26,0.15)", border:"1px solid rgba(139,26,26,0.3)",
+                borderRadius:"10px", padding:"10px 12px", marginBottom:"1.25rem",
+                fontSize:"12px", color:"#b8a09a", lineHeight:1.6 }}>
+                ❤️ Fan & Supporter of our <strong style={{color:G}}>"Take my Hand"</strong> initiative —
+                helping Children and the Poor with Necessities, Food and Guidance.
+                Follow us on social media to see what we love to do!
+              </div>
+              <div style={{ height:"1px", background:"rgba(139,26,26,0.2)", marginBottom:"1.25rem" }} />
+              <div style={{ display:"flex", flexDirection:"column", gap:"8px", flex:1, marginBottom:"1.5rem" }}>
+                {["15% Discount","VIP access","Personal concierge","Support members only",
+                  "Early access + up to 25% Discounts"].map(f=>(
+                  <div key={f} style={{ display:"flex", gap:"8px", alignItems:"center",
+                    fontSize:"13px", color:"#b8a09a" }}>
+                    <span style={{ color:"#a82020", fontWeight:"700", fontSize:"12px" }}>✓</span>{f}
+                  </div>
+                ))}
+              </div>
+              <button onClick={()=>navigate("/login")} style={{
+                width:"100%", background:"rgba(139,26,26,0.2)", color:G,
+                border:"1px solid rgba(139,26,26,0.4)", borderRadius:"10px",
+                padding:"12px", fontSize:"13px", fontWeight:"700", cursor:"pointer",
+              }}>Fan / Supporter →</button>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
       {/* ── CONTACT ── */}
       <section id="contact" style={sec("#120808")}>
         <div style={{ ...inner, textAlign:"center" }}>
