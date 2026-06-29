@@ -338,7 +338,7 @@ export default function LandingPage() {
         </p>
 
         {/* Download App button */}
-        <button onClick={handleInstall} style={{
+        <button onClick={() => { if (installPrompt) { installPrompt.prompt(); } else { setShowInstallModal(true); } }} style={{
           display:"inline-flex", alignItems:"center", gap:"8px",
           background:`linear-gradient(135deg, ${G}, #c49a2f)`,
           color:"#1a0808", border:"none", borderRadius:"50px",
