@@ -7,7 +7,7 @@
 // FIX: Sign In always visible on mobile
 // ============================================================
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { MapContainer, TileLayer, Circle, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -18,6 +18,7 @@ const G   = "#e8b84b";
 const RED = "#8B1A1A";
 const RUSTENBURG = { lat: -25.667, lng: 27.242 };
 const TAGLINE = "Rustenburg's Own. Ride. Shop. Deliver & Services.";
+const TAKE_APP = "https://take.app/projogroup";
 
 const goldIcon = new L.DivIcon({
   html: `<div style="width:12px;height:12px;background:#e8b84b;border-radius:50%;border:2px solid #c49a2f;box-shadow:0 0 8px rgba(232,184,75,0.6)"></div>`,
@@ -184,6 +185,11 @@ export default function LandingPage() {
         {/* Desktop nav links */}
         {!isMobile && (
           <div style={{ display:"flex", gap:"1.5rem", alignItems:"center" }}>
+            <a href={TAKE_APP} target="_blank" rel="noreferrer"
+              style={{ color:"#b8a09a", fontSize:"13px", fontWeight:"600", textDecoration:"none" }}
+              onMouseOver={e=>e.target.style.color=G} onMouseOut={e=>e.target.style.color="#b8a09a"}>
+              Services ↗
+            </a>
             <Link to="/shop"
               style={{ color:"#b8a09a", fontSize:"13px", fontWeight:"600", textDecoration:"none" }}
               onMouseOver={e=>e.target.style.color=G} onMouseOut={e=>e.target.style.color="#b8a09a"}>
@@ -253,6 +259,7 @@ export default function LandingPage() {
             padding:"1rem", fontFamily:"'DM Sans',sans-serif",
           }}>
             {[
+              { label:"🛠️ Services", href:TAKE_APP, external:true },
               { label:"🛍️ Shop", href:"/shop", external:false },
               { label:"💰 Pricing", href:"#pricing", external:false },
               { label:"📞 Contact", href:"#contact", external:false },
