@@ -18,7 +18,6 @@ const BG2    = "#120808";
 const BG3    = "#1c0f0f";
 const BORDER = "rgba(232,184,75,0.18)";
 
-const TAKE_APP = "https://take.app/projogroup";
 
 const VEHICLE_TYPES = ["ECONOMY", "COMFORT", "XL", "LUXURY"];
 
@@ -234,7 +233,7 @@ export default function BookRidePage() {
             </h1>
           </div>
           {/* Shop shortcut button */}
-          <button onClick={() => window.open(TAKE_APP, "_blank")} style={{
+          <button onClick={() => navigate("/shop")} style={{
             background: "rgba(232,184,75,0.1)", border: `1px solid ${G}`,
             borderRadius: "10px", padding: "8px 14px", cursor: "pointer",
             display: "flex", alignItems: "center", gap: "6px",
@@ -250,7 +249,7 @@ export default function BookRidePage() {
           gap: "10px", marginBottom: "20px" }}>
 
           {/* Card 1 — Book a Service */}
-          <div onClick={() => window.open(TAKE_APP, "_blank")} style={{
+          <div onClick={() => navigate("/shop")} style={{
             background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px",
             padding: "1rem", textAlign: "center", cursor: "pointer", transition: "all .2s",
           }}
@@ -278,7 +277,7 @@ export default function BookRidePage() {
           </div>
 
           {/* Card 3 — Online Shop */}
-          <div onClick={() => window.open(TAKE_APP, "_blank")} style={{
+          <div onClick={() => navigate("/shop")} style={{
             background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px",
             padding: "1rem", textAlign: "center", cursor: "pointer", transition: "all .2s",
           }}
@@ -461,7 +460,7 @@ export default function BookRidePage() {
               letterSpacing: "1px", textTransform: "uppercase" }}>
               All PROJO GROUP Services
             </div>
-            <button onClick={() => window.open(TAKE_APP, "_blank")} style={{
+            <button onClick={() => navigate("/shop")} style={{
               background: "transparent", border: `1px solid ${BORDER}`,
               borderRadius: "6px", padding: "4px 10px", fontSize: "11px",
               color: G, cursor: "pointer", fontWeight: "700",
@@ -479,7 +478,7 @@ export default function BookRidePage() {
               ["📣", "Marketing"],
               ["🐾", "Pet Care"],
             ].map(([icon, name]) => (
-              <button key={name} onClick={() => window.open(TAKE_APP, "_blank")} style={{
+              <button key={name} onClick={() => navigate("/shop")} style={{
                 background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px",
                 padding: "10px 6px", cursor: "pointer", textAlign: "center",
                 transition: "all .2s",
