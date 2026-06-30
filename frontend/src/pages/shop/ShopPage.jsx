@@ -517,9 +517,8 @@ export default function ShopPage() {
         </div>
 
         {/* Category quick-jump pills — scroll to section, don't filter */}
-        <div style={{ display: "flex", gap: "6px", overflowX: "auto",
-          paddingBottom: "4px", marginBottom: "1.25rem",
-          scrollbarWidth: "none" }}>
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap",
+          marginBottom: "1.25rem" }}>
           {categories.filter(c => c !== "All").map(cat => (
             <button key={cat} onClick={() => {
               const el = document.getElementById(`cat-${cat}`);
