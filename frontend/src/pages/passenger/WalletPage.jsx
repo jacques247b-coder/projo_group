@@ -1,4 +1,4 @@
-// PROJO GROUP — Wallet Page (with Promo Code redemption + Loyalty tracking)
+// PROJO GROUP — Wallet Page (Loyalty discount rule clarified)
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/ui/Navbar";
@@ -22,14 +22,15 @@ const TX_ICONS = {
 };
 const CREDIT_TYPES = ["TOPUP", "REFERRAL_BONUS", "PROMO_CREDIT", "REFUND"];
 
-// Loyalty tiers
+// Loyalty tiers — discount only applies once threshold is REACHED
 const TIERS = [
-  { name: "Starter", min: 0,    max: 500,  color: "#a8a49e", discount: "5%" },
-  { name: "Growth",  min: 500,  max: 1000, color: G,          discount: "10%" },
-  { name: "Elite",   min: 1000, max: Infinity, color: "#a82020", discount: "15%" },
+  { name: "Starter", min: 500,  max: 1000, color: G,          discount: 5  },
+  { name: "Growth",  min: 1000, max: 1500, color: "#60a5fa",  discount: 10 },
+  { name: "Elite",   min: 1500, max: Infinity, color: "#a82020", discount: 15 },
 ];
 
 function getTier(points) {
+  if (points < 500) return null;
   return TIERS.find(t => points >= t.min && points < t.max) || TIERS[TIERS.length - 1];
 }
 
@@ -113,9 +114,10 @@ export default function WalletPage() {
   const balance = wallet?.balanceZar || 0;
   const points  = wallet?.loyaltyPoints || Math.floor(balance / 10);
   const tier = getTier(points);
-  const nextTier = TIERS[TIERS.indexOf(tier) + 1];
+  const nextTier = tier ? TIERS[TIERS.indexOf(tier) + 1] : TIERS[0];
+  const progressBase = tier ? tier.min : 0;
   const progressPct = nextTier
-    ? Math.min(100, ((points - tier.min) / (nextTier.min - tier.min)) * 100)
+    ? Math.min(100, ((points - progressBase) / (nextTier.min - progressBase)) * 100)
     : 100;
   const QUICK_AMOUNTS = [50, 100, 200, 500];
 
@@ -155,24 +157,40 @@ export default function WalletPage() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
             <div>
               <div style={{ fontSize: "11px", color: "#6b6760", fontWeight: "700", textTransform: "uppercase" }}>Current Tier</div>
-              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.3rem", fontWeight: "800", color: tier.color }}>{tier.name}</div>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.3rem", fontWeight: "800", color: tier ? tier.color : "#6b6760" }}>
+                {tier ? tier.name : "No Tier Yet"}
+              </div>
             </div>
             <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: "11px", color: "#6b6760", fontWeight: "700", textTransform: "uppercase" }}>Discount</div>
-              <div style={{ fontSize: "1.1rem", fontWeight: "800", color: tier.color }}>{tier.discount}</div>
+              <div style={{ fontSize: "11px", color: "#6b6760", fontWeight: "700", textTransform: "uppercase" }}>Active Discount</div>
+              <div style={{ fontSize: "1.1rem", fontWeight: "800", color: tier ? tier.color : "#6b6760" }}>
+                {tier ? `${tier.discount}%` : "None yet"}
+              </div>
             </div>
           </div>
+
+          {!tier && (
+            <div style={{ background: "rgba(232,184,75,0.06)", border: `1px solid ${BORDER}`,
+              borderRadius: "10px", padding: "10px 12px", marginBottom: "12px", fontSize: "12px",
+              color: "#b8a09a", lineHeight: 1.6 }}>
+              💡 Reach <strong style={{ color: G }}>500 points</strong> to unlock your first discount — <strong style={{ color: G }}>5% off</strong> at Starter tier!
+            </div>
+          )}
+
           {nextTier && (
             <>
               <div style={{ height: "8px", background: BG3, borderRadius: "4px", overflow: "hidden", marginBottom: "6px" }}>
-                <div style={{ height: "100%", width: `${progressPct}%`, background: `linear-gradient(90deg, ${tier.color}, ${nextTier.color})`, borderRadius: "4px", transition: "width .4s" }} />
+                <div style={{ height: "100%", width: `${progressPct}%`, background: `linear-gradient(90deg, ${tier ? tier.color : "#6b6760"}, ${nextTier.color})`, borderRadius: "4px", transition: "width .4s" }} />
               </div>
               <div style={{ fontSize: "11px", color: "#6b6760" }}>
                 {nextTier.min - points} points to <strong style={{ color: nextTier.color }}>{nextTier.name}</strong>
+                {nextTier.discount > 0 && ` (${nextTier.discount}% off)`}
               </div>
             </>
           )}
-          <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "10px" }}>Earn 1 point per R10 spent on rides, deliveries & services</div>
+          <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "10px" }}>
+            Earn 1 point per R10 spent · Discounts apply automatically to rides & deliveries once you reach the threshold
+          </div>
         </div>
 
         {/* Push Notifications */}
@@ -201,7 +219,6 @@ export default function WalletPage() {
             ))}
           </div>
 
-          {/* Promo code input */}
           <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
             <input value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())}
               placeholder="Promo code (optional)"

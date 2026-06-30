@@ -1,5 +1,6 @@
-// PROJO GROUP — Delivery Controller (Fixed)
+// PROJO GROUP — Delivery Controller (with Loyalty Discount applied)
 const { PrismaClient } = require("@prisma/client");
+const { applyLoyaltyDiscount, calculatePoints } = require("../services/loyalty.service");
 const prisma = new PrismaClient();
 
 function isInsideRustenburg(lat, lng) {
@@ -13,7 +14,12 @@ function calcDeliveryFare(pickupLat, pickupLng, dropoffLat, dropoffLng, distance
   return { fare: Math.max(60, km * 7.5), zone: "ZONE_2_PER_KM" };
 }
 
-// POST /api/deliveries/book
+async function getUserLoyaltyPoints(userId) {
+  const wallet = await prisma.wallet.findUnique({ where: { userId } });
+  return calculatePoints(wallet?.balanceZar || 0);
+}
+
+// POST /api/deliveries/book — applies loyalty discount
 exports.bookDelivery = async (req, res) => {
   const {
     description, pickupAddress, pickupLat, pickupLng,
@@ -22,7 +28,12 @@ exports.bookDelivery = async (req, res) => {
   } = req.body;
 
   try {
-    const { fare } = calcDeliveryFare(pickupLat, pickupLng, dropoffLat, dropoffLng, distanceKm);
+    const { fare: baseFare, zone } = calcDeliveryFare(pickupLat, pickupLng, dropoffLat, dropoffLng, distanceKm);
+
+    // Apply loyalty discount
+    const points = await getUserLoyaltyPoints(req.user.id);
+    const discount = applyLoyaltyDiscount(baseFare, points);
+    const finalFare = discount.finalFare;
 
     const delivery = await prisma.delivery.create({
       data: {
@@ -37,12 +48,19 @@ exports.bookDelivery = async (req, res) => {
         dropoffLat,
         dropoffLng,
         distanceKm: distanceKm || 0,
-        fare,
+        fare: finalFare,
         status: "PENDING",
       },
     });
 
-    res.status(201).json({ message: "Delivery booked!", delivery });
+    res.status(201).json({
+      message: discount.discountApplied > 0
+        ? `Delivery booked! ${discount.tierName} tier discount of ${discount.discountPct}% applied (R${discount.discountApplied} off)`
+        : "Delivery booked!",
+      delivery,
+      loyaltyDiscount: discount.discountApplied,
+      loyaltyTier: discount.tierName,
+    });
   } catch (err) {
     console.error("[PROJO Delivery] Book error:", err.message);
     res.status(500).json({ error: "Could not book delivery: " + err.message });

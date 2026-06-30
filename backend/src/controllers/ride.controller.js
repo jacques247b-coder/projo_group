@@ -1,5 +1,6 @@
-// PROJO GROUP — Ride Controller (Fixed for simplified schema)
+// PROJO GROUP — Ride Controller (with Loyalty Discount applied)
 const { PrismaClient } = require("@prisma/client");
+const { applyLoyaltyDiscount, calculatePoints } = require("../services/loyalty.service");
 const prisma = new PrismaClient();
 
 // Fare calculation
@@ -18,19 +19,48 @@ function calcFare(pickupLat, pickupLng, dropoffLat, dropoffLng, vehicleType = "E
   }
 }
 
-// POST /api/rides/estimate
+// Get user's current loyalty points (based on lifetime wallet activity)
+async function getUserLoyaltyPoints(userId) {
+  const wallet = await prisma.wallet.findUnique({ where: { userId } });
+  // Using current balance as a proxy — ideally track lifetime spend separately
+  return calculatePoints(wallet?.balanceZar || 0);
+}
+
+// POST /api/rides/estimate — now includes loyalty discount preview
 exports.estimateFare = async (req, res) => {
   const { pickupLat, pickupLng, dropoffLat, dropoffLng, vehicleType, distanceKm } = req.body;
   const result = calcFare(pickupLat, pickupLng, dropoffLat, dropoffLng, vehicleType, distanceKm);
+
+  // Apply loyalty discount if user is authenticated
+  if (req.user) {
+    const points = await getUserLoyaltyPoints(req.user.id);
+    const discount = applyLoyaltyDiscount(result.totalFare, points);
+    return res.json({
+      ...result,
+      originalFare: result.totalFare,
+      totalFare: discount.finalFare,
+      loyaltyDiscount: discount.discountApplied,
+      loyaltyDiscountPct: discount.discountPct,
+      loyaltyTier: discount.tierName,
+    });
+  }
+
   res.json(result);
 };
 
-// POST /api/rides/book
+// POST /api/rides/book — applies loyalty discount to final fare
 exports.bookRide = async (req, res) => {
   const { pickupAddress, pickupLat, pickupLng, dropoffAddress, dropoffLat, dropoffLng,
     vehicleType = "ECONOMY", scheduledFor, paidWithWallet, distanceKm } = req.body;
   try {
     const fare = calcFare(pickupLat, pickupLng, dropoffLat, dropoffLng, vehicleType, distanceKm);
+
+    // Apply loyalty discount
+    const points = await getUserLoyaltyPoints(req.user.id);
+    const discount = applyLoyaltyDiscount(fare.totalFare, points);
+    const finalFare = discount.finalFare;
+    const finalDriverPayout = finalFare * 0.8;
+
     const ride = await prisma.ride.create({
       data: {
         passengerId: req.user.id,
@@ -43,15 +73,23 @@ exports.bookRide = async (req, res) => {
         zone: fare.zone,
         distanceKm: fare.distanceKm,
         baseFare: fare.baseFare,
-        totalFare: fare.totalFare,
-        driverPayout: fare.driverPayout,
+        totalFare: finalFare,
+        driverPayout: finalDriverPayout,
         status: "REQUESTED",
         isScheduled: !!scheduledFor,
         scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
         paidWithWallet: !!paidWithWallet,
       },
     });
-    res.status(201).json({ message: "Ride booked!", ride });
+
+    res.status(201).json({
+      message: discount.discountApplied > 0
+        ? `Ride booked! ${discount.tierName} tier discount of ${discount.discountPct}% applied (R${discount.discountApplied} off)`
+        : "Ride booked!",
+      ride,
+      loyaltyDiscount: discount.discountApplied,
+      loyaltyTier: discount.tierName,
+    });
   } catch (err) {
     console.error("[PROJO Ride] Book error:", err.message);
     res.status(500).json({ error: "Could not book ride: " + err.message });
