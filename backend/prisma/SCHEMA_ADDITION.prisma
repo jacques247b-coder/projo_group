@@ -1,0 +1,21 @@
+// Add this model to backend/prisma/schema.prisma, then run db push
+
+model ServiceOrder {
+  id              String   @id @default(uuid())
+  userId          String
+  productId       String
+  productName     String
+  category        String
+  basePrice       Float
+  finalPrice      Float
+  loyaltyDiscount Float    @default(0)
+  loyaltyTier     String?
+  paidWithWallet  Boolean  @default(false)
+  status          String   @default("CONFIRMED")
+  scheduledFor    DateTime?
+  address         String
+  phone           String
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

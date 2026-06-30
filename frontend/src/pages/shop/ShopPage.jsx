@@ -1,11 +1,12 @@
 // ============================================================
-// PROJO GROUP — Shop Page (Built-in)
-// All services bookable directly in the app
-// Gold on Amber Red theme
+// PROJO GROUP — Shop Page (In-App Checkout with Loyalty Discount)
+// Services with a fixed price can be booked & paid in-app
+// Quote-only services (priceZar=0) still go via WhatsApp
 // ============================================================
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { CONTACT } from "../../utils/constants";
+import api from "../../services/api";
 import toast from "react-hot-toast";
 import Navbar from "../../components/ui/Navbar";
 
@@ -16,55 +17,91 @@ const BG3 = "#1c0f0f";
 const BORDER = "rgba(232,184,75,0.18)";
 
 const CATEGORY_ICONS = {
-  "Cleaning": "🧹",
-  "Maintenance": "🔧",
-  "Painting": "🎨",
-  "Pest Control": "🐛",
-  "Web & App Development": "💻",
-  "Runners & Deliveries": "📦",
+  "Cleaning": "🧹", "Maintenance": "🔧", "Painting": "🎨", "Pest Control": "🐛",
+  "Web & App Development": "💻", "Runners & Deliveries": "🏃",
+  "Locksmith": "🔑", "PC & Console Repair": "🖥️", "CCTV": "📷", "Marketing": "📣",
 };
-
 const CATEGORY_COLORS = {
-  "Cleaning": "#4ade80",
-  "Maintenance": "#60a5fa",
-  "Painting": "#f472b6",
-  "Pest Control": "#a78bfa",
-  "Web & App Development": "#34d399",
-  "Runners & Deliveries": "#e8b84b",
+  "Cleaning": "#4ade80", "Maintenance": "#60a5fa", "Painting": "#f472b6",
+  "Pest Control": "#a78bfa", "Web & App Development": "#34d399",
+  "Runners & Deliveries": G, "Locksmith": "#f59e0b", "PC & Console Repair": "#60a5fa",
+  "CCTV": "#a78bfa", "Marketing": "#f472b6",
 };
 
-// Booking modal
-function BookingModal({ product, onClose }) {
+// ── In-App Checkout Modal ──────────────────────────────────────
+function CheckoutModal({ product, onClose }) {
   const { user } = useAuth();
+  const [quote, setQuote] = useState(null);
+  const [loadingQuote, setLoadingQuote] = useState(true);
   const [date, setDate] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState(user?.phone || "");
   const [notes, setNotes] = useState("");
+  const [payWithWallet, setPayWithWallet] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
 
-  async function handleSubmit() {
+  useEffect(() => {
+    loadQuote();
+    loadWallet();
+  }, []);
+
+  async function loadQuote() {
+    setLoadingQuote(true);
+    try {
+      const res = await api.get(`/services/quote/${product.id}`);
+      setQuote(res);
+    } catch (err) {
+      toast.error("Could not load pricing");
+    } finally { setLoadingQuote(false); }
+  }
+
+  async function loadWallet() {
+    try {
+      const res = await api.get("/wallet");
+      setWalletBalance(res.wallet?.balanceZar || 0);
+    } catch {}
+  }
+
+  async function handleBookViaWhatsApp() {
+    const msg = encodeURIComponent(
+      `*PROJO GROUP Booking Request*\n\n` +
+      `*Service:* ${product.name}\n` +
+      `*Category:* ${product.category}\n` +
+      `*Date/Time:* ${date || "To be confirmed"}\n` +
+      `*Address:* ${address}\n` +
+      `*Phone:* ${phone}\n` +
+      `*Notes:* ${notes || "None"}\n\n` +
+      `Please confirm my booking. Thank you!`
+    );
+    window.open(`https://wa.me/${CONTACT.whatsapp}?text=${msg}`, "_blank");
+    toast.success("Opening WhatsApp to confirm your booking!");
+    onClose();
+  }
+
+  async function handleBookInApp() {
     if (!address) return toast.error("Please enter your address");
+    if (!phone) return toast.error("Please enter your phone");
+
+    if (payWithWallet && quote.finalPrice > walletBalance) {
+      return toast.error(`Insufficient wallet balance. Need R${quote.finalPrice.toFixed(2)}, you have R${walletBalance.toFixed(2)}`);
+    }
+
     setSubmitting(true);
     try {
-      // Send booking via WhatsApp
-      const msg = encodeURIComponent(
-        `*PROJO GROUP Booking Request*\n\n` +
-        `*Service:* ${product.name}\n` +
-        `*Category:* ${product.category}\n` +
-        `*Price:* ${product.priceZar > 0 ? `R${product.priceZar}` : "Quote required"}\n` +
-        `*Date/Time:* ${date || "To be confirmed"}\n` +
-        `*Address:* ${address}\n` +
-        `*Phone:* ${phone}\n` +
-        `*Notes:* ${notes || "None"}\n\n` +
-        `Please confirm my booking. Thank you!`
-      );
-      window.open(`https://wa.me/${CONTACT.whatsapp}?text=${msg}`, "_blank");
-      toast.success("Opening WhatsApp to confirm your booking!");
+      const res = await api.post("/services/book", {
+        productId: product.id,
+        scheduledFor: date || null,
+        address,
+        phone,
+        notes,
+        paidWithWallet: payWithWallet,
+      });
+      toast.success(res.message || "Booked!");
       onClose();
     } catch (err) {
-      toast.error("Something went wrong");
-    } finally {
-      setSubmitting(false); }
+      toast.error(err?.error || "Booking failed");
+    } finally { setSubmitting(false); }
   }
 
   const inp = {
@@ -78,6 +115,8 @@ function BookingModal({ product, onClose }) {
     letterSpacing: "0.8px", textTransform: "uppercase",
     display: "block", marginBottom: "6px",
   };
+
+  const requiresQuote = quote?.requiresQuote;
 
   return (
     <div style={{
@@ -101,12 +140,6 @@ function BookingModal({ product, onClose }) {
             </div>
             <h3 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.2rem",
               fontWeight: "800", color: "#f5ede8", margin: 0 }}>{product.name}</h3>
-            {product.priceZar > 0 && (
-              <div style={{ fontSize: "1.4rem", fontWeight: "800", color: G,
-                fontFamily: "'Syne',sans-serif", marginTop: "4px" }}>
-                R{product.priceZar}
-              </div>
-            )}
           </div>
           <button onClick={onClose} style={{
             background: BG3, border: `1px solid ${BORDER}`, borderRadius: "50%",
@@ -115,12 +148,37 @@ function BookingModal({ product, onClose }) {
           }}>✕</button>
         </div>
 
-        {/* Description */}
-        <div style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "12px",
-          padding: "1rem", marginBottom: "1.25rem", fontSize: "13px",
-          color: "#b8a09a", lineHeight: 1.7 }}>
-          {product.description}
-        </div>
+        {/* Pricing breakdown */}
+        {loadingQuote ? (
+          <div style={{ textAlign: "center", padding: "2rem", color: "#7a5a55" }}>Loading price...</div>
+        ) : requiresQuote ? (
+          <div style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "12px",
+            padding: "1rem", marginBottom: "1.25rem", fontSize: "13px", color: "#b8a09a" }}>
+            This service requires a custom quote. Book via WhatsApp and we'll get back to you with pricing.
+          </div>
+        ) : (
+          <div style={{ background: "rgba(232,184,75,0.06)", border: `1px solid ${BORDER}`,
+            borderRadius: "12px", padding: "1rem", marginBottom: "1.25rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+              <span style={{ fontSize: "13px", color: "#b8a09a" }}>Base price</span>
+              <span style={{ fontSize: "13px", color: "#b8a09a" }}>R{quote.basePrice}</span>
+            </div>
+            {quote.loyaltyDiscount > 0 && (
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                <span style={{ fontSize: "13px", color: "#4ade80" }}>
+                  {quote.loyaltyTier} tier discount ({quote.loyaltyDiscountPct}%)
+                </span>
+                <span style={{ fontSize: "13px", color: "#4ade80" }}>-R{quote.loyaltyDiscount}</span>
+              </div>
+            )}
+            <div style={{ height: "1px", background: BORDER, margin: "8px 0" }} />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "14px", fontWeight: "700", color: "#f5ede8" }}>Total</span>
+              <span style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.5rem",
+                fontWeight: "800", color: G }}>R{quote.finalPrice}</span>
+            </div>
+          </div>
+        )}
 
         {/* Booking form */}
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
@@ -135,7 +193,7 @@ function BookingModal({ product, onClose }) {
               placeholder="Enter your full address in Rustenburg" style={inp} />
           </div>
           <div>
-            <label style={lbl}>📞 Phone Number</label>
+            <label style={lbl}>📞 Phone Number *</label>
             <input value={phone} onChange={e => setPhone(e.target.value)}
               placeholder="+27 83 123 4567" type="tel" style={inp} />
           </div>
@@ -145,17 +203,52 @@ function BookingModal({ product, onClose }) {
               placeholder="Any specific requirements or notes..."
               rows={3} style={{ ...inp, resize: "vertical" }} />
           </div>
+
+          {!requiresQuote && (
+            <div onClick={() => setPayWithWallet(p => !p)} style={{
+              background: BG3, border: `1px solid ${BORDER}`, borderRadius: "12px",
+              padding: "12px 16px", display: "flex",
+              alignItems: "center", justifyContent: "space-between", cursor: "pointer",
+            }}>
+              <div>
+                <div style={{ fontSize: "13px", fontWeight: "600", color: "#f5ede8" }}>
+                  💳 Pay with PROJO Wallet
+                </div>
+                <div style={{ fontSize: "12px", color: "#7a5a55", marginTop: "2px" }}>
+                  Balance: <strong style={{ color: G }}>R{walletBalance.toFixed(2)}</strong>
+                </div>
+              </div>
+              <div style={{ width: "44px", height: "24px", borderRadius: "12px",
+                background: payWithWallet ? G : BG3, position: "relative",
+                transition: "background .2s", border: `1px solid ${BORDER}` }}>
+                <div style={{ width: "18px", height: "18px", borderRadius: "50%",
+                  background: "#0d0505", position: "absolute", top: "3px",
+                  transition: "left .2s", left: payWithWallet ? "22px" : "3px" }} />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Buttons */}
         <div style={{ display: "flex", gap: "10px", marginTop: "1.25rem" }}>
-          <button onClick={handleSubmit} disabled={submitting} style={{
-            flex: 1, background: "#25D366", color: "#fff", border: "none",
-            borderRadius: "12px", padding: "14px", fontSize: "14px",
-            fontWeight: "800", cursor: "pointer", fontFamily: "'DM Sans',sans-serif",
-          }}>
-            💬 {submitting ? "Opening WhatsApp..." : "Book via WhatsApp"}
-          </button>
+          {requiresQuote ? (
+            <button onClick={handleBookViaWhatsApp} style={{
+              flex: 1, background: "#25D366", color: "#fff", border: "none",
+              borderRadius: "12px", padding: "14px", fontSize: "14px",
+              fontWeight: "800", cursor: "pointer", fontFamily: "'DM Sans',sans-serif",
+            }}>
+              💬 Request Quote via WhatsApp
+            </button>
+          ) : (
+            <button onClick={handleBookInApp} disabled={submitting || loadingQuote} style={{
+              flex: 1, background: G, color: "#1a0808", border: "none",
+              borderRadius: "12px", padding: "14px", fontSize: "14px",
+              fontWeight: "800", cursor: submitting ? "not-allowed" : "pointer",
+              opacity: submitting ? 0.7 : 1, fontFamily: "'DM Sans',sans-serif",
+            }}>
+              {submitting ? "Booking..." : `Book & Pay R${quote?.finalPrice || product.priceZar}`}
+            </button>
+          )}
           <button onClick={onClose} style={{
             background: BG3, color: "#7a5a55", border: `1px solid ${BORDER}`,
             borderRadius: "12px", padding: "14px 20px", fontSize: "14px",
@@ -163,10 +256,14 @@ function BookingModal({ product, onClose }) {
           }}>Cancel</button>
         </div>
 
-        <div style={{ textAlign: "center", marginTop: "10px",
-          fontSize: "11px", color: "#7a5a55" }}>
-          Booking confirmation sent via WhatsApp · Payment on arrival or via EFT
-        </div>
+        {!requiresQuote && (
+          <div style={{ textAlign: "center", marginTop: "10px",
+            fontSize: "11px", color: "#7a5a55" }}>
+            Or <button onClick={handleBookViaWhatsApp} style={{
+              background: "none", border: "none", color: G, cursor: "pointer",
+              textDecoration: "underline", fontSize: "11px" }}>book via WhatsApp instead</button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -179,9 +276,7 @@ export default function ShopPage() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    loadProducts();
-  }, []);
+  useEffect(() => { loadProducts(); }, []);
 
   async function loadProducts() {
     try {
@@ -198,7 +293,7 @@ export default function ShopPage() {
     }
   }
 
-  const categories = ["All", ...Object.keys(CATEGORY_ICONS)];
+  const categories = ["All", ...new Set(products.map(p => p.category))];
 
   const filtered = products.filter(p => {
     const matchCat = activeCategory === "All" || p.category === activeCategory;
@@ -212,7 +307,6 @@ export default function ShopPage() {
       <Navbar />
       <div style={{ maxWidth: "700px", margin: "0 auto", padding: "84px 1rem 2rem" }}>
 
-        {/* Header */}
         <div style={{ marginBottom: "1.5rem" }}>
           <div style={{ fontSize: "11px", fontWeight: "700", color: G,
             letterSpacing: "2px", textTransform: "uppercase", marginBottom: "4px" }}>
@@ -223,11 +317,10 @@ export default function ShopPage() {
             Book a Service
           </h1>
           <p style={{ fontSize: "13px", color: "#7a5a55" }}>
-            Rustenburg's own · All services confirmed via WhatsApp
+            Book & pay in-app · Earn loyalty points · Discounts auto-applied
           </p>
         </div>
 
-        {/* Search */}
         <div style={{ position: "relative", marginBottom: "1rem" }}>
           <span style={{ position: "absolute", left: "12px", top: "50%",
             transform: "translateY(-50%)", fontSize: "16px" }}>🔍</span>
@@ -239,10 +332,9 @@ export default function ShopPage() {
               boxSizing: "border-box" }} />
         </div>
 
-        {/* Category tabs */}
         <div style={{ display: "flex", gap: "6px", overflowX: "auto",
           paddingBottom: "4px", marginBottom: "1.25rem",
-          scrollbarWidth: "none", msOverflowStyle: "none" }}>
+          scrollbarWidth: "none" }}>
           {categories.map(cat => (
             <button key={cat} onClick={() => setActiveCategory(cat)} style={{
               background: activeCategory === cat ? G : BG2,
@@ -252,12 +344,11 @@ export default function ShopPage() {
               fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap",
               flexShrink: 0, fontFamily: "'DM Sans',sans-serif",
             }}>
-              {cat === "All" ? "All Services" : `${CATEGORY_ICONS[cat]} ${cat}`}
+              {cat === "All" ? "All Services" : `${CATEGORY_ICONS[cat] || "🛠️"} ${cat}`}
             </button>
           ))}
         </div>
 
-        {/* Products */}
         {loading ? (
           <div style={{ textAlign: "center", padding: "3rem", color: "#7a5a55" }}>
             Loading services...
@@ -279,15 +370,14 @@ export default function ShopPage() {
                 <div style={{ display: "flex", justifyContent: "space-between",
                   alignItems: "flex-start", gap: "12px" }}>
                   <div style={{ flex: 1 }}>
-                    {/* Category badge */}
                     <div style={{ display: "inline-flex", alignItems: "center", gap: "4px",
-                      background: `${CATEGORY_COLORS[product.category]}15`,
-                      border: `1px solid ${CATEGORY_COLORS[product.category]}30`,
+                      background: `${CATEGORY_COLORS[product.category] || G}15`,
+                      border: `1px solid ${CATEGORY_COLORS[product.category] || G}30`,
                       borderRadius: "50px", padding: "3px 10px",
                       marginBottom: "8px" }}>
-                      <span style={{ fontSize: "12px" }}>{CATEGORY_ICONS[product.category]}</span>
+                      <span style={{ fontSize: "12px" }}>{CATEGORY_ICONS[product.category] || "🛠️"}</span>
                       <span style={{ fontSize: "10px", fontWeight: "700",
-                        color: CATEGORY_COLORS[product.category],
+                        color: CATEGORY_COLORS[product.category] || G,
                         letterSpacing: "0.5px" }}>{product.category}</span>
                     </div>
 
@@ -329,7 +419,6 @@ export default function ShopPage() {
           </div>
         )}
 
-        {/* WhatsApp CTA */}
         <div style={{ marginTop: "2rem", background: BG2,
           border: "1px solid rgba(37,211,102,0.2)", borderRadius: "16px",
           padding: "1.25rem", textAlign: "center" }}>
@@ -346,9 +435,8 @@ export default function ShopPage() {
         </div>
       </div>
 
-      {/* Booking Modal */}
       {selectedProduct && (
-        <BookingModal
+        <CheckoutModal
           product={selectedProduct}
           onClose={() => setSelectedProduct(null)}
         />

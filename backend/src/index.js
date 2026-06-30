@@ -31,8 +31,9 @@ app.use("/api/deliveries", require("./routes/delivery.routes"));
 app.use("/api/shop",       require("./routes/shop.routes"));
 app.use("/api/admin",      require("./routes/admin.routes"));
 app.use("/api/drivers",    require("./routes/driver.routes"));
-app.use("/api/push",       require("./routes/push.routes"));   // ← NEW
-app.use("/api/promo",      require("./routes/promo.routes"));  // ← NEW
+app.use("/api/push",       require("./routes/push.routes"));
+app.use("/api/promo",      require("./routes/promo.routes"));
+app.use("/api/services",   require("./routes/service.routes")); // ← NEW
 
 app.use((req, res) => res.status(404).json({ error: "Route not found", app: "PROJO GROUP" }));
 app.use((err, req, res, next) => {

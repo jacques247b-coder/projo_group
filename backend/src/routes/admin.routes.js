@@ -1,9 +1,10 @@
-// PROJO GROUP — Admin Routes (Updated with promo codes)
+// PROJO GROUP — Admin Routes (Updated with service orders)
 const express = require("express");
 const router = express.Router();
 const { authenticate, requireRole } = require("../middleware/auth.middleware");
 const admin = require("../controllers/admin.controller");
 const promo = require("../controllers/promo.controller");
+const service = require("../controllers/service.controller");
 
 router.use(authenticate, requireRole("ADMIN"));
 
@@ -27,5 +28,9 @@ router.get("/promo-codes", promo.getAllCodes);
 router.post("/promo-codes", promo.createCode);
 router.put("/promo-codes/:id", promo.updateCode);
 router.delete("/promo-codes/:id", promo.deleteCode);
+
+// Service orders
+router.get("/service-orders", service.getAllOrders);
+router.put("/service-orders/:id/status", service.updateOrderStatus);
 
 module.exports = router;
