@@ -1,10 +1,11 @@
-// PROJO GROUP — Admin Routes (Updated with service orders)
+// PROJO GROUP — Admin Routes (Updated with product options management)
 const express = require("express");
 const router = express.Router();
 const { authenticate, requireRole } = require("../middleware/auth.middleware");
 const admin = require("../controllers/admin.controller");
 const promo = require("../controllers/promo.controller");
 const service = require("../controllers/service.controller");
+const options = require("../controllers/productOptions.controller");
 
 router.use(authenticate, requireRole("ADMIN"));
 
@@ -32,5 +33,14 @@ router.delete("/promo-codes/:id", promo.deleteCode);
 // Service orders
 router.get("/service-orders", service.getAllOrders);
 router.put("/service-orders/:id/status", service.updateOrderStatus);
+
+// Product options (configurable pricing)
+router.get("/products/:productId/options", options.getOptionsForAdmin);
+router.post("/products/:productId/option-groups", options.createOptionGroup);
+router.put("/option-groups/:id", options.updateOptionGroup);
+router.delete("/option-groups/:id", options.deleteOptionGroup);
+router.post("/option-groups/:groupId/choices", options.createChoice);
+router.put("/choices/:id", options.updateChoice);
+router.delete("/choices/:id", options.deleteChoice);
 
 module.exports = router;

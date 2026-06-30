@@ -1,132 +1,70 @@
-# PROJO GROUP — 4 New Features Setup Guide
+# PROJO GROUP — Configurable E-commerce Checkout Setup
 
-## Feature 1 — Driver Live Tracking Improvements ✅
-**File:** `frontend/src/components/map/LiveTrackingMap.jsx`
-**What's new:**
-- ETA banner showing minutes until arrival + distance + driver speed
-- Car icon rotates to match direction of travel (heading)
-- Smooth speed calculation between GPS pings
+## Step 1 — Add Prisma schema additions
 
-**No backend changes needed** — drop the file in and it works.
+Open `backend/prisma/schema.prisma` and add the two new models from `SCHEMA_ADDITION.prisma`:
+- `ProductOptionGroup`
+- `ProductOptionChoice`
 
----
-
-## Feature 2 — Push Notifications
-
-### Step 1 — Install web-push package
-```bash
-cd backend
-npm install web-push
-```
-
-### Step 2 — Generate VAPID keys (one-time)
-```bash
-npx web-push generate-vapid-keys
-```
-This prints a Public Key and Private Key.
-
-### Step 3 — Add to Render backend Environment Variables
-```
-VAPID_PUBLIC_KEY = <paste public key>
-VAPID_PRIVATE_KEY = <paste private key>
-```
-
-### Step 4 — Add to Prisma schema
-Open `backend/prisma/schema.prisma`, find your `User` model, add this field:
+Also add this ONE field to your existing `ServiceOrder` model:
 ```prisma
-pushSubscription String?
-```
-Then run:
-```bash
-npx prisma migrate dev --name add_push_subscription
+selectedOptions String?
 ```
 
-### Files to copy:
+## Step 2 — Run schema sync
+```
+cd backend
+node node_modules\prisma\build\index.js db push
+```
+
+## Step 3 — Copy files
+
 | File | Goes to |
 |------|---------|
-| `push.service.js` | `backend/src/services/` |
-| `push.controller.js` | `backend/src/controllers/` |
-| `push.routes.js` | `backend/src/routes/` |
-| `pushNotifications.js` | `frontend/src/services/` |
-| `sw.js` | `frontend/public/` (replaces existing) |
+| `productOptions.controller.js` | `backend/src/controllers/` (new) |
+| `service.controller.js` | `backend/src/controllers/` (overwrite) |
+| `service.routes.js` | `backend/src/routes/` (overwrite) |
+| `admin.routes.js` | `backend/src/routes/` (overwrite) |
+| `ProductOptionsPage.jsx` | `frontend/src/pages/admin/` (new) |
+| `ShopPage.jsx` | `frontend/src/pages/shop/` (overwrite) |
 
-### How users enable it:
-On the Wallet page, there's a "🔔 Enable Notifications" banner — tapping it requests browser permission and subscribes them.
-
-### To send a notification (from any backend controller):
-```js
-const { notifyUser } = require("../controllers/push.controller");
-await notifyUser(userId, {
-  title: "Your ride is here!",
-  body: "Your driver has arrived at the pickup point",
-  data: { url: "/ride/" + rideId }
-});
-```
-
----
-
-## Feature 3 — Promo Codes
-
-### Step 1 — Add Prisma models
-Open `backend/prisma/schema.prisma`, add the models from `SCHEMA_ADDITIONS.prisma` (included in this zip).
-Then run:
-```bash
-npx prisma migrate dev --name add_promo_codes
-```
-
-### Files to copy:
-| File | Goes to |
-|------|---------|
-| `promo.controller.js` | `backend/src/controllers/` |
-| `promo.routes.js` | `backend/src/routes/` |
-| `admin.routes.js` | `backend/src/routes/` (replaces existing — adds promo endpoints) |
-| `PromoCodesPage.jsx` | `frontend/src/pages/admin/` |
-
-### Add route in App.jsx:
+## Step 4 — Add route to App.jsx
 ```jsx
-import PromoCodesPage from "./pages/admin/PromoCodesPage";
-// Add this route:
-<Route path="/admin/promo-codes" element={
-  <Protected roles={["ADMIN"]}><PromoCodesPage /></Protected>
+import ProductOptionsPage from "./pages/admin/ProductOptionsPage";
+
+<Route path="/admin/product-options" element={
+  <Protected roles={["ADMIN"]}><ProductOptionsPage /></Protected>
 } />
 ```
 
-### Admin creates codes at `/admin/promo-codes`:
-- Code (e.g. PROJO10)
-- Percentage or Fixed discount
-- Min order amount, max discount cap, usage limits, expiry date
+## How it works
 
-### Customers redeem codes on the Wallet page top-up section.
+**Admin side (`/admin/product-options`):**
+1. Select a service (e.g. Painting)
+2. Add an option GROUP — e.g. "Property Size", type "Single choice", mark Required if mandatory
+3. Add CHOICES to that group — e.g. "1 Bedroom" +R0, "2 Bedroom" +R150, "3 Bedroom" +R300
+4. Add more groups as needed — e.g. "Urgency" with "Standard" +R0, "Same Day" +R200
+5. Multi-select groups work too — e.g. "Add-ons" where customer can pick multiple extras
 
----
+**Customer side (Shop page):**
+1. Taps "Book Now" on a service
+2. Sees all option groups as buttons — selects their choices
+3. Price updates live as they pick (base + all selected modifiers)
+4. Loyalty discount auto-applies on top of the calculated total
+5. Pays via wallet or books via WhatsApp if it's a quote-only service
 
-## Feature 4 — Loyalty Points Tracking ✅
-**File:** `frontend/src/pages/passenger/WalletPage.jsx`
-**What's new:**
-- 3 loyalty tiers: Starter (0-500pts), Growth (500-1000pts), Elite (1000+pts)
-- Visual progress bar showing points needed for next tier
-- Tier discount percentage displayed
-- Push notification opt-in banner
-- Promo code redemption built into top-up flow
+## Example setup for Painting
 
-**No backend changes needed beyond promo codes above** — loyalty points already calculated from wallet balance (1pt per R10 spent).
+Base price: R28 (this becomes a "per unit" starting point — you can set base to R0 and make everything option-driven, or keep base R28 and use options for size multipliers)
 
----
+**Recommended for Painting specifically:**
+- Set base price to R0
+- Group: "Property Size" (required, single choice)
+  - "1 Bedroom (~50sqm)" → R1400
+  - "2 Bedroom (~80sqm)" → R2240
+  - "3 Bedroom (~120sqm)" → R3360
+- Group: "Add-ons" (multi-select)
+  - "Ceiling included" → +R300
+  - "Exterior walls" → +R500
 
-## Final Steps
-
-1. Copy all files to their destinations (see tables above)
-2. Run the two Prisma migrations (push subscription field + promo models)
-3. Install `web-push`: `npm install web-push` in backend folder
-4. Generate and add VAPID keys to Render environment variables
-5. Add the PromoCodesPage route to App.jsx
-6. Commit and push:
-
-```bash
-cd "C:\Users\Neels\Documents\jacques & zanica folders\PROJO\PROJO\projo_group"
-git add .
-git commit -m "Add: Push notifications, promo codes, loyalty tiers, improved tracking"
-git push
-```
-
-7. Redeploy backend on Render (auto-deploys on push)
+This gives full flexibility without needing custom per-sqm calculation logic.

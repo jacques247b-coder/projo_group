@@ -1,8 +1,5 @@
-// ============================================================
-// PROJO GROUP — Shop Page (In-App Checkout with Loyalty Discount)
-// Services with a fixed price can be booked & paid in-app
-// Quote-only services (priceZar=0) still go via WhatsApp
-// ============================================================
+// PROJO GROUP — Shop Page (Configurable In-App Checkout)
+// Customers select options (size, add-ons) and price calculates live
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { CONTACT } from "../../utils/constants";
@@ -28,9 +25,11 @@ const CATEGORY_COLORS = {
   "CCTV": "#a78bfa", "Marketing": "#f472b6",
 };
 
-// ── In-App Checkout Modal ──────────────────────────────────────
+// ── In-App Checkout Modal with Options ─────────────────────────
 function CheckoutModal({ product, onClose }) {
   const { user } = useAuth();
+  const [groups, setGroups] = useState([]);
+  const [selectedChoices, setSelectedChoices] = useState({}); // { groupId: [choiceId, ...] }
   const [quote, setQuote] = useState(null);
   const [loadingQuote, setLoadingQuote] = useState(true);
   const [date, setDate] = useState("");
@@ -42,18 +41,19 @@ function CheckoutModal({ product, onClose }) {
   const [walletBalance, setWalletBalance] = useState(0);
 
   useEffect(() => {
-    loadQuote();
+    loadOptions();
     loadWallet();
   }, []);
 
-  async function loadQuote() {
-    setLoadingQuote(true);
+  useEffect(() => {
+    loadQuote();
+  }, [selectedChoices]);
+
+  async function loadOptions() {
     try {
-      const res = await api.get(`/services/quote/${product.id}`);
-      setQuote(res);
-    } catch (err) {
-      toast.error("Could not load pricing");
-    } finally { setLoadingQuote(false); }
+      const res = await api.get(`/services/products/${product.id}/options`);
+      setGroups(res.groups || []);
+    } catch {}
   }
 
   async function loadWallet() {
@@ -63,11 +63,54 @@ function CheckoutModal({ product, onClose }) {
     } catch {}
   }
 
+  function getAllSelectedIds() {
+    return Object.values(selectedChoices).flat();
+  }
+
+  async function loadQuote() {
+    setLoadingQuote(true);
+    try {
+      const res = await api.post("/services/quote", {
+        productId: product.id,
+        selectedChoiceIds: getAllSelectedIds(),
+      });
+      setQuote(res);
+    } catch (err) {
+      toast.error("Could not load pricing");
+    } finally { setLoadingQuote(false); }
+  }
+
+  function toggleChoice(groupId, choiceId, isMulti) {
+    setSelectedChoices(prev => {
+      if (isMulti) {
+        const current = prev[groupId] || [];
+        const next = current.includes(choiceId)
+          ? current.filter(id => id !== choiceId)
+          : [...current, choiceId];
+        return { ...prev, [groupId]: next };
+      } else {
+        return { ...prev, [groupId]: [choiceId] };
+      }
+    });
+  }
+
+  function isSelected(groupId, choiceId) {
+    return (selectedChoices[groupId] || []).includes(choiceId);
+  }
+
   async function handleBookViaWhatsApp() {
+    const optionsText = groups.map(g => {
+      const selected = (selectedChoices[g.id] || [])
+        .map(cid => g.choices.find(c => c.id === cid)?.label)
+        .filter(Boolean).join(", ");
+      return selected ? `${g.name}: ${selected}` : null;
+    }).filter(Boolean).join("\n");
+
     const msg = encodeURIComponent(
       `*PROJO GROUP Booking Request*\n\n` +
       `*Service:* ${product.name}\n` +
       `*Category:* ${product.category}\n` +
+      (optionsText ? `${optionsText}\n` : "") +
       `*Date/Time:* ${date || "To be confirmed"}\n` +
       `*Address:* ${address}\n` +
       `*Phone:* ${phone}\n` +
@@ -83,6 +126,13 @@ function CheckoutModal({ product, onClose }) {
     if (!address) return toast.error("Please enter your address");
     if (!phone) return toast.error("Please enter your phone");
 
+    // Check required groups
+    for (const group of groups) {
+      if (group.required && !(selectedChoices[group.id] || []).length) {
+        return toast.error(`Please select an option for "${group.name}"`);
+      }
+    }
+
     if (payWithWallet && quote.finalPrice > walletBalance) {
       return toast.error(`Insufficient wallet balance. Need R${quote.finalPrice.toFixed(2)}, you have R${walletBalance.toFixed(2)}`);
     }
@@ -92,10 +142,9 @@ function CheckoutModal({ product, onClose }) {
       const res = await api.post("/services/book", {
         productId: product.id,
         scheduledFor: date || null,
-        address,
-        phone,
-        notes,
+        address, phone, notes,
         paidWithWallet: payWithWallet,
+        selectedChoiceIds: getAllSelectedIds(),
       });
       toast.success(res.message || "Booked!");
       onClose();
@@ -130,7 +179,6 @@ function CheckoutModal({ product, onClose }) {
         width: "100%", maxWidth: "600px", maxHeight: "85vh",
         overflowY: "auto",
       }}>
-        {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between",
           alignItems: "flex-start", marginBottom: "1.25rem" }}>
           <div>
@@ -148,9 +196,51 @@ function CheckoutModal({ product, onClose }) {
           }}>✕</button>
         </div>
 
+        {/* Description */}
+        <div style={{ fontSize: "13px", color: "#b8a09a", marginBottom: "1.25rem", lineHeight: 1.6 }}>
+          {product.description}
+        </div>
+
+        {/* Option groups */}
+        {groups.map(group => (
+          <div key={group.id} style={{ marginBottom: "1.25rem" }}>
+            <div style={{ fontSize: "12px", fontWeight: "700", color: "#f5ede8",
+              marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+              {group.name}
+              {group.required && <span style={{ color: "#f87171", fontSize: "11px" }}>*</span>}
+              <span style={{ fontSize: "10px", color: "#7a5a55", fontWeight: "400" }}>
+                {group.type === "MULTI" ? "(select any)" : "(choose one)"}
+              </span>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+              {group.choices.map(choice => (
+                <button key={choice.id} onClick={() => toggleChoice(group.id, choice.id, group.type === "MULTI")}
+                  style={{
+                    background: isSelected(group.id, choice.id) ? "rgba(232,184,75,0.15)" : BG3,
+                    border: `1px solid ${isSelected(group.id, choice.id) ? G : BORDER}`,
+                    borderRadius: "10px", padding: "8px 14px", cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: "6px",
+                  }}>
+                  <span style={{ fontSize: "13px",
+                    color: isSelected(group.id, choice.id) ? G : "#b8a09a",
+                    fontWeight: isSelected(group.id, choice.id) ? "700" : "500" }}>
+                    {choice.label}
+                  </span>
+                  {choice.priceModifier !== 0 && (
+                    <span style={{ fontSize: "11px",
+                      color: isSelected(group.id, choice.id) ? G : "#7a5a55" }}>
+                      ({choice.priceModifier > 0 ? "+" : ""}R{choice.priceModifier})
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+
         {/* Pricing breakdown */}
         {loadingQuote ? (
-          <div style={{ textAlign: "center", padding: "2rem", color: "#7a5a55" }}>Loading price...</div>
+          <div style={{ textAlign: "center", padding: "1.5rem", color: "#7a5a55" }}>Calculating price...</div>
         ) : requiresQuote ? (
           <div style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "12px",
             padding: "1rem", marginBottom: "1.25rem", fontSize: "13px", color: "#b8a09a" }}>
@@ -159,12 +249,20 @@ function CheckoutModal({ product, onClose }) {
         ) : (
           <div style={{ background: "rgba(232,184,75,0.06)", border: `1px solid ${BORDER}`,
             borderRadius: "12px", padding: "1rem", marginBottom: "1.25rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
               <span style={{ fontSize: "13px", color: "#b8a09a" }}>Base price</span>
-              <span style={{ fontSize: "13px", color: "#b8a09a" }}>R{quote.basePrice}</span>
+              <span style={{ fontSize: "13px", color: "#b8a09a" }}>R{quote.baseProductPrice}</span>
             </div>
+            {quote.selections?.map((s, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                <span style={{ fontSize: "12px", color: "#7a5a55" }}>{s.groupName}: {s.choiceLabel}</span>
+                <span style={{ fontSize: "12px", color: "#7a5a55" }}>
+                  {s.priceModifier >= 0 ? "+" : ""}R{s.priceModifier}
+                </span>
+              </div>
+            ))}
             {quote.loyaltyDiscount > 0 && (
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px" }}>
                 <span style={{ fontSize: "13px", color: "#4ade80" }}>
                   {quote.loyaltyTier} tier discount ({quote.loyaltyDiscountPct}%)
                 </span>
@@ -229,7 +327,6 @@ function CheckoutModal({ product, onClose }) {
           )}
         </div>
 
-        {/* Buttons */}
         <div style={{ display: "flex", gap: "10px", marginTop: "1.25rem" }}>
           {requiresQuote ? (
             <button onClick={handleBookViaWhatsApp} style={{
@@ -302,6 +399,61 @@ export default function ShopPage() {
     return matchCat && matchSearch && p.isActive;
   });
 
+  // Group products by category for "All" view
+  const grouped = activeCategory === "All"
+    ? categories.filter(c => c !== "All").map(cat => ({
+        category: cat,
+        items: filtered.filter(p => p.category === cat),
+      })).filter(g => g.items.length > 0)
+    : null;
+
+  function renderProductCard(product) {
+    return (
+      <div key={product.id} style={{
+        background: BG2, border: `1px solid ${BORDER}`,
+        borderRadius: "16px", padding: "1.25rem",
+        transition: "all .2s", cursor: "pointer",
+      }}
+      onMouseOver={e => e.currentTarget.style.borderColor = G}
+      onMouseOut={e => e.currentTarget.style.borderColor = BORDER}>
+        <div style={{ display: "flex", justifyContent: "space-between",
+          alignItems: "flex-start", gap: "12px" }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "1rem",
+              fontWeight: "700", color: "#f5ede8", marginBottom: "6px" }}>
+              {product.name}
+            </div>
+            <div style={{ fontSize: "12px", color: "#b8a09a", lineHeight: 1.6,
+              display: "-webkit-box", WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+              {product.description}
+            </div>
+          </div>
+          <div style={{ textAlign: "right", flexShrink: 0 }}>
+            {product.priceZar > 0 ? (
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.2rem",
+                fontWeight: "800", color: G, marginBottom: "8px" }}>
+                R{product.priceZar}
+              </div>
+            ) : (
+              <div style={{ fontSize: "11px", color: "#7a5a55",
+                marginBottom: "8px", fontWeight: "700" }}>
+                Get Quote
+              </div>
+            )}
+            <button onClick={() => setSelectedProduct(product)} style={{
+              background: G, color: "#1a0808", border: "none",
+              borderRadius: "8px", padding: "8px 16px", fontSize: "12px",
+              fontWeight: "800", cursor: "pointer", whiteSpace: "nowrap",
+            }}>
+              Book Now
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ background: BG, minHeight: "100vh", fontFamily: "'DM Sans',sans-serif" }}>
       <Navbar />
@@ -357,65 +509,30 @@ export default function ShopPage() {
           <div style={{ textAlign: "center", padding: "3rem", color: "#7a5a55" }}>
             No services found
           </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {filtered.map(product => (
-              <div key={product.id} style={{
-                background: BG2, border: `1px solid ${BORDER}`,
-                borderRadius: "16px", padding: "1.25rem",
-                transition: "all .2s", cursor: "pointer",
-              }}
-              onMouseOver={e => e.currentTarget.style.borderColor = G}
-              onMouseOut={e => e.currentTarget.style.borderColor = BORDER}>
-                <div style={{ display: "flex", justifyContent: "space-between",
-                  alignItems: "flex-start", gap: "12px" }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: "4px",
-                      background: `${CATEGORY_COLORS[product.category] || G}15`,
-                      border: `1px solid ${CATEGORY_COLORS[product.category] || G}30`,
-                      borderRadius: "50px", padding: "3px 10px",
-                      marginBottom: "8px" }}>
-                      <span style={{ fontSize: "12px" }}>{CATEGORY_ICONS[product.category] || "🛠️"}</span>
-                      <span style={{ fontSize: "10px", fontWeight: "700",
-                        color: CATEGORY_COLORS[product.category] || G,
-                        letterSpacing: "0.5px" }}>{product.category}</span>
-                    </div>
-
-                    <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "1rem",
-                      fontWeight: "700", color: "#f5ede8", marginBottom: "6px" }}>
-                      {product.name}
-                    </div>
-
-                    <div style={{ fontSize: "12px", color: "#b8a09a", lineHeight: 1.6,
-                      display: "-webkit-box", WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                      {product.description}
-                    </div>
+        ) : grouped ? (
+          // Grouped by category view (when "All" selected)
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.75rem" }}>
+            {grouped.map(g => (
+              <div key={g.category}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px",
+                  marginBottom: "10px" }}>
+                  <span style={{ fontSize: "18px" }}>{CATEGORY_ICONS[g.category] || "🛠️"}</span>
+                  <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "1rem",
+                    fontWeight: "700", color: CATEGORY_COLORS[g.category] || G }}>
+                    {g.category}
                   </div>
-
-                  <div style={{ textAlign: "right", flexShrink: 0 }}>
-                    {product.priceZar > 0 ? (
-                      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.2rem",
-                        fontWeight: "800", color: G, marginBottom: "8px" }}>
-                        R{product.priceZar}
-                      </div>
-                    ) : (
-                      <div style={{ fontSize: "11px", color: "#7a5a55",
-                        marginBottom: "8px", fontWeight: "700" }}>
-                        Get Quote
-                      </div>
-                    )}
-                    <button onClick={() => setSelectedProduct(product)} style={{
-                      background: G, color: "#1a0808", border: "none",
-                      borderRadius: "8px", padding: "8px 16px", fontSize: "12px",
-                      fontWeight: "800", cursor: "pointer", whiteSpace: "nowrap",
-                    }}>
-                      Book Now
-                    </button>
-                  </div>
+                  <div style={{ flex: 1, height: "1px", background: BORDER }} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  {g.items.map(renderProductCard)}
                 </div>
               </div>
             ))}
+          </div>
+        ) : (
+          // Single category filtered view
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {filtered.map(renderProductCard)}
           </div>
         )}
 

@@ -1,0 +1,29 @@
+// PROJO GROUP — Configurable Product Options
+// Add to backend/prisma/schema.prisma, then run db push
+
+// An option GROUP for a product, e.g. "Property Size", "Add-ons", "Urgency"
+model ProductOptionGroup {
+  id          String              @id @default(uuid())
+  productId   String
+  name        String              // e.g. "Property Size"
+  type        String              @default("SINGLE") // SINGLE (radio) or MULTI (checkboxes)
+  required    Boolean             @default(false)
+  sortOrder   Int                 @default(0)
+  choices     ProductOptionChoice[]
+  createdAt   DateTime            @default(now())
+}
+
+// A choice within a group, e.g. "2 Bedroom" with +R150
+model ProductOptionChoice {
+  id            String              @id @default(uuid())
+  groupId       String
+  group         ProductOptionGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  label         String              // e.g. "2 Bedroom"
+  priceModifier Float               @default(0) // added to base price, can be negative
+  sortOrder     Int                 @default(0)
+  createdAt     DateTime            @default(now())
+}
+
+// Update ServiceOrder to store selected options as JSON
+// Add this field to the existing ServiceOrder model:
+//   selectedOptions String?  // JSON string of {groupName, choiceLabel, priceModifier}[]
