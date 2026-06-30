@@ -1,11 +1,10 @@
-// PROJO GROUP — Top Navigation Bar (Mobile Fixed v3)
+// PROJO GROUP — Top Navigation Bar (Mobile Fixed v3 - Shop link fixed)
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import toast from "react-hot-toast";
 
 const GOLD     = "#e8b84b";
-const TAKE_APP = "https://take.app/projogroup";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -20,7 +19,6 @@ export default function Navbar() {
     return () => window.removeEventListener("resize", handle);
   }, []);
 
-  // Close menu on route change
   useEffect(() => { setMenuOpen(false); }, [location.pathname]);
 
   const isActive = (path) => location.pathname.startsWith(path);
@@ -64,7 +62,6 @@ export default function Navbar() {
         fontFamily: "'DM Sans',sans-serif",
       }}>
 
-        {/* Brand */}
         <Link to="/" style={{ display: "flex", alignItems: "center", gap: "8px", textDecoration: "none", flexShrink: 0 }}>
           <div style={{
             width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0,
@@ -80,20 +77,16 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop links */}
         {!isMobile && (
           <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
             <Link to="/book"    style={linkStyle("/book")}>Book Ride</Link>
             <Link to="/courier" style={linkStyle("/courier")}>Courier</Link>
-            <a href={TAKE_APP} target="_blank" rel="noopener noreferrer" style={{
-              color: "#a8a49e", fontWeight: "500", textDecoration: "none", fontSize: "14px",
-            }}>Shop ↗</a>
+            <Link to="/shop"    style={linkStyle("/shop")}>Shop</Link>
             {user?.role === "DRIVER" && <Link to="/driver" style={linkStyle("/driver")}>Driver</Link>}
             {user?.role === "ADMIN"  && <Link to="/admin"  style={linkStyle("/admin")}>Admin</Link>}
           </div>
         )}
 
-        {/* Right side */}
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
           {user && !isMobile && (
             <Link to="/wallet" style={{
@@ -103,7 +96,6 @@ export default function Navbar() {
             }}>💰 Wallet</Link>
           )}
 
-          {/* Hamburger — always on mobile, also on desktop */}
           <button onClick={() => setMenuOpen(!menuOpen)} style={{
             background: menuOpen ? "rgba(232,184,75,0.1)" : "transparent",
             border: `1px solid ${menuOpen ? GOLD : "rgba(232,184,75,0.25)"}`,
@@ -119,7 +111,6 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Menu drawer */}
       {menuOpen && (
         <>
           <div onClick={() => setMenuOpen(false)} style={{
@@ -135,7 +126,6 @@ export default function Navbar() {
             boxShadow: "-8px 0 32px rgba(0,0,0,0.7)",
           }}>
 
-            {/* User info */}
             {user && (
               <div style={{ padding: "12px 14px", background: "#120808",
                 borderRadius: "12px", marginBottom: "1rem",
@@ -149,19 +139,14 @@ export default function Navbar() {
               </div>
             )}
 
-            {/* Links */}
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
               {drawerLink("/book", "🚗 Book a Ride")}
               {drawerLink("/courier", "📦 Courier")}
+              {drawerLink("/shop", "🛍️ Shop")}
               {user && drawerLink("/wallet", "💰 Wallet")}
               {user && drawerLink("/rides", "🕐 Ride History")}
               {user?.role === "DRIVER" && drawerLink("/driver", "🚘 Driver Dashboard")}
               {user?.role === "ADMIN"  && drawerLink("/admin",  "⚙️ Admin Panel")}
-              <a href={TAKE_APP} target="_blank" rel="noopener noreferrer" style={{
-                display: "block", padding: "14px 16px", color: "#c8b8b0",
-                textDecoration: "none", fontSize: "16px", borderRadius: "10px",
-                borderLeft: "3px solid transparent",
-              }}>🛍️ Online Shop ↗</a>
             </div>
 
             <div style={{ height: "1px", background: "rgba(232,184,75,0.1)", margin: "12px 0" }} />
