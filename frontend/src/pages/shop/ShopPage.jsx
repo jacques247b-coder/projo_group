@@ -18,6 +18,21 @@ const CATEGORY_ICONS = {
   "Web & App Development": "💻", "Runners & Deliveries": "🏃",
   "Locksmith": "🔑", "PC & Console Repair": "🖥️", "CCTV": "📷", "Marketing": "📣",
 };
+
+const CATEGORY_IMAGES = {
+  "Cleaning": "/assets/categories/cleaning.png",
+  "Maintenance": "/assets/categories/maintenance.png",
+  "Painting": "/assets/categories/painting.png",
+  "Pest Control": "/assets/categories/pest-control.png",
+  "Web & App Development": "/assets/categories/web-app-development.png",
+  "Runners & Deliveries": "/assets/categories/runners-deliveries.png",
+  "Locksmith": "/assets/categories/locksmith.png",
+  "PC & Console Repair": "/assets/categories/pc-console-repair.png",
+  "CCTV": "/assets/categories/cctv.png",
+  "Digital Marketing": "/assets/categories/digital-marketing.png",
+  "Laundry Services": "/assets/categories/laundry.png",
+  "Products": "/assets/categories/products-shop.png",
+};
 const CATEGORY_COLORS = {
   "Cleaning": "#4ade80", "Maintenance": "#60a5fa", "Painting": "#f472b6",
   "Pest Control": "#a78bfa", "Web & App Development": "#34d399",
@@ -526,11 +541,19 @@ export default function ShopPage() {
             }} style={{
               background: BG2, color: "#b8a09a",
               border: `1px solid ${BORDER}`,
-              borderRadius: "50px", padding: "7px 14px", fontSize: "12px",
+              borderRadius: "50px", padding: "6px 14px 6px 6px", fontSize: "12px",
               fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap",
               flexShrink: 0, fontFamily: "'DM Sans',sans-serif",
+              display: "flex", alignItems: "center", gap: "6px",
             }}>
-              {CATEGORY_ICONS[cat] || "🛠️"} {cat}
+              {CATEGORY_IMAGES[cat] ? (
+                <img src={CATEGORY_IMAGES[cat]} alt={cat}
+                  style={{ width: "20px", height: "20px", borderRadius: "50%", objectFit: "cover" }}
+                  onError={e => { e.target.style.display = "none"; }} />
+              ) : (
+                <span>{CATEGORY_ICONS[cat] || "🛠️"}</span>
+              )}
+              {cat}
             </button>
           ))}
         </div>
@@ -548,9 +571,17 @@ export default function ShopPage() {
           <div style={{ display: "flex", flexDirection: "column", gap: "1.75rem" }}>
             {grouped.map(g => (
               <div key={g.category} id={`cat-${g.category}`} style={{ scrollMarginTop: "80px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px",
-                  marginBottom: "10px" }}>
-                  <span style={{ fontSize: "18px" }}>{CATEGORY_ICONS[g.category] || "🛠️"}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px",
+                  marginBottom: "12px" }}>
+                  {CATEGORY_IMAGES[g.category] ? (
+                    <img src={CATEGORY_IMAGES[g.category]} alt={g.category}
+                      style={{ width: "32px", height: "32px", borderRadius: "50%",
+                        objectFit: "cover", flexShrink: 0,
+                        boxShadow: "0 0 8px rgba(232,184,75,0.3)" }}
+                      onError={e => { e.target.style.display = "none"; }} />
+                  ) : (
+                    <span style={{ fontSize: "18px" }}>{CATEGORY_ICONS[g.category] || "🛠️"}</span>
+                  )}
                   <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "1rem",
                     fontWeight: "700", color: CATEGORY_COLORS[g.category] || G }}>
                     {g.category}
