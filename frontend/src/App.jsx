@@ -27,6 +27,7 @@ import DriverEarnings from "./pages/driver/DriverEarnings";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import PromoCodesPage from "./pages/admin/PromoCodesPage";
 
 // Landing page
 import LandingPage from "./pages/LandingPage";
@@ -45,7 +46,6 @@ function Protected({ children, roles }) {
   );
   if (!user) return <Navigate to="/login" replace />;
   if (roles && !roles.includes(user.role)) {
-    // Redirect to appropriate home based on role
     if (user.role === "DRIVER") return <Navigate to="/driver" replace />;
     if (user.role === "ADMIN") return <Navigate to="/admin" replace />;
     return <Navigate to="/book" replace />;
@@ -56,7 +56,6 @@ function Protected({ children, roles }) {
 function AppRoutes() {
   const { user } = useAuth();
 
-  // Where to send logged-in users from /
   const homeRoute = !user ? "/home"
     : user.role === "DRIVER" ? "/driver"
     : user.role === "ADMIN" ? "/admin"
@@ -65,9 +64,9 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Public landing page */}
-<Route path="/shop" element={
-  <Protected><ShopPage /></Protected>
-} />
+      <Route path="/shop" element={
+        <Protected><ShopPage /></Protected>
+      } />
       <Route path="/home" element={<LandingPage />} />
       <Route path="/" element={<Navigate to={homeRoute} replace />} />
 
@@ -113,6 +112,11 @@ function AppRoutes() {
       <Route path="/admin" element={
         <Protected roles={["ADMIN"]}>
           <AdminDashboard />
+        </Protected>
+      } />
+      <Route path="/admin/promo-codes" element={
+        <Protected roles={["ADMIN"]}>
+          <PromoCodesPage />
         </Protected>
       } />
 

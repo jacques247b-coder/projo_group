@@ -30,7 +30,9 @@ app.use("/api/wallet",     require("./routes/wallet.routes"));
 app.use("/api/deliveries", require("./routes/delivery.routes"));
 app.use("/api/shop",       require("./routes/shop.routes"));
 app.use("/api/admin",      require("./routes/admin.routes"));
-app.use("/api/drivers",    require("./routes/driver.routes")); // ← ADDED
+app.use("/api/drivers",    require("./routes/driver.routes"));
+app.use("/api/push",       require("./routes/push.routes"));   // ← NEW
+app.use("/api/promo",      require("./routes/promo.routes"));  // ← NEW
 
 app.use((req, res) => res.status(404).json({ error: "Route not found", app: "PROJO GROUP" }));
 app.use((err, req, res, next) => {
@@ -39,27 +41,23 @@ app.use((err, req, res, next) => {
 });
 
 io.on("connection", (socket) => {
-  // Driver joins their own room for targeted events
   socket.on("driver:join", ({ driverId }) => {
     socket.join(`driver:${driverId}`);
   });
 
-  // Passenger joins ride room for status updates
   socket.on("ride:join", ({ rideId }) => {
     socket.join(`ride:${rideId}`);
   });
 
-  // Driver broadcasts live location — emits to ride room only
   socket.on("driver:location_update", ({ lat, lng, rideId, heading }) => {
     const payload = { lat, lng, heading, timestamp: new Date().toISOString() };
     if (rideId) {
       io.to(`ride:${rideId}`).emit("driver:location", payload);
     } else {
-      io.emit("driver:location", payload); // fallback broadcast
+      io.emit("driver:location", payload);
     }
   });
 
-  // Driver toggles online/offline
   socket.on("driver:toggle_status", ({ status }) => {
     console.log(`[PROJO Socket] Driver status: ${status}`);
   });

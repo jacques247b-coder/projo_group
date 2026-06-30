@@ -2,17 +2,16 @@ generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
-
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
-
 model User {
   id           String    @id @default(uuid())
   email        String?   @unique
   phone        String    @unique
+  pushSubscription String?
   name         String
   role         String    @default("PASSENGER")
   status       String    @default("PENDING_VERIFICATION")
@@ -26,10 +25,8 @@ model User {
   updatedAt    DateTime  @updatedAt
   wallet       Wallet?
   notifications Notification[]
-
   @@map("users")
 }
-
 model Wallet {
   id            String        @id @default(uuid())
   userId        String        @unique
@@ -38,10 +35,8 @@ model Wallet {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   transactions  Transaction[]
-
   @@map("wallets")
 }
-
 model Transaction {
   id          String   @id @default(uuid())
   walletId    String
@@ -53,10 +48,8 @@ model Transaction {
   referenceId String?
   paymentRef  String?
   createdAt   DateTime @default(now())
-
   @@map("transactions")
 }
-
 model Ride {
   id             String    @id @default(uuid())
   passengerId    String
@@ -79,10 +72,8 @@ model Ride {
   paidWithWallet Boolean   @default(false)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
-
   @@map("rides")
 }
-
 model Delivery {
   id             String   @id @default(uuid())
   trackingNumber String   @unique @default(cuid())
@@ -102,10 +93,8 @@ model Delivery {
   status         String   @default("PENDING")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-
   @@map("deliveries")
 }
-
 model Notification {
   id        String   @id @default(uuid())
   userId    String
@@ -115,6 +104,47 @@ model Notification {
   type      String   @default("general")
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
-
   @@map("notifications")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  category    String
+  priceZar    Float    @default(0)
+  stockQty    Int      @default(999)
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@map("products")
+}
+
+model PromoCode {
+  id              String   @id @default(uuid())
+  code            String   @unique
+  description     String?
+  discountType    String
+  discountValue   Float
+  minOrderAmount  Float?
+  maxDiscount     Float?
+  maxUses         Int?
+  usedCount       Int      @default(0)
+  oneTimePerUser  Boolean  @default(true)
+  isActive        Boolean  @default(true)
+  expiresAt       DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  usages          PromoUsage[]
+}
+
+model PromoUsage {
+  id           String    @id @default(uuid())
+  promoCodeId  String
+  promoCode    PromoCode @relation(fields: [promoCodeId], references: [id])
+  userId       String
+  usedAt       DateTime  @default(now())
+
+  @@unique([promoCodeId, userId])
 }
