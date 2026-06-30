@@ -173,8 +173,10 @@ export default function ProductOptionsPage() {
                       ))}
                     </div>
 
-                    {/* Add choice inline */}
-                    <AddChoiceForm groupId={group.id} onAdd={addChoice} />
+                    {/* Add choice inline (not for TEXT groups) */}
+                    {group.type !== "TEXT" && (
+                      <AddChoiceForm groupId={group.id} onAdd={addChoice} />
+                    )}
                   </div>
                 ))}
 
@@ -190,6 +192,7 @@ export default function ProductOptionsPage() {
                       onChange={e => setNewGroupType(e.target.value)}>
                       <option value="SINGLE">Single choice</option>
                       <option value="MULTI">Multi-select</option>
+                      <option value="TEXT">Text input (no choices)</option>
                     </select>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>

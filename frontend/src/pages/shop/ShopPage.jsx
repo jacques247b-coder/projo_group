@@ -30,6 +30,7 @@ function CheckoutModal({ product, onClose }) {
   const { user } = useAuth();
   const [groups, setGroups] = useState([]);
   const [selectedChoices, setSelectedChoices] = useState({}); // { groupId: [choiceId, ...] }
+  const [textValues, setTextValues] = useState({}); // { groupId: "text input value" }
   const [quote, setQuote] = useState(null);
   const [loadingQuote, setLoadingQuote] = useState(true);
   const [date, setDate] = useState("");
@@ -128,8 +129,13 @@ function CheckoutModal({ product, onClose }) {
 
     // Check required groups
     for (const group of groups) {
-      if (group.required && !(selectedChoices[group.id] || []).length) {
-        return toast.error(`Please select an option for "${group.name}"`);
+      if (group.required) {
+        if (group.type === "TEXT" && !(textValues[group.id] || "").trim()) {
+          return toast.error(`Please fill in "${group.name}"`);
+        }
+        if (group.type !== "TEXT" && !(selectedChoices[group.id] || []).length) {
+          return toast.error(`Please select an option for "${group.name}"`);
+        }
       }
     }
 
@@ -139,10 +145,21 @@ function CheckoutModal({ product, onClose }) {
 
     setSubmitting(true);
     try {
+      // Combine text-option answers into notes
+      const textAnswers = Object.entries(textValues)
+        .filter(([_, v]) => v && v.trim())
+        .map(([groupId, v]) => {
+          const group = groups.find(g => g.id === groupId);
+          return group ? `${group.name}: ${v}` : null;
+        })
+        .filter(Boolean)
+        .join("\n");
+      const combinedNotes = [textAnswers, notes].filter(Boolean).join("\n\n");
+
       const res = await api.post("/services/book", {
         productId: product.id,
         scheduledFor: date || null,
-        address, phone, notes,
+        address, phone, notes: combinedNotes,
         paidWithWallet: payWithWallet,
         selectedChoiceIds: getAllSelectedIds(),
       });
@@ -208,33 +225,51 @@ function CheckoutModal({ product, onClose }) {
               marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
               {group.name}
               {group.required && <span style={{ color: "#f87171", fontSize: "11px" }}>*</span>}
-              <span style={{ fontSize: "10px", color: "#7a5a55", fontWeight: "400" }}>
-                {group.type === "MULTI" ? "(select any)" : "(choose one)"}
-              </span>
+              {group.type !== "TEXT" && (
+                <span style={{ fontSize: "10px", color: "#7a5a55", fontWeight: "400" }}>
+                  {group.type === "MULTI" ? "(select any)" : "(choose one)"}
+                </span>
+              )}
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-              {group.choices.map(choice => (
-                <button key={choice.id} onClick={() => toggleChoice(group.id, choice.id, group.type === "MULTI")}
-                  style={{
-                    background: isSelected(group.id, choice.id) ? "rgba(232,184,75,0.15)" : BG3,
-                    border: `1px solid ${isSelected(group.id, choice.id) ? G : BORDER}`,
-                    borderRadius: "10px", padding: "8px 14px", cursor: "pointer",
-                    display: "flex", alignItems: "center", gap: "6px",
-                  }}>
-                  <span style={{ fontSize: "13px",
-                    color: isSelected(group.id, choice.id) ? G : "#b8a09a",
-                    fontWeight: isSelected(group.id, choice.id) ? "700" : "500" }}>
-                    {choice.label}
-                  </span>
-                  {choice.priceModifier !== 0 && (
-                    <span style={{ fontSize: "11px",
-                      color: isSelected(group.id, choice.id) ? G : "#7a5a55" }}>
-                      ({choice.priceModifier > 0 ? "+" : ""}R{choice.priceModifier})
+
+            {group.type === "TEXT" ? (
+              <textarea
+                value={textValues[group.id] || ""}
+                onChange={e => setTextValues(prev => ({ ...prev, [group.id]: e.target.value }))}
+                placeholder={`Enter ${group.name.toLowerCase()}...`}
+                rows={2}
+                style={{
+                  width: "100%", background: BG3, border: `1px solid ${BORDER}`,
+                  color: "#f5ede8", borderRadius: "10px", padding: "11px 14px",
+                  fontSize: "13px", fontFamily: "'DM Sans',sans-serif", outline: "none",
+                  resize: "vertical", boxSizing: "border-box",
+                }}
+              />
+            ) : (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                {group.choices.map(choice => (
+                  <button key={choice.id} onClick={() => toggleChoice(group.id, choice.id, group.type === "MULTI")}
+                    style={{
+                      background: isSelected(group.id, choice.id) ? "rgba(232,184,75,0.15)" : BG3,
+                      border: `1px solid ${isSelected(group.id, choice.id) ? G : BORDER}`,
+                      borderRadius: "10px", padding: "8px 14px", cursor: "pointer",
+                      display: "flex", alignItems: "center", gap: "6px",
+                    }}>
+                    <span style={{ fontSize: "13px",
+                      color: isSelected(group.id, choice.id) ? G : "#b8a09a",
+                      fontWeight: isSelected(group.id, choice.id) ? "700" : "500" }}>
+                      {choice.label}
                     </span>
-                  )}
-                </button>
-              ))}
-            </div>
+                    {choice.priceModifier !== 0 && (
+                      <span style={{ fontSize: "11px",
+                        color: isSelected(group.id, choice.id) ? G : "#7a5a55" }}>
+                        ({choice.priceModifier > 0 ? "+" : ""}R{choice.priceModifier})
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         ))}
 

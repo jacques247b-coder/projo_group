@@ -148,3 +148,45 @@ model PromoUsage {
 
   @@unique([promoCodeId, userId])
 }
+
+model ProductOptionGroup {
+  id          String                @id @default(uuid())
+  productId   String
+  name        String
+  type        String                @default("SINGLE")
+  required    Boolean               @default(false)
+  sortOrder   Int                   @default(0)
+  choices     ProductOptionChoice[]
+  createdAt   DateTime              @default(now())
+}
+
+model ProductOptionChoice {
+  id            String              @id @default(uuid())
+  groupId       String
+  group         ProductOptionGroup  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  label         String
+  priceModifier Float               @default(0)
+  sortOrder     Int                 @default(0)
+  createdAt     DateTime            @default(now())
+}
+
+model ServiceOrder {
+  id              String    @id @default(uuid())
+  userId          String
+  productId       String
+  productName     String
+  category        String
+  basePrice       Float
+  finalPrice      Float
+  loyaltyDiscount Float     @default(0)
+  loyaltyTier     String?
+  paidWithWallet  Boolean   @default(false)
+  status          String    @default("CONFIRMED")
+  scheduledFor    DateTime?
+  address         String
+  phone           String
+  notes           String?
+  selectedOptions String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
