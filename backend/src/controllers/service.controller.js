@@ -1,4 +1,6 @@
-// PROJO GROUP — Service Checkout Controller (with configurable options)
+// PROJO GROUP — Service Checkout Controller (Fixed quote logic)
+// FIX: requiresQuote now checks if product HAS option groups before
+// flagging price=0 as "needs quote" — products with options aren't quote-only
 const { PrismaClient } = require("@prisma/client");
 const { applyLoyaltyDiscount, calculatePoints } = require("../services/loyalty.service");
 const prisma = new PrismaClient();
@@ -8,7 +10,6 @@ async function getUserLoyaltyPoints(userId) {
   return calculatePoints(wallet?.balanceZar || 0);
 }
 
-// Calculate base price + selected option modifiers
 async function calculateOptionsTotal(productId, selectedChoiceIds = []) {
   if (!selectedChoiceIds.length) return { total: 0, selections: [] };
 
@@ -27,7 +28,7 @@ async function calculateOptionsTotal(productId, selectedChoiceIds = []) {
   return { total, selections };
 }
 
-// POST /api/services/book — book with selected options + loyalty discount
+// POST /api/services/book
 exports.bookService = async (req, res) => {
   const { productId, scheduledFor, address, phone, notes, paidWithWallet, selectedChoiceIds } = req.body;
 
@@ -40,12 +41,13 @@ exports.bookService = async (req, res) => {
     if (!product) return res.status(404).json({ error: "Service not found" });
     if (!product.isActive) return res.status(400).json({ error: "This service is currently unavailable" });
 
-    // Check for required option groups
     const groups = await prisma.productOptionGroup.findMany({
       where: { productId },
       include: { choices: true },
     });
-    const requiredGroups = groups.filter(g => g.required);
+
+    // Check required groups (skip TEXT groups here — validated client-side via notes)
+    const requiredGroups = groups.filter(g => g.required && g.type !== "TEXT");
     for (const group of requiredGroups) {
       const hasSelection = group.choices.some(c => (selectedChoiceIds || []).includes(c.id));
       if (!hasSelection) {
@@ -53,22 +55,21 @@ exports.bookService = async (req, res) => {
       }
     }
 
-    // Calculate price: base + options
     const { total: optionsTotal, selections } = await calculateOptionsTotal(productId, selectedChoiceIds || []);
     const basePrice = product.priceZar + optionsTotal;
 
-    if (basePrice <= 0) {
+    // Only a true quote-only product if it has NO option groups AND price is 0
+    const hasOptions = groups.length > 0;
+    if (basePrice <= 0 && !hasOptions) {
       return res.status(400).json({
         error: "This service requires a custom quote. Please book via WhatsApp.",
       });
     }
 
-    // Apply loyalty discount
     const points = await getUserLoyaltyPoints(req.user.id);
     const discount = applyLoyaltyDiscount(basePrice, points);
     const finalPrice = discount.finalFare;
 
-    // Handle wallet payment
     if (paidWithWallet) {
       const wallet = await prisma.wallet.findUnique({ where: { userId: req.user.id } });
       if (!wallet || wallet.balanceZar < finalPrice) {
@@ -128,17 +129,24 @@ exports.bookService = async (req, res) => {
   }
 };
 
-// POST /api/services/quote — calculate live price preview with options + loyalty
+// POST /api/services/quote — FIXED: respects presence of option groups
 exports.getQuote = async (req, res) => {
   const { productId, selectedChoiceIds } = req.body;
   try {
     const product = await prisma.product.findUnique({ where: { id: productId } });
     if (!product) return res.status(404).json({ error: "Service not found" });
 
+    const groups = await prisma.productOptionGroup.findMany({
+      where: { productId },
+    });
+    const hasOptions = groups.length > 0;
+
     const { total: optionsTotal, selections } = await calculateOptionsTotal(productId, selectedChoiceIds || []);
     const basePrice = product.priceZar + optionsTotal;
 
-    if (basePrice <= 0) {
+    // Only flag as "requires quote" if there are truly no options to configure
+    // AND base price is 0 (a genuine quote-only service like Pest Control)
+    if (!hasOptions && basePrice <= 0) {
       return res.json({ requiresQuote: true, product, optionsTotal: 0, selections: [] });
     }
 

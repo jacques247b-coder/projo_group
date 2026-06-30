@@ -428,19 +428,16 @@ export default function ShopPage() {
   const categories = ["All", ...new Set(products.map(p => p.category))];
 
   const filtered = products.filter(p => {
-    const matchCat = activeCategory === "All" || p.category === activeCategory;
     const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.category.toLowerCase().includes(search.toLowerCase());
-    return matchCat && matchSearch && p.isActive;
+    return matchSearch && p.isActive;
   });
 
-  // Group products by category for "All" view
-  const grouped = activeCategory === "All"
-    ? categories.filter(c => c !== "All").map(cat => ({
-        category: cat,
-        items: filtered.filter(p => p.category === cat),
-      })).filter(g => g.items.length > 0)
-    : null;
+  // Always grouped by category — no filtering, everything visible
+  const grouped = categories.filter(c => c !== "All").map(cat => ({
+    category: cat,
+    items: filtered.filter(p => p.category === cat),
+  })).filter(g => g.items.length > 0);
 
   function renderProductCard(product) {
     return (
@@ -519,19 +516,22 @@ export default function ShopPage() {
               boxSizing: "border-box" }} />
         </div>
 
+        {/* Category quick-jump pills — scroll to section, don't filter */}
         <div style={{ display: "flex", gap: "6px", overflowX: "auto",
           paddingBottom: "4px", marginBottom: "1.25rem",
           scrollbarWidth: "none" }}>
-          {categories.map(cat => (
-            <button key={cat} onClick={() => setActiveCategory(cat)} style={{
-              background: activeCategory === cat ? G : BG2,
-              color: activeCategory === cat ? "#1a0808" : "#b8a09a",
-              border: `1px solid ${activeCategory === cat ? G : BORDER}`,
+          {categories.filter(c => c !== "All").map(cat => (
+            <button key={cat} onClick={() => {
+              const el = document.getElementById(`cat-${cat}`);
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }} style={{
+              background: BG2, color: "#b8a09a",
+              border: `1px solid ${BORDER}`,
               borderRadius: "50px", padding: "7px 14px", fontSize: "12px",
               fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap",
               flexShrink: 0, fontFamily: "'DM Sans',sans-serif",
             }}>
-              {cat === "All" ? "All Services" : `${CATEGORY_ICONS[cat] || "🛠️"} ${cat}`}
+              {CATEGORY_ICONS[cat] || "🛠️"} {cat}
             </button>
           ))}
         </div>
@@ -544,11 +544,11 @@ export default function ShopPage() {
           <div style={{ textAlign: "center", padding: "3rem", color: "#7a5a55" }}>
             No services found
           </div>
-        ) : grouped ? (
-          // Grouped by category view (when "All" selected)
+        ) : (
+          // Always grouped by category — fully visible, no filter clicks needed
           <div style={{ display: "flex", flexDirection: "column", gap: "1.75rem" }}>
             {grouped.map(g => (
-              <div key={g.category}>
+              <div key={g.category} id={`cat-${g.category}`} style={{ scrollMarginTop: "80px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px",
                   marginBottom: "10px" }}>
                   <span style={{ fontSize: "18px" }}>{CATEGORY_ICONS[g.category] || "🛠️"}</span>
@@ -563,11 +563,6 @@ export default function ShopPage() {
                 </div>
               </div>
             ))}
-          </div>
-        ) : (
-          // Single category filtered view
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {filtered.map(renderProductCard)}
           </div>
         )}
 
