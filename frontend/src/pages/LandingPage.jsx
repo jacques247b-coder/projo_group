@@ -190,11 +190,11 @@ export default function LandingPage() {
               onMouseOver={e=>e.target.style.color=G} onMouseOut={e=>e.target.style.color="#b8a09a"}>
               Services ↗
             </a>
-            <a href={TAKE_APP} target="_blank" rel="noreferrer"
+            <Link to="/shop"
               style={{ color:"#b8a09a", fontSize:"13px", fontWeight:"600", textDecoration:"none" }}
               onMouseOver={e=>e.target.style.color=G} onMouseOut={e=>e.target.style.color="#b8a09a"}>
-              Shop ↗
-            </a>
+              Shop
+            </Link>
             <a href="#pricing"
               style={{ color:"#b8a09a", fontSize:"13px", fontWeight:"600", textDecoration:"none" }}
               onMouseOver={e=>e.target.style.color=G} onMouseOut={e=>e.target.style.color="#b8a09a"}>
@@ -260,7 +260,7 @@ export default function LandingPage() {
           }}>
             {[
               { label:"🛠️ Services", href:TAKE_APP, external:true },
-              { label:"🛍️ Shop", href:TAKE_APP, external:true },
+              { label:"🛍️ Shop", href:"/shop", external:false },
               { label:"💰 Pricing", href:"#pricing", external:false },
               { label:"📞 Contact", href:"#contact", external:false },
             ].map(item => item.external ? (
@@ -356,12 +356,12 @@ export default function LandingPage() {
             background:G, color:"#1a0808", border:"none", borderRadius:"10px",
             padding:"14px 28px", fontSize:"15px", fontWeight:"800", cursor:"pointer",
           }}>Book a Ride →</button>
-          <button onClick={()=>window.open(TAKE_APP,"_blank")} style={{
+          <button onClick={()=>navigate("/shop")} style={{
             background:"transparent", color:G,
             border:"1px solid rgba(232,184,75,0.3)",
             borderRadius:"10px", padding:"14px 28px",
             fontSize:"15px", fontWeight:"700", cursor:"pointer",
-          }}>Browse Services ↗</button>
+          }}>Browse Services</button>
           <button onClick={()=>navigate("/driver/signup")} style={{
             background:"transparent", color:"#4ade80",
             border:"1px solid rgba(74,222,128,0.3)",
@@ -398,7 +398,7 @@ export default function LandingPage() {
               ["🏃","Runners","Errands & shopping"],
               ["🖥️","PC & Console Repair","Quote"],
             ].map(([icon,name,price,type])=>(
-              <div key={name} onClick={()=>type==="in-app" ? navigate("/login") : window.open(TAKE_APP,"_blank")} style={{
+              <div key={name} onClick={()=>type==="in-app" ? navigate("/login") : navigate("/shop")} style={{
                 background:"#1c0f0f", border:"1px solid rgba(232,184,75,0.12)",
                 borderRadius:"14px", padding:"1.25rem 1rem", textAlign:"center",
                 cursor:"pointer", transition:"all .2s",
@@ -413,10 +413,10 @@ export default function LandingPage() {
             ))}
           </div>
           <div style={{ textAlign:"center", marginTop:"2rem" }}>
-            <button onClick={()=>window.open(TAKE_APP,"_blank")} style={{
+            <button onClick={()=>navigate("/shop")} style={{
               background:G, color:"#1a0808", border:"none", borderRadius:"10px",
               padding:"14px 32px", fontSize:"15px", fontWeight:"700", cursor:"pointer",
-            }}>View All Services & Book ↗</button>
+            }}>View All Services & Book</button>
           </div>
         </div>
       </section>
@@ -579,7 +579,6 @@ export default function LandingPage() {
               { label:"📘 Facebook",  href:CONTACT.facebook,     bg:"#1877F2", color:"#fff" },
               { label:"📷 Instagram", href:CONTACT.instagram,    bg:"#E1306C", color:"#fff" },
               { label:"🎵 TikTok",   href:CONTACT.tiktok,       bg:"#010101", color:"#fff" },
-              { label:"🛍️ Shop",    href:TAKE_APP,              bg:G,         color:"#1a0808" },
               { label:"✉️ Email",   href:`mailto:${CONTACT.email}`, bg:"#120808", color:G },
             ].map(b=>(
               <a key={b.label} href={b.href} target="_blank" rel="noreferrer" style={{
@@ -589,6 +588,12 @@ export default function LandingPage() {
                 border:"1px solid rgba(232,184,75,0.1)",
               }}>{b.label}</a>
             ))}
+            <button onClick={()=>navigate("/shop")} style={{
+              display:"inline-flex", alignItems:"center", gap:"6px",
+              background:G, color:"#1a0808", border:"1px solid rgba(232,184,75,0.1)",
+              borderRadius:"10px", padding:"11px 18px", fontSize:"13px", fontWeight:"700",
+              cursor:"pointer",
+            }}>🛍️ Shop</button>
           </div>
         </div>
       </section>
@@ -630,11 +635,12 @@ export default function LandingPage() {
                 letterSpacing:"1px", textTransform:"uppercase", marginBottom:"1rem" }}>Services</h4>
               {["Rides","Courier","Cleaning","Maintenance","Painting","CCTV",
                 "Pest Control","Web & App","Marketing","Locksmith","Runners","PC & Console Repair"].map(s=>(
-                <a key={s} href={TAKE_APP} target="_blank" rel="noreferrer"
-                  style={{ display:"block", fontSize:"12px", color:"#7a5a55",
-                  textDecoration:"none", marginBottom:"5px" }}
+                <button key={s} onClick={()=>navigate(s==="Rides" ? "/login" : "/shop")}
+                  style={{ display:"block", background:"none", border:"none", padding:0,
+                  fontSize:"12px", color:"#7a5a55", textDecoration:"none", marginBottom:"5px",
+                  cursor:"pointer", textAlign:"left", fontFamily:"'DM Sans',sans-serif" }}
                   onMouseOver={e=>e.target.style.color=G}
-                  onMouseOut={e=>e.target.style.color="#7a5a55"}>{s}</a>
+                  onMouseOut={e=>e.target.style.color="#7a5a55"}>{s}</button>
               ))}
             </div>
 
@@ -647,9 +653,16 @@ export default function LandingPage() {
                 ["Facebook",  CONTACT.facebook],
                 ["Instagram", CONTACT.instagram],
                 ["TikTok",    CONTACT.tiktok],
-                ["Shop",      TAKE_APP],
+                ["Shop",      "/shop"],
                 ["Website",   CONTACT.website],
-              ].map(([l,href])=>(
+              ].map(([l,href])=> href.startsWith("/") ? (
+                <button key={l} onClick={()=>navigate(href)}
+                  style={{ display:"block", background:"none", border:"none", padding:0,
+                  fontSize:"12px", color:"#7a5a55", textDecoration:"none", marginBottom:"6px",
+                  cursor:"pointer", textAlign:"left", fontFamily:"'DM Sans',sans-serif" }}
+                  onMouseOver={e=>e.target.style.color=G}
+                  onMouseOut={e=>e.target.style.color="#7a5a55"}>{l}</button>
+              ) : (
                 <a key={l} href={href} target="_blank" rel="noreferrer"
                   style={{ display:"block", fontSize:"12px", color:"#7a5a55",
                   textDecoration:"none", marginBottom:"6px" }}
