@@ -548,7 +548,7 @@ export default function ShopPage() {
             }}>
               {CATEGORY_IMAGES[cat] ? (
                 <img src={CATEGORY_IMAGES[cat]} alt={cat}
-                  style={{ width: "20px", height: "20px", borderRadius: "50%", objectFit: "cover" }}
+                  style={{ width: "28px", height: "28px", borderRadius: "50%", objectFit: "cover" }}
                   onError={e => { e.target.style.display = "none"; }} />
               ) : (
                 <span>{CATEGORY_ICONS[cat] || "🛠️"}</span>
@@ -575,9 +575,9 @@ export default function ShopPage() {
                   marginBottom: "12px" }}>
                   {CATEGORY_IMAGES[g.category] ? (
                     <img src={CATEGORY_IMAGES[g.category]} alt={g.category}
-                      style={{ width: "32px", height: "32px", borderRadius: "50%",
+                      style={{ width: "44px", height: "44px", borderRadius: "50%",
                         objectFit: "cover", flexShrink: 0,
-                        boxShadow: "0 0 8px rgba(232,184,75,0.3)" }}
+                        boxShadow: "0 0 10px rgba(232,184,75,0.4)" }}
                       onError={e => { e.target.style.display = "none"; }} />
                   ) : (
                     <span style={{ fontSize: "18px" }}>{CATEGORY_ICONS[g.category] || "🛠️"}</span>

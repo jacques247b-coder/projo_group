@@ -203,7 +203,7 @@ export default function CourierPage() {
             {booked.trackingNumber && (
               <div style={{ background: BG3, borderRadius: "10px", padding: "1rem", marginBottom: "1rem" }}>
                 <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "4px" }}>Tracking Number</div>
-                <div style={{ fontFamily: "monospace", fontSize: "1.1rem", fontWeight: "700", color: G, letterSpacing: "2px" }}>{booked.trackingNumber}</div>
+                <div style={{ fontFamily: "monospace", fontSize: "0.95rem", fontWeight: "700", color: G, letterSpacing: "1px", wordBreak: "break-all", overflowWrap: "anywhere" }}>{booked.trackingNumber}</div>
               </div>
             )}
             <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.5rem", fontWeight: "800", color: G, marginBottom: "1.5rem" }}>{formatFare(booked.fare || 60)}</div>
@@ -224,7 +224,7 @@ export default function CourierPage() {
             {trackResult && (
               <div style={{ ...card, border: `1px solid ${BORDER}` }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                  <div style={{ fontFamily: "monospace", color: G, fontWeight: "700", fontSize: "13px" }}>{trackResult.trackingNumber}</div>
+                  <div style={{ fontFamily: "monospace", color: G, fontWeight: "700", fontSize: "13px", wordBreak: "break-all", overflowWrap: "anywhere" }}>{trackResult.trackingNumber}</div>
                   <div style={{ fontSize: "12px", fontWeight: "700", padding: "4px 12px", borderRadius: "50px", background: `${STATUS_COLOR[trackResult.status]}22`, color: STATUS_COLOR[trackResult.status] }}>{trackResult.status}</div>
                 </div>
                 <div style={{ fontSize: "13px", color: "#a8a49e", marginBottom: "8px" }}>📍 {trackResult.pickupAddress} → 🏁 {trackResult.dropoffAddress}</div>
@@ -247,7 +247,7 @@ export default function CourierPage() {
             ) : deliveries.map(d => (
               <div key={d.id} style={{ ...card, border: "1px solid rgba(232,184,75,0.1)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                  <div style={{ fontFamily: "monospace", fontSize: "12px", color: G }}>{d.trackingNumber}</div>
+                  <div style={{ fontFamily: "monospace", fontSize: "12px", color: G, wordBreak: "break-all", overflowWrap: "anywhere" }}>{d.trackingNumber}</div>
                   <div style={{ fontSize: "12px", fontWeight: "700", padding: "2px 10px", borderRadius: "50px", background: `${STATUS_COLOR[d.status]}22`, color: STATUS_COLOR[d.status] }}>{d.status}</div>
                 </div>
                 <div style={{ fontSize: "13px", color: "#f0ede8", marginBottom: "4px" }}>{d.description}</div>

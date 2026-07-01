@@ -468,16 +468,19 @@ export default function BookRidePage() {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "8px" }}>
             {[
-              ["🧹", "Cleaning"],
-              ["🔧", "Maintenance"],
-              ["🎨", "Painting"],
-              ["📷", "CCTV"],
-              ["🐛", "Pest Control"],
-              ["💻", "Geeks IT"],
-              ["🌐", "Web & App"],
-              ["📣", "Marketing"],
-              ["🐾", "Pet Care"],
-            ].map(([icon, name]) => (
+              ["/assets/categories/cleaning.png", "Cleaning"],
+              ["/assets/categories/maintenance.png", "Maintenance"],
+              ["/assets/categories/painting.png", "Painting"],
+              ["/assets/categories/cctv.png", "CCTV"],
+              ["/assets/categories/locksmith.png", "Locksmith"],
+              ["/assets/categories/pest-control.png", "Pest Control"],
+              ["/assets/categories/runners-deliveries.png", "Runners"],
+              ["/assets/categories/pc-console-repair.png", "PC & Console"],
+              ["/assets/categories/laundry.png", "Laundry"],
+              ["/assets/categories/web-app-development.png", "Web & App"],
+              ["/assets/categories/digital-marketing.png", "Marketing"],
+              ["/assets/categories/products-shop.png", "Products"],
+            ].map(([img, name]) => (
               <button key={name} onClick={() => navigate("/shop")} style={{
                 background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px",
                 padding: "10px 6px", cursor: "pointer", textAlign: "center",
@@ -485,7 +488,11 @@ export default function BookRidePage() {
               }}
               onMouseOver={e => e.currentTarget.style.borderColor = G}
               onMouseOut={e => e.currentTarget.style.borderColor = BORDER}>
-                <div style={{ fontSize: "18px", marginBottom: "4px" }}>{icon}</div>
+                <img src={img} alt={name} style={{
+                  width: "36px", height: "36px", borderRadius: "50%",
+                  objectFit: "cover", marginBottom: "4px",
+                  boxShadow: "0 0 6px rgba(232,184,75,0.25)"
+                }} onError={e => e.target.style.display="none"} />
                 <div style={{ fontSize: "10px", fontWeight: "700", color: "#b8a09a" }}>{name}</div>
               </button>
             ))}
