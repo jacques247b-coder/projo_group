@@ -531,10 +531,10 @@ export default function ShopPage() {
               boxSizing: "border-box" }} />
         </div>
 
-        {/* Category quick-jump pills — scroll to section, don't filter */}
+        {/* Category quick-jump pills — scroll to section, in correct order */}
         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap",
           marginBottom: "1.25rem" }}>
-          {categories.filter(c => c !== "All").map(cat => (
+          {CATEGORY_ORDER.filter(cat => grouped.some(g => g.category === cat)).map(cat => (
             <button key={cat} onClick={() => {
               const el = document.getElementById(`cat-${cat}`);
               if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });

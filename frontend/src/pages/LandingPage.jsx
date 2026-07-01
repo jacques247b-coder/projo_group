@@ -378,19 +378,20 @@ export default function LandingPage() {
             gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",
             gap:"10px" }}>
             {[
-              ["🚗","Rides","R60 flat", "in-app"],
-              ["📦","Courier","Same-day"],
-              ["🧹","Cleaning","Quote"],
-              ["🔧","Maintenance","R350 callout"],
-              ["🎨","Painting","R28/sqm"],
-              ["🐛","Pest Control","Quote"],
-              ["📷","CCTV","Quote"],
-              ["💻","Web & App","From R2100"],
-              ["📣","Marketing","Quote"],
-              ["🔑","Locksmith","Quote"],
-              ["🏃","Runners","Errands & shopping"],
-              ["🖥️","PC & Console Repair","Quote"],
-            ].map(([icon,name,price,type])=>(
+              ["/assets/logo/PROJO_LOGO.png",  "Rides",                "R60 flat",          "in-app"],
+              ["/assets/categories/cleaning.png",          "Cleaning",             "Quote"],
+              ["/assets/categories/maintenance.png",       "Maintenance",          "R350 callout"],
+              ["/assets/categories/painting.png",          "Painting",             "R28/sqm"],
+              ["/assets/categories/cctv.png",              "CCTV",                 "Quote"],
+              ["/assets/categories/locksmith.png",         "Locksmith",            "From R200"],
+              ["/assets/categories/pest-control.png",      "Pest Control",         "Quote"],
+              ["/assets/categories/runners-deliveries.png","Runners & Deliveries", "From R60"],
+              ["/assets/categories/pc-console-repair.png", "PC & Console Repair",  "Quote"],
+              ["/assets/categories/laundry.png",           "Laundry Services",     "From R19/kg"],
+              ["/assets/categories/web-app-development.png","Web & App Dev",       "From R2100"],
+              ["/assets/categories/digital-marketing.png", "Digital Marketing",    "From R240"],
+              ["/assets/categories/products-shop.png",     "Products",             "Shop"],
+            ].map(([img,name,price,type])=>(
               <div key={name} onClick={()=>type==="in-app" ? navigate("/login") : navigate("/shop")} style={{
                 background:"#1c0f0f", border:"1px solid rgba(232,184,75,0.12)",
                 borderRadius:"14px", padding:"1.25rem 1rem", textAlign:"center",
@@ -398,8 +399,11 @@ export default function LandingPage() {
               }}
               onMouseOver={e=>e.currentTarget.style.borderColor=G}
               onMouseOut={e=>e.currentTarget.style.borderColor="rgba(232,184,75,0.12)"}>
-                <div style={{ fontSize:"28px", marginBottom:"8px" }}>{icon}</div>
-                <div style={{ fontFamily:"'Syne',sans-serif", fontSize:"13px",
+                <img src={img} alt={name} style={{
+                  width:"52px", height:"52px", borderRadius:"50%", objectFit:"cover",
+                  marginBottom:"8px", boxShadow:"0 0 10px rgba(232,184,75,0.3)"
+                }} onError={e=>e.target.style.display="none"} />
+                <div style={{ fontFamily:"'Syne',sans-serif", fontSize:"12px",
                   fontWeight:"700", color:"#f5ede8", marginBottom:"4px" }}>{name}</div>
                 <div style={{ fontSize:"11px", color:"#7a5a55" }}>{price}</div>
               </div>
