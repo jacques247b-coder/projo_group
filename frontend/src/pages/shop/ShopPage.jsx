@@ -448,11 +448,15 @@ export default function ShopPage() {
     return matchSearch && p.isActive;
   });
 
-  // Always grouped by category — no filtering, everything visible
-  const grouped = categories.filter(c => c !== "All").map(cat => ({
-    category: cat,
-    items: filtered.filter(p => p.category === cat),
-  })).filter(g => g.items.length > 0);
+  // Always grouped by category in correct order
+  const CATEGORY_ORDER = [
+    "Cleaning", "Maintenance", "Painting", "CCTV", "Locksmith",
+    "Pest Control", "Runners & Deliveries", "PC & Console Repair",
+    "Laundry Services", "Web & App Development", "Digital Marketing", "Products"
+  ];
+  const grouped = CATEGORY_ORDER
+    .map(cat => ({ category: cat, items: filtered.filter(p => p.category === cat) }))
+    .filter(g => g.items.length > 0);
 
   function renderProductCard(product) {
     return (
