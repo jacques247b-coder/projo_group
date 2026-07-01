@@ -63,14 +63,11 @@ export default function Navbar() {
       }}>
 
         <Link to="/" style={{ display: "flex", alignItems: "center", gap: "8px", textDecoration: "none", flexShrink: 0 }}>
-          <div style={{
-            width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0,
-            background: "radial-gradient(circle at 35% 35%,#f5d078,#e8b84b,#c49a2f,#9a7520)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "9px", fontWeight: "800", color: "#2a1a00",
-            fontFamily: "'Syne',sans-serif",
+          <img src="/assets/logo/PROJO_LOGO.png" alt="PROJO" style={{
+            width: "42px", height: "42px", borderRadius: "50%", flexShrink: 0,
+            objectFit: "cover",
             boxShadow: "0 0 12px rgba(232,184,75,0.3)", border: "2px solid #c49a2f",
-          }}>PROJO</div>
+          }} />
           <span style={{ fontFamily: "'Syne',sans-serif", fontSize: "14px",
             fontWeight: "800", color: GOLD, letterSpacing: "1px" }}>
             PROJO GROUP
