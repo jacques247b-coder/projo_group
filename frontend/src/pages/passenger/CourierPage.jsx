@@ -24,7 +24,7 @@ export default function CourierPage() {
   const navigate = useNavigate();
   const [tab, setTab] = useState("book");
   const [form, setForm] = useState({
-    description: "", weight: "", isFragile: false,
+    description: "", isFragile: false,
     pickupAddress: "", pickupLat: "", pickupLng: "",
     recipientName: "", recipientPhone: "",
     dropoffAddress: "", dropoffLat: "", dropoffLng: "",
@@ -129,7 +129,7 @@ export default function CourierPage() {
               <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "700", color: "#f0ede8", marginBottom: "12px", fontSize: "13px" }}>📦 Package Details</div>
               <input style={inp} placeholder="What are you sending? (e.g. Documents, Clothes)" required value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "10px" }}>
-                <input style={inp} placeholder="Weight (kg)" type="number" step="0.1" value={form.weight} onChange={e => setForm(f => ({ ...f, weight: e.target.value }))} />
+                
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px 14px", cursor: "pointer" }} onClick={() => setForm(f => ({ ...f, isFragile: !f.isFragile }))}>
                   <div style={{ width: "18px", height: "18px", borderRadius: "4px", border: "2px solid rgba(232,184,75,0.4)", display: "flex", alignItems: "center", justifyContent: "center", background: form.isFragile ? G : "transparent" }}>
                     {form.isFragile && <span style={{ fontSize: "11px", color: "#0a0a0a", fontWeight: "800" }}>✓</span>}
@@ -209,7 +209,7 @@ export default function CourierPage() {
             <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.5rem", fontWeight: "800", color: G, marginBottom: "1.5rem" }}>{formatFare(booked.fare || 60)}</div>
             <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
               <button onClick={() => { setTab("track"); if (booked.trackingNumber) setTrackingNo(booked.trackingNumber); }} style={{ background: G, color: "#0a0a0a", border: "none", borderRadius: "10px", padding: "10px 20px", fontWeight: "700", cursor: "pointer" }}>Track Parcel</button>
-              <button onClick={() => { setBooked(null); setForm({ description: "", weight: "", isFragile: false, pickupAddress: "", pickupLat: "", pickupLng: "", recipientName: "", recipientPhone: "", dropoffAddress: "", dropoffLat: "", dropoffLng: "" }); }} style={{ background: BG3, color: "#a8a49e", border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "10px 20px", fontWeight: "600", cursor: "pointer" }}>Book Another</button>
+              <button onClick={() => { setBooked(null); setForm({ description: "", isFragile: false, pickupAddress: "", pickupLat: "", pickupLng: "", recipientName: "", recipientPhone: "", dropoffAddress: "", dropoffLat: "", dropoffLng: "" }); }} style={{ background: BG3, color: "#a8a49e", border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "10px 20px", fontWeight: "600", cursor: "pointer" }}>Book Another</button>
             </div>
           </div>
         )}

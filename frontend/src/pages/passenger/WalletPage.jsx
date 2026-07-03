@@ -257,11 +257,11 @@ export default function WalletPage() {
         <div style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "1.25rem", marginBottom: "1.5rem",
           display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
           <div>
-            <div style={{ fontWeight: "700", color: "#f0ede8", marginBottom: "4px" }}>🎁 Invite Friends — Earn R50 Each</div>
-            <div style={{ fontSize: "12px", color: "#6b6760" }}>Share PROJO GROUP. Both you and your friend get R50 wallet credit.</div>
+            <div style={{ fontWeight: "700", color: "#f0ede8", marginBottom: "4px" }}>🎁 Invite Friends — Earn R50</div>
+            <div style={{ fontSize: "12px", color: "#6b6760" }}>Share PROJO GROUP. You earn R50 wallet credit when your friend signs up and books their first service.</div>
           </div>
           <button onClick={() => {
-            const msg = encodeURIComponent(`Join PROJO GROUP — Rustenburg's ride, delivery & services app! Get R50 wallet credit when you sign up. ${CONTACT.website}`);
+            const msg = encodeURIComponent(`Join PROJO GROUP — Rustenburg's ride, delivery & services app! Download now: ${CONTACT.website}`);
             window.open(`https://wa.me/?text=${msg}`, "_blank");
           }} style={{ background: "#25D366", color: "#fff", border: "none", borderRadius: "10px", padding: "10px 18px",
             fontWeight: "700", fontSize: "13px", cursor: "pointer", whiteSpace: "nowrap" }}>💬 Share</button>
