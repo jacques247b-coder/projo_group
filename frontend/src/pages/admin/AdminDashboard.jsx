@@ -274,6 +274,33 @@ export default function AdminDashboard() {
         )}
 
         {/* ── STATS ── */}
+        {!loading && tab === "stats" && (
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1rem" }}>
+            <button
+              onClick={() => {
+                const token = localStorage.getItem("projo_token");
+                const url = `${process.env.REACT_APP_API_URL || "http://localhost:5000/api"}/admin/export/emails`;
+                fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+                  .then(r => r.blob())
+                  .then(blob => {
+                    const a = document.createElement("a");
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `PROJO_Subscribers_${new Date().toISOString().slice(0,10)}.xlsx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                  })
+                  .catch(() => toast.error("Export failed"));
+              }}
+              style={{
+                background: "#1a7520", color: "#fff", border: "none",
+                borderRadius: "10px", padding: "10px 20px", fontSize: "13px",
+                fontWeight: "700", cursor: "pointer",
+              }}>
+              📥 Export Emails for MailerLite
+            </button>
+          </div>
+        )}
         {!loading && tab === "stats" && stats && (
           <div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",

@@ -201,3 +201,68 @@ exports.deleteProduct = async (req, res) => {
     res.status(500).json({ error: "Could not delete product" });
   }
 };
+
+// GET /api/admin/export/emails — export all user emails to Excel (MailerLite format)
+exports.exportEmailsExcel = async (req, res) => {
+  try {
+    const ExcelJS = require("exceljs");
+
+    const users = await prisma.user.findMany({
+      where: { email: { not: null }, status: { not: "SUSPENDED" } },
+      select: {
+        name: true, email: true, phone: true,
+        role: true, createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const wb = new ExcelJS.Workbook();
+    wb.creator = "PROJO GROUP";
+    wb.created = new Date();
+
+    const ws = wb.addWorksheet("PROJO Subscribers");
+
+    // MailerLite-compatible columns
+    ws.columns = [
+      { header: "Email",      key: "email",     width: 35 },
+      { header: "Name",       key: "name",      width: 25 },
+      { header: "Phone",      key: "phone",     width: 18 },
+      { header: "Role",       key: "role",      width: 12 },
+      { header: "Signup Date",key: "date",      width: 20 },
+    ];
+
+    // Style header row
+    const headerRow = ws.getRow(1);
+    headerRow.font = { bold: true, color: { argb: "FF1A0808" }, size: 11 };
+    headerRow.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFE8B84B" } };
+    headerRow.alignment = { horizontal: "center", vertical: "middle" };
+    headerRow.height = 22;
+
+    // Add data
+    users.forEach(u => {
+      const row = ws.addRow({
+        email: u.email,
+        name:  u.name,
+        phone: u.phone,
+        role:  u.role,
+        date:  u.createdAt ? new Date(u.createdAt).toLocaleDateString("en-ZA") : "",
+      });
+      row.font = { size: 10 };
+    });
+
+    // Totals row
+    ws.addRow([]);
+    const totalRow = ws.addRow([`Total Subscribers: ${users.length}`]);
+    totalRow.font = { bold: true, size: 10, color: { argb: "FFC49A2F" } };
+
+    // Set response headers for download
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", `attachment; filename=PROJO_Subscribers_${new Date().toISOString().slice(0,10)}.xlsx`);
+
+    await wb.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    console.error("[PROJO Admin] Export error:", err.message);
+    res.status(500).json({ error: "Could not export emails: " + err.message });
+  }
+};

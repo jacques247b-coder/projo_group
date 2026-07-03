@@ -32,6 +32,9 @@ router.delete("/promo-codes/:id", promo.deleteCode);
 
 // Service orders
 router.get("/service-orders", service.getAllOrders);
+
+// Email export for MailerLite
+router.get("/export/emails", admin.exportEmailsExcel);
 router.put("/service-orders/:id/status", service.updateOrderStatus);
 
 // Product options (configurable pricing)
