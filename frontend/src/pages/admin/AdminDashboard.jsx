@@ -480,22 +480,73 @@ export default function AdminDashboard() {
 
         {/* Product Modal */}
         {productModal && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
-            <div style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "1.5rem", width: "100%", maxWidth: "480px" }}>
-              <h3 style={{ fontFamily: "'Syne',sans-serif", color: G, margin: "0 0 1rem" }}>{productModal === "new" ? "Add Product" : "Edit Product"}</h3>
-              {[["Name","name","text"],["Description","description","text"],["Price (R)","priceZar","number"]].map(([label, key, type]) => (
-                <div key={key} style={{ marginBottom: "10px" }}>
-                  <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "1px" }}>{label}</div>
-                  <input type={type} value={productForm[key] || ""} onChange={e => setProductForm(f => ({ ...f, [key]: type === "number" ? parseFloat(e.target.value) : e.target.value }))} style={inp} />
-                </div>
-              ))}
-              <div style={{ marginBottom: "10px" }}>
-                <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "4px", textTransform: "uppercase" }}>Category</div>
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "flex-end", justifyContent: "center", padding: "0" }}>
+            <div style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "20px 20px 0 0", padding: "1.5rem", width: "100%", maxWidth: "600px", maxHeight: "90vh", overflowY: "auto" }}>
+              <h3 style={{ fontFamily: "'Syne',sans-serif", color: G, margin: "0 0 1.25rem" }}>{productModal === "new" ? "➕ Add Product" : "✏️ Edit Product"}</h3>
+
+              {/* Name */}
+              <div style={{ marginBottom: "12px" }}>
+                <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "1px" }}>Product Name *</div>
+                <input value={productForm.name || ""} onChange={e => setProductForm(f => ({ ...f, name: e.target.value }))} style={inp} placeholder="e.g. Nike Air Max" />
+              </div>
+
+              {/* Category */}
+              <div style={{ marginBottom: "12px" }}>
+                <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "1px" }}>Category</div>
                 <input value={productForm.category || "Products"} onChange={e => setProductForm(f => ({ ...f, category: e.target.value }))} style={inp} placeholder="Products" />
               </div>
-              <div style={{ display: "flex", gap: "8px", marginTop: "1rem" }}>
-                <button onClick={saveProduct} style={{ flex: 1, background: G, color: "#0a0a0a", border: "none", borderRadius: "8px", padding: "10px", fontWeight: "700", cursor: "pointer" }}>Save</button>
-                <button onClick={() => setProductModal(null)} style={{ flex: 1, background: BG3, color: "#a8a49e", border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "10px", cursor: "pointer" }}>Cancel</button>
+
+              {/* Price + Original Price */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                <div>
+                  <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "1px" }}>Price (R) *</div>
+                  <input type="number" value={productForm.priceZar || ""} onChange={e => setProductForm(f => ({ ...f, priceZar: parseFloat(e.target.value) || 0 }))} style={inp} placeholder="0" />
+                </div>
+                <div>
+                  <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "1px" }}>Original Price (R)</div>
+                  <input type="number" value={productForm.originalPrice || ""} onChange={e => setProductForm(f => ({ ...f, originalPrice: parseFloat(e.target.value) || 0 }))} style={inp} placeholder="0" />
+                </div>
+              </div>
+
+              {/* SKU + Stock */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                <div>
+                  <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "1px" }}>SKU</div>
+                  <input value={productForm.sku || ""} onChange={e => setProductForm(f => ({ ...f, sku: e.target.value }))} style={inp} placeholder="e.g. SKU-001" />
+                </div>
+                <div>
+                  <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "1px" }}>Stock Qty</div>
+                  <input type="number" value={productForm.stockQty ?? 999} onChange={e => setProductForm(f => ({ ...f, stockQty: parseInt(e.target.value) || 999 }))} style={inp} placeholder="999" />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div style={{ marginBottom: "12px" }}>
+                <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "1px" }}>Description</div>
+                <textarea value={productForm.description || ""} onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} style={{ ...inp, minHeight: "80px", resize: "vertical" }} placeholder="Describe this product..." />
+              </div>
+
+              {/* Image URL */}
+              <div style={{ marginBottom: "12px" }}>
+                <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "1px" }}>Image URL</div>
+                <input value={productForm.imageUrl || ""} onChange={e => setProductForm(f => ({ ...f, imageUrl: e.target.value }))} style={inp} placeholder="https://..." />
+                {productForm.imageUrl && <img src={productForm.imageUrl} alt="preview" style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "8px", marginTop: "8px", border: `1px solid ${BORDER}` }} onError={e => e.target.style.display="none"} />}
+              </div>
+
+              {/* Availability toggle */}
+              <div onClick={() => setProductForm(f => ({ ...f, isActive: !f.isActive }))} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px 14px", marginBottom: "1.25rem", cursor: "pointer" }}>
+                <div>
+                  <div style={{ fontSize: "13px", fontWeight: "600", color: "#f0ede8" }}>Visible / Active</div>
+                  <div style={{ fontSize: "11px", color: "#6b6760" }}>Show this product in the shop</div>
+                </div>
+                <div style={{ width: "44px", height: "24px", borderRadius: "12px", background: productForm.isActive !== false ? G : BG3, border: `1px solid ${BORDER}`, position: "relative", transition: "background .2s" }}>
+                  <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: "#0a0a0a", position: "absolute", top: "3px", left: productForm.isActive !== false ? "22px" : "3px", transition: "left .2s" }} />
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button onClick={saveProduct} style={{ flex: 1, background: G, color: "#0a0a0a", border: "none", borderRadius: "10px", padding: "12px", fontWeight: "800", fontSize: "14px", cursor: "pointer" }}>Save Product</button>
+                <button onClick={() => setProductModal(null)} style={{ flex: 1, background: BG3, color: "#a8a49e", border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", cursor: "pointer" }}>Cancel</button>
               </div>
             </div>
           </div>
