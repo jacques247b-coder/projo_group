@@ -30,18 +30,25 @@ const REQUIRED_DOCS = [
 export default function DriverSignupPage() {
   const navigate = useNavigate();
   const [step, setStep]     = useState(() => {
-    try { return parseInt(sessionStorage.getItem("drv_step") || "0"); } catch { return 0; }
+    try { return parseInt(localStorage.getItem("drv_step") || "0"); } catch { return 0; }
   });
   const [loading, setLoading] = useState(false);
 
   const [personal, setPersonal] = useState(() => {
     try {
-      const saved = sessionStorage.getItem("drv_personal");
+      const saved = localStorage.getItem("drv_personal");
       return saved ? JSON.parse(saved) : { name: "", phone: "", email: "", address: "", idNumber: "" };
     } catch { return { name: "", phone: "", email: "", address: "", idNumber: "" }; }
   });
-  const [vehicle, setVehicle] = useState({
+  const [vehicle, setVehicle] = useState(() => {
+    try {
+      const saved = localStorage.getItem("drv_vehicle");
+      return saved ? JSON.parse(saved) : {
     make: "", model: "", year: "", color: "", registration: "", vehicleType: "ECONOMY",
+  };
+    } catch { return {
+    make: "", model: "", year: "", color: "", registration: "", vehicleType: "ECONOMY",
+  }; }
   });
   const [docs, setDocs] = useState({
     operatorCard: null, vehiclePapers: null, idCopy: null,
@@ -49,10 +56,10 @@ export default function DriverSignupPage() {
   });
   const [otp, setOtp]         = useState("");
   const [otpSent, setOtpSent] = useState(() => {
-    try { return sessionStorage.getItem("drv_otpSent") === "true"; } catch { return false; }
+    try { return localStorage.getItem("drv_otpSent") === "true"; } catch { return false; }
   });
   const [verified, setVerified] = useState(() => {
-    try { return sessionStorage.getItem("drv_verified") === "true"; } catch { return false; }
+    try { return localStorage.getItem("drv_verified") === "true"; } catch { return false; }
   });
 
   const inp = {
@@ -88,7 +95,7 @@ export default function DriverSignupPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setOtpSent(true);
-      sessionStorage.setItem("drv_otpSent", "true");
+      localStorage.setItem("drv_otpSent", "true");
       toast.success(`Verification code sent to ${personal.email}`);
     } catch (err) {
       toast.error(err.message || "Failed to send OTP");
@@ -129,10 +136,10 @@ export default function DriverSignupPage() {
     setLoading(true);
     try {
       // Clear session storage on successful submit
-    sessionStorage.removeItem("drv_step");
-    sessionStorage.removeItem("drv_personal");
-    sessionStorage.removeItem("drv_otpSent");
-    sessionStorage.removeItem("drv_verified");
+    localStorage.removeItem("drv_step");
+    localStorage.removeItem("drv_personal");
+    localStorage.removeItem("drv_otpSent");
+    localStorage.removeItem("drv_verified");
     const token = localStorage.getItem("projo_token");
       const formData = new FormData();
 
@@ -163,6 +170,7 @@ export default function DriverSignupPage() {
       if (missingDocs.length > 0) {
         toast(`Some documents missing (${missingDocs.join(", ")}) — we'll request them via WhatsApp`, { icon: "ℹ️", duration: 5000 });
       }
+      localStorage.setItem("drv_step", "3");
       setStep(3);
     } catch (err) {
       toast.error(err.message || "Submission failed. Please try again.");
@@ -226,7 +234,7 @@ export default function DriverSignupPage() {
                 <label style={lbl}>Full Name *</label>
                 <input style={inp} placeholder="Your full name"
                   value={personal.name}
-                  onChange={e => { const v = e.target.value; setPersonal(p => { const n = {...p, name:v}; sessionStorage.setItem("drv_personal", JSON.stringify(n)); return n; }); }} />
+                  onChange={e => { const v = e.target.value; setPersonal(p => { const n = {...p, name:v}; localStorage.setItem("drv_personal", JSON.stringify(n)); return n; }); }} />
               </div>
               <div>
                 <label style={lbl}>SA Phone Number *</label>
@@ -235,14 +243,14 @@ export default function DriverSignupPage() {
                     fontWeight: "700", textAlign: "center" }}>+27</div>
                   <input style={{ ...inp, flex: 1 }} placeholder="83 123 4567"
                     type="tel" value={personal.phone}
-                    onChange={e => { const v = e.target.value; setPersonal(p => { const n = {...p, phone:v}; sessionStorage.setItem("drv_personal", JSON.stringify(n)); return n; }); }} />
+                    onChange={e => { const v = e.target.value; setPersonal(p => { const n = {...p, phone:v}; localStorage.setItem("drv_personal", JSON.stringify(n)); return n; }); }} />
                 </div>
               </div>
               <div>
                 <label style={lbl}>Email Address *</label>
                 <input style={inp} placeholder="your@email.com" type="email"
                   value={personal.email}
-                  onChange={e => { const v = e.target.value; setPersonal(p => { const n = {...p, email:v}; sessionStorage.setItem("drv_personal", JSON.stringify(n)); return n; }); }} />
+                  onChange={e => { const v = e.target.value; setPersonal(p => { const n = {...p, email:v}; localStorage.setItem("drv_personal", JSON.stringify(n)); return n; }); }} />
               </div>
               <div>
                 <label style={lbl}>ID Number *</label>
@@ -337,13 +345,13 @@ export default function DriverSignupPage() {
                   <label style={lbl}>Make *</label>
                   <input style={inp} placeholder="e.g. Toyota"
                     value={vehicle.make}
-                    onChange={e => setVehicle(v => ({ ...v, make: e.target.value }))} />
+                    onChange={e => { const val = e.target.value; setVehicle(v => { const n = {...v, make: val}; localStorage.setItem("drv_vehicle", JSON.stringify(n)); return n; }); }} />
                 </div>
                 <div>
                   <label style={lbl}>Model *</label>
                   <input style={inp} placeholder="e.g. Corolla"
                     value={vehicle.model}
-                    onChange={e => setVehicle(v => ({ ...v, model: e.target.value }))} />
+                    onChange={e => { const val = e.target.value; setVehicle(v => { const n = {...v, model: val}; localStorage.setItem("drv_vehicle", JSON.stringify(n)); return n; }); }} />
                 </div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
@@ -351,20 +359,20 @@ export default function DriverSignupPage() {
                   <label style={lbl}>Year *</label>
                   <input style={inp} placeholder="e.g. 2020" type="number"
                     value={vehicle.year}
-                    onChange={e => setVehicle(v => ({ ...v, year: e.target.value }))} />
+                    onChange={e => { const val = e.target.value; setVehicle(v => { const n = {...v, year: val}; localStorage.setItem("drv_vehicle", JSON.stringify(n)); return n; }); }} />
                 </div>
                 <div>
                   <label style={lbl}>Color *</label>
                   <input style={inp} placeholder="e.g. White"
                     value={vehicle.color}
-                    onChange={e => setVehicle(v => ({ ...v, color: e.target.value }))} />
+                    onChange={e => { const val = e.target.value; setVehicle(v => { const n = {...v, color: val}; localStorage.setItem("drv_vehicle", JSON.stringify(n)); return n; }); }} />
                 </div>
               </div>
               <div>
                 <label style={lbl}>Registration Number *</label>
                 <input style={inp} placeholder="e.g. JK 12 GP"
                   value={vehicle.registration}
-                  onChange={e => setVehicle(v => ({ ...v, registration: e.target.value }))} />
+                  onChange={e => { const val = e.target.value; setVehicle(v => { const n = {...v, registration: val}; localStorage.setItem("drv_vehicle", JSON.stringify(n)); return n; }); }} />
               </div>
               <div>
                 <label style={lbl}>Vehicle Type *</label>
