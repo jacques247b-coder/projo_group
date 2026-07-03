@@ -64,8 +64,8 @@ export default function Navbar() {
 
         <Link to="/" style={{ display: "flex", alignItems: "center", gap: "8px", textDecoration: "none", flexShrink: 0 }}>
           <img src="/assets/logo/PROJO_LOGO.png" alt="PROJO" style={{
-            width: "46px", height: "46px", flexShrink: 0,
-            objectFit: "contain",
+            width: "48px", height: "48px", flexShrink: 0,
+            objectFit: "contain", background: "transparent",
           }} />
           <span style={{ fontFamily: "'Syne',sans-serif", fontSize: "14px",
             fontWeight: "800", color: GOLD, letterSpacing: "1px" }}>
