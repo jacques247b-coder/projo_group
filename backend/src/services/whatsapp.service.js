@@ -1,18 +1,13 @@
 // PROJO GROUP — WhatsApp Notification Service (CallMeBot)
-// Setup: Send "I allow callmebot to send me messages" to +34 644 77 72 31 on WhatsApp
-// Then visit: https://www.callmebot.com/blog/free-api-whatsapp-messages/
-// You'll receive your API key via WhatsApp
-// Set CALLMEBOT_API_KEY and CALLMEBOT_PHONE in Render environment variables
-
+// Activated: +34 644 86 70 49 | Phone: 27766147986 | APIKey: set in env vars
 const https = require("https");
 
 async function sendWhatsAppNotification(message) {
-  const phone = process.env.CALLMEBOT_PHONE || "27766147386";
+  const phone = process.env.CALLMEBOT_PHONE || "27766147986";
   const apiKey = process.env.CALLMEBOT_API_KEY;
 
   if (!apiKey) {
-    // Fallback: log the message (until CallMeBot is set up)
-    console.log(`[PROJO WhatsApp] NOTIFICATION (no API key set):\n${message}`);
+    console.log(`[PROJO WhatsApp] No API key set — message:\n${message}`);
     return;
   }
 
@@ -24,11 +19,11 @@ async function sendWhatsAppNotification(message) {
       let data = "";
       res.on("data", chunk => data += chunk);
       res.on("end", () => {
-        console.log(`[PROJO WhatsApp] Notification sent: ${res.statusCode}`);
+        console.log(`[PROJO WhatsApp] ✅ Sent: ${res.statusCode}`);
         resolve(data);
       });
     }).on("error", (err) => {
-      console.error(`[PROJO WhatsApp] Error: ${err.message}`);
+      console.error(`[PROJO WhatsApp] ❌ Error: ${err.message}`);
       resolve(null);
     });
   });
