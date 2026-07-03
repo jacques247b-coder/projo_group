@@ -1,6 +1,7 @@
 // PROJO GROUP — Shop Page (Configurable In-App Checkout)
 // Customers select options (size, add-ons) and price calculates live
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { CONTACT } from "../../utils/constants";
 import api from "../../services/api";
@@ -417,6 +418,7 @@ function CheckoutModal({ product, onClose }) {
 }
 
 export default function ShopPage() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("All");
@@ -510,18 +512,26 @@ export default function ShopPage() {
       <Navbar />
       <div style={{ maxWidth: "700px", margin: "0 auto", padding: "84px 1rem 2rem" }}>
 
-        <div style={{ marginBottom: "1.5rem" }}>
-          <div style={{ fontSize: "11px", fontWeight: "700", color: G,
-            letterSpacing: "2px", textTransform: "uppercase", marginBottom: "4px" }}>
-            PROJO GROUP Services
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "1.5rem" }}>
+          <div>
+            <div style={{ fontSize: "11px", fontWeight: "700", color: G,
+              letterSpacing: "2px", textTransform: "uppercase", marginBottom: "4px" }}>
+              PROJO GROUP Services
+            </div>
+            <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.8rem",
+              fontWeight: "800", color: "#f5ede8", marginBottom: "4px" }}>
+              Book a Service
+            </h1>
+            <p style={{ fontSize: "13px", color: "#7a5a55" }}>
+              Book & pay in-app · Earn loyalty points · Discounts auto-applied
+            </p>
           </div>
-          <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.8rem",
-            fontWeight: "800", color: "#f5ede8", marginBottom: "4px" }}>
-            Book a Service
-          </h1>
-          <p style={{ fontSize: "13px", color: "#7a5a55" }}>
-            Book & pay in-app · Earn loyalty points · Discounts auto-applied
-          </p>
+          <button onClick={() => navigate("/products")} style={{
+            background: "rgba(232,184,75,0.1)", border: `1px solid ${G}`,
+            borderRadius: "8px", padding: "6px 12px", cursor: "pointer",
+            color: G, fontSize: "12px", fontWeight: "700",
+            fontFamily: "'DM Sans',sans-serif", flexShrink: 0, marginTop: "4px",
+          }}>🛍️ Products Shop</button>
         </div>
 
         <div style={{ position: "relative", marginBottom: "1rem" }}>
