@@ -13,16 +13,35 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   // On load — restore session from token
+  // IMPORTANT: Only clear token on 401 (invalid/expired), NOT on network errors
+  // (Render free tier sleeps — network errors should NOT log the user out)
   useEffect(() => {
     if (token) {
       authAPI.getMe()
-        .then(res => setUser(res.user))
-        .catch(() => {
-          localStorage.removeItem("projo_token");
-          localStorage.removeItem("projo_refresh_token");
-          setToken(null);
+        .then(res => {
+          setUser(res.user);
+          // Cache user data for offline/sleep recovery
+          localStorage.setItem("projo_user", JSON.stringify(res.user));
+          setLoading(false);
         })
-        .finally(() => setLoading(false));
+        .catch((err) => {
+          // Only clear token if backend explicitly rejects it (401)
+          // Network errors, timeouts, server sleeping = keep token, retry later
+          const status = err?.status || err?.response?.status;
+          if (status === 401 || status === 403) {
+            localStorage.removeItem("projo_token");
+            localStorage.removeItem("projo_refresh_token");
+            setToken(null);
+          } else {
+            // Network error or server sleeping — keep the user logged in
+            // Try to restore user from cached data if available
+            const cachedUser = localStorage.getItem("projo_user");
+            if (cachedUser) {
+              try { setUser(JSON.parse(cachedUser)); } catch {}
+            }
+          }
+          setLoading(false);
+        });
     } else {
       setLoading(false);
     }
@@ -40,6 +59,7 @@ export function AuthProvider({ children }) {
     if (res.refreshToken) localStorage.setItem("projo_refresh_token", res.refreshToken);
     setToken(res.token);
     setUser(res.user);
+    localStorage.setItem("projo_user", JSON.stringify(res.user));
     return res.user;
   }, []);
 
@@ -49,6 +69,7 @@ export function AuthProvider({ children }) {
     if (refreshToken) localStorage.setItem("projo_refresh_token", refreshToken);
     setToken(newToken);
     setUser(userData);
+    localStorage.setItem("projo_user", JSON.stringify(userData));
   }, []);
 
   const register = useCallback(async (data) => {
@@ -59,6 +80,7 @@ export function AuthProvider({ children }) {
     try { await authAPI.logout(); } catch {}
     localStorage.removeItem("projo_token");
     localStorage.removeItem("projo_refresh_token");
+    localStorage.removeItem("projo_user");
     setToken(null);
     setUser(null);
   }, []);

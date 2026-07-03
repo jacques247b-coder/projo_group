@@ -32,12 +32,21 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (e) {
-        localStorage.removeItem("projo_token");
-        localStorage.removeItem("projo_refresh_token");
-        window.location.href = "/login";
+        // Only clear token and redirect if it's a real auth failure
+        // not a network/timeout error (Render sleeping)
+        if (e.response?.status === 401 || e.response?.status === 403) {
+          localStorage.removeItem("projo_token");
+          localStorage.removeItem("projo_refresh_token");
+          localStorage.removeItem("projo_user");
+          window.location.href = "/login";
+        }
+        // Otherwise silently fail — user stays logged in with cached data
       }
     }
-    return Promise.reject(error.response?.data || error);
+    // Attach status to error for AuthContext to read
+    const err = error.response?.data || error;
+    if (error.response?.status) err.status = error.response.status;
+    return Promise.reject(err);
   }
 );
 
