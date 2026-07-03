@@ -378,9 +378,9 @@ export default function LandingPage() {
             gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",
             gap:"10px" }}>
             {[
-              ["/assets/logo/PROJO_LOGO.png",  "Rides",                "R60 flat",          "in-app"],
+              ["/assets/categories/projo-rides.png", "Rides",          "R60 flat",          "in-app"],
               ["/assets/categories/cleaning.png",          "Cleaning",             "Quote"],
-              ["/assets/categories/maintenance.png",       "Maintenance",          "R350 callout"],
+              ["/assets/categories/maintenance.png",       "Maintenance",          "R450 callout"],
               ["/assets/categories/painting.png",          "Painting",             "R28/sqm"],
               ["/assets/categories/cctv.png",              "CCTV",                 "Quote"],
               ["/assets/categories/locksmith.png",         "Locksmith",            "From R200"],
