@@ -386,12 +386,6 @@ export default function AdminDashboard() {
                       fontSize: "10px", fontWeight: "700", cursor: "pointer"
                     }}>{s}</button>
                   ))}
-                  <button onClick={() => sendWhatsApp(
-                    `🛠️ PROJO Service Order\n${o.productName}\nStatus: ${o.status}\nAddress: ${o.address}\nPhone: ${o.phone}\nDate: ${fmt(o.scheduledFor || o.createdAt)}\nFare: R${o.finalPrice}`
-                  )} style={{
-                    background: "#25D366", border: "none", borderRadius: "6px",
-                    padding: "4px 10px", color: "#fff", fontSize: "10px", fontWeight: "700", cursor: "pointer"
-                  }}>💬 WA</button>
                 </div>
               </div>
             ))}
