@@ -134,12 +134,9 @@ exports.bookService = async (req, res) => {
 ` +
         `Address: ${address}
 ` +
-        `${scheduledFor ? "Scheduled: " + new Date(scheduledFor).toLocaleString("en-ZA") + "
-" : ""}` +
-        `${optionsSummary ? "Options: " + optionsSummary + "
-" : ""}` +
-        `${notes ? "Notes: " + notes + "
-" : ""}` +
+        (scheduledFor ? "Scheduled: " + new Date(scheduledFor).toLocaleString("en-ZA") + "\n" : "") +
+        (optionsSummary ? "Options: " + optionsSummary + "\n" : "") +
+        (notes ? "Notes: " + notes + "\n" : "") +
         `Fare: R${finalPrice.toFixed(2)}
 ` +
         `Payment: ${paidWithWallet ? "PROJO Wallet" : "Pending"}
