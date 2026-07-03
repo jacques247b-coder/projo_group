@@ -112,7 +112,8 @@ export default function WalletPage() {
   }
 
   const balance = wallet?.balanceZar || 0;
-  const points  = wallet?.loyaltyPoints || Math.floor(balance / 10);
+  // Use actual stored loyaltyPoints, fallback to lifetimeSpend calculation
+  const points  = wallet?.loyaltyPoints || Math.floor((wallet?.lifetimeSpend || 0) / 10);
   const tier = getTier(points);
   const nextTier = tier ? TIERS[TIERS.indexOf(tier) + 1] : TIERS[0];
   const progressBase = tier ? tier.min : 0;

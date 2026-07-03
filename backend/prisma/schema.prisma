@@ -32,6 +32,8 @@ model Wallet {
   userId        String        @unique
   user          User          @relation(fields: [userId], references: [id])
   balanceZar    Float         @default(0)
+  loyaltyPoints Int           @default(0)
+  lifetimeSpend Float         @default(0)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   transactions  Transaction[]
