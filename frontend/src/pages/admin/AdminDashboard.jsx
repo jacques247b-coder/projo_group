@@ -240,7 +240,7 @@ export default function AdminDashboard() {
                   { label: "Total Users",  value: stats.totalUsers,     icon: "👥" },
                   { label: "Total Rides",  value: stats.totalRides,     icon: "🚗" },
                   { label: "Deliveries",   value: stats.totalDeliveries,icon: "📦" },
-                  { label: "Revenue",      value: `R${(stats.totalRevenue||0).toFixed(0)}`, icon: "💰" },
+                  { label: "Revenue",      value: `R${(parseFloat(stats.totalRevenue)||0).toFixed(0)}`, icon: "💰" },
                 ].map(s => (
                   <div key={s.label} style={{ ...card, flex: "1 1 180px", textAlign: "center" }}>
                     <div style={{ fontSize: "28px", marginBottom: "8px" }}>{s.icon}</div>
