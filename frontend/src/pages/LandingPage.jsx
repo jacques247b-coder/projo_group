@@ -300,7 +300,7 @@ export default function LandingPage() {
           flexShrink:0,
         }}>
           <img src="/assets/logo/PROJO_LOGO.png" alt="PROJO GROUP"
-            style={{ width:"100%", height:"100%", objectFit:"contain", display:"block" }}
+            style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
             onError={e=>{
               e.target.style.display="none";
               e.target.parentElement.style.background="radial-gradient(circle at 35% 35%,#f5d078,#e8b84b,#c49a2f,#9a7520)";
