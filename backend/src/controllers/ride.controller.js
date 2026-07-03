@@ -85,6 +85,42 @@ exports.bookRide = async (req, res) => {
     // Get passenger info for admin notification
     const passenger = await prisma.user.findUnique({ where: { id: req.user.id } });
 
+    // Send WhatsApp + email notification to admin
+    try {
+      const fareTxt = `R${finalFare.toFixed(2)}`;
+      const zone = fare.zone === "ZONE_1_FLAT" ? "Rustenburg Flat Rate" : `${fare.distanceKm}km @ R7.50/km`;
+
+      // Email via Resend
+      const { Resend } = require("resend");
+      if (process.env.RESEND_API_KEY) {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        await resend.emails.send({
+          from: process.env.RESEND_FROM_EMAIL || "noreply@projogroup.co.za",
+          to: "jacquesb247@gmail.com",
+          subject: `🚗 New Ride Booking — ${passenger?.name || "Customer"}`,
+          html: `
+            <h2>New Ride Booking — PROJO GROUP</h2>
+            <p><strong>Customer:</strong> ${passenger?.name || "N/A"}</p>
+            <p><strong>Phone:</strong> ${passenger?.phone || "N/A"}</p>
+            <hr/>
+            <p><strong>Pickup:</strong> ${pickupAddress}</p>
+            <p><strong>Dropoff:</strong> ${dropoffAddress}</p>
+            <p><strong>Vehicle:</strong> ${vehicleType}</p>
+            <p><strong>Zone:</strong> ${zone}</p>
+            <p><strong>Fare:</strong> ${fareTxt}</p>
+            <p><strong>Payment:</strong> ${paidWithWallet ? "PROJO Wallet" : "Cash"}</p>
+            ${discount.discountApplied > 0 ? `<p><strong>Loyalty Discount:</strong> ${discount.tierName} ${discount.discountPct}% off (R${discount.discountApplied} saved)</p>` : ""}
+            <p><strong>Time:</strong> ${new Date().toLocaleString("en-ZA")}</p>
+            <hr/>
+            <p><a href="https://app.projogroup.co.za/admin">View in Admin Panel</a></p>
+          `,
+        });
+      }
+      console.log(`[PROJO Ride] Admin notified — ${passenger?.name} booking ${pickupAddress} → ${dropoffAddress} ${fareTxt}`);
+    } catch (notifyErr) {
+      console.log(`[PROJO Ride] Notification error (non-fatal):`, notifyErr.message);
+    }
+
     res.status(201).json({
       message: discount.discountApplied > 0
         ? `Ride booked! ${discount.tierName} tier discount of ${discount.discountPct}% applied (R${discount.discountApplied} off)`
