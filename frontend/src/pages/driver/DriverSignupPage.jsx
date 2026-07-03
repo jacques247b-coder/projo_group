@@ -29,11 +29,16 @@ const REQUIRED_DOCS = [
 
 export default function DriverSignupPage() {
   const navigate = useNavigate();
-  const [step, setStep]     = useState(0);
+  const [step, setStep]     = useState(() => {
+    try { return parseInt(sessionStorage.getItem("drv_step") || "0"); } catch { return 0; }
+  });
   const [loading, setLoading] = useState(false);
 
-  const [personal, setPersonal] = useState({
-    name: "", phone: "", email: "", address: "", idNumber: "",
+  const [personal, setPersonal] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem("drv_personal");
+      return saved ? JSON.parse(saved) : { name: "", phone: "", email: "", address: "", idNumber: "" };
+    } catch { return { name: "", phone: "", email: "", address: "", idNumber: "" }; }
   });
   const [vehicle, setVehicle] = useState({
     make: "", model: "", year: "", color: "", registration: "", vehicleType: "ECONOMY",
@@ -43,8 +48,12 @@ export default function DriverSignupPage() {
     personPhoto: null, vehicleInside: null, vehicleOutside: null,
   });
   const [otp, setOtp]         = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [verified, setVerified] = useState(false);
+  const [otpSent, setOtpSent] = useState(() => {
+    try { return sessionStorage.getItem("drv_otpSent") === "true"; } catch { return false; }
+  });
+  const [verified, setVerified] = useState(() => {
+    try { return sessionStorage.getItem("drv_verified") === "true"; } catch { return false; }
+  });
 
   const inp = {
     width: "100%", background: BG3, border: `1px solid ${BORDER}`,
@@ -79,6 +88,7 @@ export default function DriverSignupPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setOtpSent(true);
+      sessionStorage.setItem("drv_otpSent", "true");
       toast.success(`Verification code sent to ${personal.email}`);
     } catch (err) {
       toast.error(err.message || "Failed to send OTP");
@@ -118,7 +128,12 @@ export default function DriverSignupPage() {
     }
     setLoading(true);
     try {
-      const token = localStorage.getItem("projo_token");
+      // Clear session storage on successful submit
+    sessionStorage.removeItem("drv_step");
+    sessionStorage.removeItem("drv_personal");
+    sessionStorage.removeItem("drv_otpSent");
+    sessionStorage.removeItem("drv_verified");
+    const token = localStorage.getItem("projo_token");
       const formData = new FormData();
 
       // Personal & vehicle data
@@ -143,6 +158,11 @@ export default function DriverSignupPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+      // Note missing docs for WhatsApp follow-up
+      const missingDocs = Object.entries(docs).filter(([k,v]) => !v).map(([k]) => k);
+      if (missingDocs.length > 0) {
+        toast(`Some documents missing (${missingDocs.join(", ")}) — we'll request them via WhatsApp`, { icon: "ℹ️", duration: 5000 });
+      }
       setStep(3);
     } catch (err) {
       toast.error(err.message || "Submission failed. Please try again.");
@@ -206,7 +226,7 @@ export default function DriverSignupPage() {
                 <label style={lbl}>Full Name *</label>
                 <input style={inp} placeholder="Your full name"
                   value={personal.name}
-                  onChange={e => setPersonal(p => ({ ...p, name: e.target.value }))} />
+                  onChange={e => { const v = e.target.value; setPersonal(p => { const n = {...p, name:v}; sessionStorage.setItem("drv_personal", JSON.stringify(n)); return n; }); }} />
               </div>
               <div>
                 <label style={lbl}>SA Phone Number *</label>
@@ -215,14 +235,14 @@ export default function DriverSignupPage() {
                     fontWeight: "700", textAlign: "center" }}>+27</div>
                   <input style={{ ...inp, flex: 1 }} placeholder="83 123 4567"
                     type="tel" value={personal.phone}
-                    onChange={e => setPersonal(p => ({ ...p, phone: e.target.value }))} />
+                    onChange={e => { const v = e.target.value; setPersonal(p => { const n = {...p, phone:v}; sessionStorage.setItem("drv_personal", JSON.stringify(n)); return n; }); }} />
                 </div>
               </div>
               <div>
                 <label style={lbl}>Email Address *</label>
                 <input style={inp} placeholder="your@email.com" type="email"
                   value={personal.email}
-                  onChange={e => setPersonal(p => ({ ...p, email: e.target.value }))} />
+                  onChange={e => { const v = e.target.value; setPersonal(p => { const n = {...p, email:v}; sessionStorage.setItem("drv_personal", JSON.stringify(n)); return n; }); }} />
               </div>
               <div>
                 <label style={lbl}>ID Number *</label>

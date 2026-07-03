@@ -82,6 +82,9 @@ exports.bookRide = async (req, res) => {
       },
     });
 
+    // Get passenger info for admin notification
+    const passenger = await prisma.user.findUnique({ where: { id: req.user.id } });
+
     res.status(201).json({
       message: discount.discountApplied > 0
         ? `Ride booked! ${discount.tierName} tier discount of ${discount.discountPct}% applied (R${discount.discountApplied} off)`
@@ -89,6 +92,7 @@ exports.bookRide = async (req, res) => {
       ride,
       loyaltyDiscount: discount.discountApplied,
       loyaltyTier: discount.tierName,
+      passenger: { name: passenger?.name, phone: passenger?.phone },
     });
   } catch (err) {
     console.error("[PROJO Ride] Book error:", err.message);
