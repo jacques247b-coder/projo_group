@@ -293,6 +293,47 @@ export default function AdminDashboard() {
                     <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px" }}>
                       <div style={{ fontSize: "11px", color: "#6b6760" }}>{fmt(r.createdAt)}</div>
                       {r.status !== "CANCELLED" && r.status !== "COMPLETED" && (
+                        <button onClick={e => { e.stopPropagation(); cancelRide(r.id); }} style={{
+                          background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: "6px",
+                          padding: "3px 10px", color: "#f87171", fontSize: "11px", fontWeight: "700", cursor: "pointer"
+                        }}>Cancel</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {rides.length === 0 && <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>No rides yet</div>}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── DELIVERIES ── */}
+        {!loading && tab === "deliveries" && (
+          <div>
+            {selectedDelivery ? (
+              <div style={{ ...card }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                  <h3 style={{ color: G, fontFamily: "'Syne',sans-serif", margin: 0 }}>Delivery Details</h3>
+                  <button onClick={() => setSelectedDelivery(null)} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "6px", padding: "4px 12px", color: "#a8a49e", cursor: "pointer" }}>← Back</button>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "13px" }}>
+                  <div><span style={{ color: "#6b6760" }}>Tracking:</span> <span style={{ color: G, fontFamily: "monospace", wordBreak: "break-all" }}>{selectedDelivery.trackingNumber}</span></div>
+                  <div><span style={{ color: "#6b6760" }}>Status:</span> <span style={{ color: STATUS_COLOR[selectedDelivery.status], fontWeight: "700" }}>{selectedDelivery.status}</span></div>
+                  <div><span style={{ color: "#6b6760" }}>Date/Time:</span> <span style={{ color: "#f0ede8" }}>{fmt(selectedDelivery.createdAt)}</span></div>
+                  <div><span style={{ color: "#6b6760" }}>Item:</span> <span style={{ color: "#f0ede8" }}>{selectedDelivery.description}</span></div>
+                  <div><span style={{ color: "#6b6760" }}>Pickup:</span> <span style={{ color: "#f0ede8" }}>{selectedDelivery.pickupAddress}</span></div>
+                  <div><span style={{ color: "#6b6760" }}>Dropoff:</span> <span style={{ color: "#f0ede8" }}>{selectedDelivery.dropoffAddress}</span></div>
+                  <div><span style={{ color: "#6b6760" }}>Recipient:</span> <span style={{ color: "#f0ede8" }}>{selectedDelivery.recipientName} · {selectedDelivery.recipientPhone}</span></div>
+                  <div><span style={{ color: "#6b6760" }}>Fare:</span> <span style={{ color: G, fontWeight: "700" }}>{formatFare(selectedDelivery.fare || 60)}</span></div>
+                </div>
+                <div style={{ display: "flex", gap: "8px", marginTop: "1rem", flexWrap: "wrap" }}>
+                  {["PICKED_UP","IN_TRANSIT","DELIVERED","CANCELLED"].map(s => (
+                    <button key={s} onClick={() => updateDeliveryStatus(selectedDelivery.id, s)} style={{
+                      background: BG3, border: `1px solid ${BORDER}`, borderRadius: "6px",
+                      padding: "6px 12px", color: s === "CANCELLED" ? "#f87171" : G,
+                      fontSize: "11px", fontWeight: "700", cursor: "pointer"
+                    }}>{s.replace(/_/g," ")}</button>
+                  ))}
                 </div>
               </div>
             ) : (
