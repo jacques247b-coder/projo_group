@@ -170,11 +170,11 @@ export default function LandingPage() {
         <div style={{ display:"flex", alignItems:"center", gap:"8px", cursor:"pointer", flexShrink:0 }}
           onClick={()=>navigate("/")}>
           <div style={{
-            width:"38px", height:"38px", borderRadius:"50%", flexShrink:0, overflow:"hidden",
+            width:"46px", height:"46px", flexShrink:0,
             border:"2px solid #c49a2f", boxShadow:"0 0 10px rgba(232,184,75,0.4)",
           }}>
             <img src="/assets/logo/PROJO_LOGO.png" alt="PROJO"
-              style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
+              style={{ width:"100%", height:"100%", objectFit:"contain", display:"block" }}
               onError={e=>{e.target.style.display="none"; e.target.parentElement.style.background="radial-gradient(circle at 35% 35%,#f5d078,#e8b84b,#c49a2f,#9a7520)";}} />
           </div>
           <span style={{ fontFamily:"'Syne',sans-serif", fontSize:"14px",
@@ -292,14 +292,14 @@ export default function LandingPage() {
 
         {/* Logo — fixed to not cut off */}
         <div style={{
-          width:"100px", height:"100px", borderRadius:"50%",
+          width:"100px", height:"100px",
           overflow:"hidden", marginBottom:"1.5rem",
           border:"3px solid #c49a2f",
           boxShadow:"0 0 30px rgba(232,184,75,0.5)",
           flexShrink:0,
         }}>
           <img src="/assets/logo/PROJO_LOGO.png" alt="PROJO GROUP"
-            style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }}
+            style={{ width:"100%", height:"100%", objectFit:"contain", display:"block" }}
             onError={e=>{
               e.target.style.display="none";
               e.target.parentElement.style.background="radial-gradient(circle at 35% 35%,#f5d078,#e8b84b,#c49a2f,#9a7520)";
@@ -610,7 +610,7 @@ export default function LandingPage() {
                 <div style={{ width:"40px", height:"40px", borderRadius:"50%",
                   overflow:"hidden", border:"2px solid #c49a2f", flexShrink:0 }}>
                   <img src="/assets/logo/PROJO_LOGO.png" alt="PROJO"
-                    style={{ width:"100%", height:"100%", objectFit:"cover" }}
+                    style={{ width:"100%", height:"100%", objectFit:"contain" }}
                     onError={e=>e.target.style.display="none"} />
                 </div>
                 <div>
