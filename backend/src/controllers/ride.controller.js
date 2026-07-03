@@ -5,6 +5,7 @@ const {
   awardPoints, deductPoints, refundWallet
 } = require("../services/loyalty.service");
 const { Resend } = require("resend");
+const { sendWhatsAppNotification } = require("../services/whatsapp.service");
 const prisma = new PrismaClient();
 
 function calcFare(pickupLat, pickupLng, dropoffLat, dropoffLng, vehicleType = "ECONOMY", distanceKm = 0) {
@@ -87,6 +88,31 @@ exports.bookRide = async (req, res) => {
         });
       }
     } catch (e) { console.log("[PROJO Ride] Email notification failed:", e.message); }
+
+    // Auto-forward to WhatsApp Business
+    try {
+      const passenger = await prisma.user.findUnique({ where: { id: req.user.id } }).catch(() => null);
+      await sendWhatsAppNotification(
+        `🚗 NEW RIDE BOOKING - PROJO GROUP
+
+` +
+        `Customer: ${passenger?.name || "Unknown"}
+` +
+        `Phone: ${passenger?.phone || "N/A"}
+` +
+        `Pickup: ${pickupAddress}
+` +
+        `Dropoff: ${dropoffAddress}
+` +
+        `Vehicle: ${vehicleType}
+` +
+        `Fare: R${finalFare.toFixed(2)}
+` +
+        `Payment: ${paidWithWallet ? "PROJO Wallet" : "Cash"}
+` +
+        `Time: ${new Date().toLocaleString("en-ZA")}`
+      );
+    } catch (e) { console.log("[PROJO Ride] WhatsApp notification failed:", e.message); }
 
     res.status(201).json({
       message: discount.discountApplied > 0

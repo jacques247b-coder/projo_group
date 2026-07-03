@@ -1,5 +1,6 @@
 // PROJO GROUP — Delivery Controller (with Loyalty Discount applied)
 const { PrismaClient } = require("@prisma/client");
+const { sendWhatsAppNotification } = require("../services/whatsapp.service");
 const { applyLoyaltyDiscount, calculatePoints } = require("../services/loyalty.service");
 const prisma = new PrismaClient();
 
@@ -52,6 +53,33 @@ exports.bookDelivery = async (req, res) => {
         status: "PENDING",
       },
     });
+
+    // Auto-forward to WhatsApp Business
+    try {
+      const sender = await prisma.user.findUnique({ where: { id: req.user.id } }).catch(() => null);
+      await sendWhatsAppNotification(
+        `📦 NEW DELIVERY BOOKING - PROJO GROUP
+
+` +
+        `Customer: ${sender?.name || "Unknown"}
+` +
+        `Phone: ${sender?.phone || "N/A"}
+` +
+        `Item: ${description || "Package"}
+` +
+        `Pickup: ${pickupAddress}
+` +
+        `Dropoff: ${dropoffAddress}
+` +
+        `Recipient: ${recipientName} - ${recipientPhone}
+` +
+        `Fare: R${finalFare.toFixed(2)}
+` +
+        `Tracking: ${delivery.trackingNumber}
+` +
+        `Time: ${new Date().toLocaleString("en-ZA")}`
+      );
+    } catch (e) { console.log("[PROJO Delivery] WhatsApp notification failed:", e.message); }
 
     res.status(201).json({
       message: discount.discountApplied > 0

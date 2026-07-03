@@ -3,6 +3,7 @@
 // flagging price=0 as "needs quote" — products with options aren't quote-only
 const { PrismaClient } = require("@prisma/client");
 const { applyLoyaltyDiscount, calculatePoints } = require("../services/loyalty.service");
+const { sendWhatsAppNotification } = require("../services/whatsapp.service");
 const prisma = new PrismaClient();
 
 async function getUserLoyaltyPoints(userId) {
@@ -114,6 +115,38 @@ exports.bookService = async (req, res) => {
         selectedOptions: JSON.stringify(selections),
       },
     });
+
+    // Auto-forward to WhatsApp Business
+    try {
+      const customer = await prisma.user.findUnique({ where: { id: req.user.id } }).catch(() => null);
+      const optionsSummary = selections.map(s => `${s.groupName}: ${s.choiceLabel}`).join(", ");
+      await sendWhatsAppNotification(
+        `🛠️ NEW SERVICE BOOKING - PROJO GROUP
+
+` +
+        `Service: ${product.name}
+` +
+        `Category: ${product.category}
+` +
+        `Customer: ${customer?.name || "Unknown"}
+` +
+        `Phone: ${phone}
+` +
+        `Address: ${address}
+` +
+        `${scheduledFor ? "Scheduled: " + new Date(scheduledFor).toLocaleString("en-ZA") + "
+" : ""}` +
+        `${optionsSummary ? "Options: " + optionsSummary + "
+" : ""}` +
+        `${notes ? "Notes: " + notes + "
+" : ""}` +
+        `Fare: R${finalPrice.toFixed(2)}
+` +
+        `Payment: ${paidWithWallet ? "PROJO Wallet" : "Pending"}
+` +
+        `Time: ${new Date().toLocaleString("en-ZA")}`
+      );
+    } catch (e) { console.log("[PROJO Service] WhatsApp notification failed:", e.message); }
 
     res.status(201).json({
       message: discount.discountApplied > 0

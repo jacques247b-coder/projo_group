@@ -1,595 +1,412 @@
-// ============================================================
-// PROJO GROUP — Admin Dashboard
-// Tabs: Stats · Users · Rides · Deliveries · Products
-// Admin can add, edit, delete products/services
-// ============================================================
+// PROJO GROUP — Admin Dashboard (Comprehensive Fix)
+// Fixes: Ride/Delivery cancel+view, Products split, Driver online status,
+//        Service Orders tab, WhatsApp notifications, Date/Time display
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/ui/Navbar";
-import { adminAPI } from "../../services/api";
 import api from "../../services/api";
-import { formatFare } from "../../utils/constants";
 import toast from "react-hot-toast";
+import { CONTACT } from "../../utils/constants";
 
-const G      = "#e8b84b";
-const BG     = "#0a0a0a";
-const BG2    = "#111111";
-const BG3    = "#1a1a1a";
+const G = "#e8b84b";
+const BG = "#0a0a0a";
+const BG2 = "#111111";
+const BG3 = "#1a1a1a";
 const BORDER = "rgba(232,184,75,0.15)";
+const card = {
+  background: BG2, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "1rem",
+};
+const STATUS_COLOR = {
+  ACTIVE: "#4ade80", PENDING_VERIFICATION: "#f59e0b", SUSPENDED: "#ef4444", BANNED: "#ef4444",
+  REQUESTED: "#60a5fa", DRIVER_ASSIGNED: "#a78bfa", IN_PROGRESS: "#f59e0b",
+  COMPLETED: "#4ade80", CANCELLED: "#ef4444", PENDING: "#f59e0b",
+  CONFIRMED: "#4ade80", ONLINE: "#4ade80", OFFLINE: "#6b6760",
+};
+const { formatFare } = { formatFare: (n) => `R${(n || 0).toFixed(2)}` };
 
 const TABS = [
   { key: "stats",      label: "📊 Stats" },
   { key: "users",      label: "👥 Users" },
   { key: "rides",      label: "🚗 Rides" },
   { key: "deliveries", label: "📦 Deliveries" },
-  { key: "products",   label: "🛠️ Products" },
-  { key: "drivers",    label: "🚗 Drivers" },
+  { key: "services",   label: "🛠️ Services" },
+  { key: "products",   label: "🛍️ Products" },
+  { key: "drivers",    label: "🚘 Drivers" },
 ];
 
-const STATUS_COLOR = {
-  ACTIVE: "#4ade80", SUSPENDED: "#f59e0b", BANNED: "#ef4444",
-  PENDING_VERIFICATION: "#60a5fa",
-  COMPLETED: "#4ade80", CANCELLED: "#ef4444", REQUESTED: "#f59e0b",
-  PENDING: "#f59e0b", DELIVERED: "#4ade80",
-};
+const SERVICE_CATEGORIES = [
+  "Cleaning","Maintenance","Painting","Pest Control","CCTV","Locksmith",
+  "Runners & Deliveries","PC & Console Repair","Laundry Services",
+  "Web & App Development","Digital Marketing",
+];
 
-// ── Product Form Modal ────────────────────────────────────────
-function ProductModal({ product, onClose, onSaved }) {
-  const [form, setForm] = useState(product || {
-    name: "", category: "", priceZar: 0, description: "", isActive: true,
+function fmt(dt) {
+  if (!dt) return "—";
+  return new Date(dt).toLocaleString("en-ZA", {
+    day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit"
   });
-  const [saving, setSaving] = useState(false);
-
-  const CATEGORIES = [
-    "Cleaning", "Maintenance", "Painting", "Pest Control",
-    "CCTV", "Web & App Development", "Marketing",
-    "Runners & Deliveries", "Locksmith", "Runners", "PC & Console Repair", "Other",
-  ];
-
-  async function handleSave() {
-    if (!form.name || !form.category) return toast.error("Name and category required");
-    setSaving(true);
-    try {
-      if (product?.id) {
-        await api.put(`/admin/products/${product.id}`, form);
-        toast.success("Product updated");
-      } else {
-        await api.post("/admin/products", form);
-        toast.success("Product added");
-      }
-      onSaved();
-      onClose();
-    } catch (err) {
-      toast.error(err?.error || "Failed to save product");
-    } finally { setSaving(false); }
-  }
-
-  const inp = {
-    width: "100%", background: BG3, border: `1px solid ${BORDER}`,
-    borderRadius: "10px", color: "#f0ede8", padding: "11px 14px",
-    fontSize: "14px", outline: "none", fontFamily: "'DM Sans',sans-serif",
-    boxSizing: "border-box", marginTop: "6px",
-  };
-  const lbl = {
-    fontSize: "11px", fontWeight: "700", color: "#6b6760",
-    letterSpacing: "0.8px", textTransform: "uppercase",
-    display: "block", marginTop: "12px",
-  };
-
-  return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 1000,
-      background: "rgba(0,0,0,0.8)", display: "flex",
-      alignItems: "center", justifyContent: "center", padding: "1rem" }}
-      onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ background: BG2, border: `1px solid ${BORDER}`,
-        borderRadius: "16px", padding: "1.5rem", width: "100%",
-        maxWidth: "500px", maxHeight: "90vh", overflowY: "auto" }}>
-
-        <div style={{ display: "flex", justifyContent: "space-between",
-          alignItems: "center", marginBottom: "1rem" }}>
-          <h3 style={{ fontFamily: "'Syne',sans-serif", color: "#f0ede8",
-            fontSize: "1.1rem", fontWeight: "700" }}>
-            {product?.id ? "Edit Product" : "Add New Product"}
-          </h3>
-          <button onClick={onClose} style={{ background: "none", border: "none",
-            color: "#6b6760", cursor: "pointer", fontSize: "20px" }}>✕</button>
-        </div>
-
-        <label style={lbl}>Service / Product Name *</label>
-        <input style={inp} placeholder="e.g. Standard Cleaning"
-          value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-
-        <label style={lbl}>Category *</label>
-        <select style={{ ...inp, cursor: "pointer" }}
-          value={form.category}
-          onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
-          <option value="">Select category...</option>
-          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-
-        <label style={lbl}>Price (ZAR) — enter 0 for "Get Quote"</label>
-        <input style={inp} type="number" min="0" step="0.01"
-          placeholder="0" value={form.priceZar}
-          onChange={e => setForm(f => ({ ...f, priceZar: parseFloat(e.target.value) || 0 }))} />
-
-        <label style={lbl}>Description</label>
-        <textarea style={{ ...inp, resize: "vertical", minHeight: "100px" }}
-          placeholder="Describe the service..."
-          value={form.description}
-          onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
-
-        <div style={{ display: "flex", alignItems: "center", gap: "10px",
-          marginTop: "14px", cursor: "pointer" }}
-          onClick={() => setForm(f => ({ ...f, isActive: !f.isActive }))}>
-          <div style={{ width: "44px", height: "24px", borderRadius: "12px",
-            background: form.isActive ? G : BG3,
-            border: `1px solid ${BORDER}`, position: "relative", transition: "background .2s" }}>
-            <div style={{ width: "18px", height: "18px", borderRadius: "50%",
-              background: "#0a0a0a", position: "absolute", top: "3px",
-              left: form.isActive ? "23px" : "3px", transition: "left .2s" }} />
-          </div>
-          <span style={{ fontSize: "13px", color: form.isActive ? G : "#6b6760" }}>
-            {form.isActive ? "Active — visible to customers" : "Inactive — hidden from customers"}
-          </span>
-        </div>
-
-        <div style={{ display: "flex", gap: "10px", marginTop: "1.25rem" }}>
-          <button onClick={handleSave} disabled={saving} style={{
-            flex: 1, background: G, color: "#0a0a0a", border: "none",
-            borderRadius: "10px", padding: "13px", fontSize: "14px",
-            fontWeight: "700", cursor: saving ? "not-allowed" : "pointer",
-            opacity: saving ? 0.7 : 1,
-          }}>{saving ? "Saving..." : product?.id ? "Update Product" : "Add Product"}</button>
-          <button onClick={onClose} style={{
-            background: BG3, color: "#6b6760", border: `1px solid ${BORDER}`,
-            borderRadius: "10px", padding: "13px 20px", cursor: "pointer",
-          }}>Cancel</button>
-        </div>
-      </div>
-    </div>
-  );
 }
 
-// ── Main Dashboard ────────────────────────────────────────────
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const [tab, setTab]           = useState("stats");
-  const [stats, setStats]       = useState(null);
-  const [users, setUsers]       = useState([]);
-  const [rides, setRides]       = useState([]);
+  const [tab, setTab] = useState("stats");
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [rides, setRides] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
   const [products, setProducts] = useState([]);
-  const [loading, setLoading]   = useState(false);
+  const [serviceOrders, setServiceOrders] = useState([]);
   const [pendingDrivers, setPendingDrivers] = useState([]);
-  const [editProduct, setEditProduct] = useState(null); // null=closed, {}=new, {id,...}=edit
-  const [search, setSearch]     = useState("");
+  const [allDrivers, setAllDrivers] = useState([]);
+  const [search, setSearch] = useState("");
+  const [selectedRide, setSelectedRide] = useState(null);
+  const [selectedDelivery, setSelectedDelivery] = useState(null);
+  const [productModal, setProductModal] = useState(null);
+  const [productForm, setProductForm] = useState({});
 
-  useEffect(() => { loadTab(tab); }, [tab]);
+  useEffect(() => { loadAll(); }, []);
 
-  async function loadTab(t) {
+  async function loadAll() {
     setLoading(true);
     try {
-      if (t === "stats") {
-        const res = await api.get("/admin/stats");
-        setStats(res.stats);
-      } else if (t === "users") {
-        const res = await api.get("/admin/users");
-        setUsers(res.users || []);
-      } else if (t === "rides") {
-        const res = await api.get("/admin/rides");
-        setRides(res.rides || []);
-      } else if (t === "deliveries") {
-        const res = await api.get("/admin/deliveries");
-        setDeliveries(res.deliveries || []);
-      } else if (t === "drivers") {
-        const res = await api.get("/drivers/pending");
-        setPendingDrivers(res.drivers || []);
-      } else if (t === "products") {
-        const res = await api.get("/admin/products");
-        setProducts(res.products || []);
-      }
+      const [s, u, r, d, p, dr, so] = await Promise.all([
+        api.get("/admin/stats"),
+        api.get("/admin/users"),
+        api.get("/admin/rides"),
+        api.get("/admin/deliveries"),
+        api.get("/admin/products"),
+        api.get("/admin/drivers"),
+        api.get("/admin/service-orders").catch(() => ({ orders: [] })),
+      ]);
+      setStats(s.stats);
+      setUsers(u.users || []);
+      setRides(r.rides || []);
+      setDeliveries(d.deliveries || []);
+      setProducts(p.products || []);
+      setServiceOrders(so.orders || []);
+      const drivers = dr.drivers || [];
+      setPendingDrivers(drivers.filter(d => d.status === "PENDING_VERIFICATION"));
+      setAllDrivers(drivers);
     } catch (err) {
-      toast.error("Could not load data");
+      toast.error("Could not load admin data");
     } finally { setLoading(false); }
+  }
+
+  async function cancelRide(id) {
+    if (!window.confirm("Cancel this ride? Wallet will be refunded if applicable.")) return;
+    try {
+      await api.post(`/rides/${id}/cancel`);
+      toast.success("Ride cancelled");
+      loadAll();
+    } catch { toast.error("Could not cancel ride"); }
+  }
+
+  async function updateRideStatus(id, status) {
+    try {
+      await api.put(`/admin/rides/${id}/status`, { status });
+      toast.success(`Status updated to ${status}`);
+      loadAll();
+    } catch { toast.error("Could not update status"); }
+  }
+
+  async function updateDeliveryStatus(id, status) {
+    try {
+      await api.put(`/admin/deliveries/${id}/status`, { status });
+      toast.success(`Delivery status updated`);
+      loadAll();
+    } catch { toast.error("Could not update delivery"); }
   }
 
   async function updateUserStatus(id, status) {
     try {
       await api.put(`/admin/users/${id}/status`, { status });
       toast.success("User status updated");
-      loadTab("users");
-    } catch { toast.error("Failed to update user"); }
+      loadAll();
+    } catch { toast.error("Failed"); }
+  }
+
+  async function approveDriver(id) {
+    try {
+      await api.post(`/admin/drivers/${id}/approve`);
+      toast.success("Driver approved!");
+      loadAll();
+    } catch { toast.error("Could not approve"); }
+  }
+
+  async function rejectDriver(id) {
+    const note = window.prompt("Reason for rejection (optional):");
+    try {
+      await api.post(`/admin/drivers/${id}/reject`, { note: note || "" });
+      toast.success("Driver rejected");
+      loadAll();
+    } catch { toast.error("Could not reject"); }
+  }
+
+  async function saveProduct() {
+    try {
+      if (productForm.id) {
+        await api.put(`/admin/products/${productForm.id}`, productForm);
+      } else {
+        await api.post("/admin/products", productForm);
+      }
+      toast.success("Product saved");
+      setProductModal(null);
+      loadAll();
+    } catch { toast.error("Could not save product"); }
   }
 
   async function deleteProduct(id) {
     if (!window.confirm("Delete this product?")) return;
     try {
       await api.delete(`/admin/products/${id}`);
-      toast.success("Product deleted");
-      loadTab("products");
-    } catch { toast.error("Failed to delete product"); }
+      toast.success("Deleted");
+      loadAll();
+    } catch { toast.error("Could not delete"); }
   }
 
-  async function approveDriver(id) {
+  async function updateServiceOrder(id, status) {
     try {
-      await api.post(`/drivers/${id}/approve`);
-      toast.success("Driver approved and activated!");
-      loadTab("drivers");
-    } catch { toast.error("Could not approve driver"); }
+      await api.put(`/admin/service-orders/${id}/status`, { status });
+      toast.success("Order updated");
+      loadAll();
+    } catch { toast.error("Could not update order"); }
   }
 
-  async function rejectDriver(id) {
-    const reason = window.prompt("Reason for rejection:");
-    try {
-      await api.post(`/drivers/${id}/reject`, { reason: reason || "" });
-      toast.success("Driver application rejected");
-      loadTab("drivers");
-    } catch { toast.error("Could not reject driver"); }
-  }
-
-  const card = {
-    background: BG2, border: `1px solid ${BORDER}`,
-    borderRadius: "14px", padding: "1.25rem",
-  };
-
-  const filteredProducts = products.filter(p =>
-    !search || p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.category.toLowerCase().includes(search.toLowerCase())
+  const filteredServices = products.filter(p =>
+    SERVICE_CATEGORIES.includes(p.category) &&
+    (!search || p.name.toLowerCase().includes(search.toLowerCase()) ||
+     p.category.toLowerCase().includes(search.toLowerCase()))
   );
 
-  return (
-    <div style={{ minHeight: "100vh", background: BG,
-      fontFamily: "'DM Sans',sans-serif", paddingTop: "64px" }}>
-      <Navbar />
-      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "1.5rem 1rem" }}>
+  const filteredProducts = products.filter(p =>
+    p.category === "Products" &&
+    (!search || p.name.toLowerCase().includes(search.toLowerCase()))
+  );
 
-        {/* Header */}
+  const inp = {
+    width: "100%", background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px",
+    color: "#f0ede8", padding: "8px 12px", fontSize: "13px", outline: "none",
+    fontFamily: "'DM Sans',sans-serif", boxSizing: "border-box",
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", background: BG, fontFamily: "'DM Sans',sans-serif", paddingTop: "64px" }}>
+      <Navbar />
+      <div style={{ maxWidth: "900px", margin: "0 auto", padding: "1.5rem 1rem" }}>
+
         <div style={{ marginBottom: "1.5rem" }}>
-          <div style={{ fontSize: "11px", fontWeight: "700", color: G,
-            letterSpacing: "2px", textTransform: "uppercase", marginBottom: "4px" }}>
-            PROJO GROUP
-          </div>
-          <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.6rem",
-            fontWeight: "800", color: "#f0ede8", margin: 0 }}>Admin Dashboard</h1>
+          <div style={{ fontSize: "11px", fontWeight: "700", color: G, letterSpacing: "2px", textTransform: "uppercase", marginBottom: "4px" }}>PROJO GROUP</div>
+          <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.5rem", fontWeight: "800", color: "#f0ede8", margin: 0 }}>Admin Dashboard</h1>
         </div>
 
         {/* Tabs */}
-        <div style={{ display: "flex", gap: "6px", overflowX: "auto",
-          paddingBottom: "4px", marginBottom: "1.5rem", scrollbarWidth: "none" }}>
+        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "1.5rem" }}>
           {TABS.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)} style={{
-              padding: "9px 16px", borderRadius: "50px", fontSize: "13px",
-              fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
-              background: tab === t.key ? G : BG3,
+            <button key={t.key} onClick={() => { setTab(t.key); setSearch(""); }} style={{
+              background: tab === t.key ? G : BG2,
               color: tab === t.key ? "#0a0a0a" : "#a8a49e",
-              border: tab === t.key ? "none" : `1px solid ${BORDER}`,
+              border: `1px solid ${tab === t.key ? G : BORDER}`,
+              borderRadius: "8px", padding: "7px 14px", fontSize: "12px",
+              fontWeight: "700", cursor: "pointer", fontFamily: "'DM Sans',sans-serif",
             }}>{t.label}</button>
           ))}
         </div>
 
-        {loading && (
-          <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>
-            Loading...
-          </div>
-        )}
+        {loading && <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>Loading...</div>}
 
         {/* ── STATS ── */}
         {!loading && tab === "stats" && (
-          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1rem" }}>
-            <button
-              onClick={() => {
-                const token = localStorage.getItem("projo_token");
-                const url = `${process.env.REACT_APP_API_URL || "http://localhost:5000/api"}/admin/export/emails`;
-                fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-                  .then(r => r.blob())
-                  .then(blob => {
-                    const a = document.createElement("a");
-                    a.href = URL.createObjectURL(blob);
-                    a.download = `PROJO_Subscribers_${new Date().toISOString().slice(0,10)}.xlsx`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                  })
-                  .catch(() => toast.error("Export failed"));
-              }}
-              style={{
-                background: "#1a7520", color: "#fff", border: "none",
-                borderRadius: "10px", padding: "10px 20px", fontSize: "13px",
-                fontWeight: "700", cursor: "pointer",
-              }}>
-              📥 Export Emails for MailerLite
-            </button>
+          <div>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "1rem" }}>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {rides.map(r => (
+                  <div key={r.id} style={{ ...card, cursor: "pointer" }} onClick={() => setSelectedRide(r)}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                      <div style={{ fontSize: "11px", fontWeight: "700", color: STATUS_COLOR[r.status] || "#a8a49e", textTransform: "uppercase" }}>{r.status}</div>
+                      <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "800", color: G }}>{formatFare(r.totalFare)}</div>
+                    </div>
+                    <div style={{ fontSize: "13px", color: "#f0ede8" }}>📍 {r.pickupAddress}</div>
+                    <div style={{ fontSize: "13px", color: "#a8a49e" }}>🏁 {r.dropoffAddress}</div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px" }}>
+                      <div style={{ fontSize: "11px", color: "#6b6760" }}>{fmt(r.createdAt)}</div>
+                      {r.status !== "CANCELLED" && r.status !== "COMPLETED" && (
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {deliveries.map(d => (
+                  <div key={d.id} style={{ ...card, cursor: "pointer" }} onClick={() => setSelectedDelivery(d)}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                      <div style={{ fontFamily: "monospace", fontSize: "11px", color: G, wordBreak: "break-all" }}>{d.trackingNumber}</div>
+                      <div style={{ fontSize: "11px", fontWeight: "700", color: STATUS_COLOR[d.status] || "#a8a49e" }}>{d.status}</div>
+                    </div>
+                    <div style={{ fontSize: "13px", color: "#f0ede8" }}>{d.description}</div>
+                    <div style={{ fontSize: "12px", color: "#a8a49e", marginTop: "4px" }}>{d.pickupAddress} → {d.dropoffAddress}</div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px" }}>
+                      <div style={{ fontSize: "11px", color: "#6b6760" }}>{fmt(d.createdAt)}</div>
+                      <div style={{ fontSize: "12px", color: G, fontWeight: "700" }}>{formatFare(d.fare || 60)}</div>
+                    </div>
+                  </div>
+                ))}
+                {deliveries.length === 0 && <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>No deliveries yet</div>}
+              </div>
+            )}
           </div>
         )}
-        {!loading && tab === "stats" && stats && (
+
+        {/* ── SERVICE ORDERS ── */}
+        {!loading && tab === "services" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ fontSize: "13px", color: "#6b6760", marginBottom: "4px" }}>{serviceOrders.length} service order{serviceOrders.length !== 1 ? "s" : ""}</div>
+            {serviceOrders.map(o => (
+              <div key={o.id} style={{ ...card }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                  <div>
+                    <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "13px" }}>{o.productName}</div>
+                    <div style={{ fontSize: "11px", color: "#6b6760" }}>{o.category} · {fmt(o.createdAt)}</div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ color: G, fontWeight: "700", fontFamily: "'Syne',sans-serif" }}>R{o.finalPrice}</div>
+                    <div style={{ fontSize: "11px", color: STATUS_COLOR[o.status] || "#a8a49e", fontWeight: "700" }}>{o.status}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: "12px", color: "#a8a49e" }}>📍 {o.address} · 📞 {o.phone}</div>
+                {o.scheduledFor && <div style={{ fontSize: "12px", color: "#a8a49e" }}>📅 {fmt(o.scheduledFor)}</div>}
+                {o.notes && <div style={{ fontSize: "12px", color: "#a8a49e", marginTop: "4px" }}>📝 {o.notes}</div>}
+                <div style={{ display: "flex", gap: "6px", marginTop: "10px", flexWrap: "wrap" }}>
+                  {["CONFIRMED","IN_PROGRESS","COMPLETED","CANCELLED"].map(s => (
+                    <button key={s} onClick={() => updateServiceOrder(o.id, s)} style={{
+                      background: o.status === s ? "rgba(232,184,75,0.15)" : BG3,
+                      border: `1px solid ${o.status === s ? G : BORDER}`,
+                      borderRadius: "6px", padding: "4px 10px", color: o.status === s ? G : "#a8a49e",
+                      fontSize: "10px", fontWeight: "700", cursor: "pointer"
+                    }}>{s}</button>
+                  ))}
+                  <button onClick={() => sendWhatsApp(
+                    `🛠️ PROJO Service Order\n${o.productName}\nStatus: ${o.status}\nAddress: ${o.address}\nPhone: ${o.phone}\nDate: ${fmt(o.scheduledFor || o.createdAt)}\nFare: R${o.finalPrice}`
+                  )} style={{
+                    background: "#25D366", border: "none", borderRadius: "6px",
+                    padding: "4px 10px", color: "#fff", fontSize: "10px", fontWeight: "700", cursor: "pointer"
+                  }}>💬 WA</button>
+                </div>
+              </div>
+            ))}
+            {serviceOrders.length === 0 && <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>No service orders yet</div>}
+          </div>
+        )}
+
+        {/* ── PRODUCTS (shop only) ── */}
+        {!loading && tab === "products" && (
           <div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
-              gap: "12px", marginBottom: "1.5rem" }}>
-              {[
-                { label: "Passengers",   value: stats.totalUsers,     icon: "👥" },
-                { label: "Drivers",      value: stats.totalDrivers,   icon: "🚗" },
-                { label: "Total Rides",  value: stats.totalRides,     icon: "🛣️" },
-                { label: "Deliveries",   value: stats.totalDeliveries,icon: "📦" },
-                { label: "Revenue",      value: `R${stats.totalRevenue}`, icon: "💰" },
-                { label: "Commission",   value: `R${stats.projoCommission}`, icon: "📈" },
-              ].map(s => (
-                <div key={s.label} style={{ ...card, textAlign: "center" }}>
-                  <div style={{ fontSize: "24px", marginBottom: "6px" }}>{s.icon}</div>
-                  <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.4rem",
-                    fontWeight: "800", color: G }}>{s.value}</div>
-                  <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "4px",
-                    fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                    {s.label}
+            <div style={{ display: "flex", gap: "10px", marginBottom: "1rem", alignItems: "center" }}>
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products..." style={{ ...inp, flex: 1 }} />
+              <button onClick={() => { setProductForm({ category: "Products", priceZar: 0, isActive: true }); setProductModal("new"); }} style={{
+                background: G, color: "#0a0a0a", border: "none", borderRadius: "8px",
+                padding: "8px 16px", fontWeight: "700", fontSize: "13px", cursor: "pointer", whiteSpace: "nowrap"
+              }}>+ New Product</button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {filteredProducts.map(p => (
+                <div key={p.id} style={{ ...card }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <div style={{ fontWeight: "700", color: p.isActive ? "#f0ede8" : "#6b6760", fontSize: "14px" }}>{p.name}</div>
+                      <div style={{ fontSize: "11px", color: "#6b6760" }}>{p.category} · R{p.priceZar} · {p.isActive ? "Active" : "Inactive"}</div>
+                    </div>
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      <button onClick={() => { setProductForm({ ...p }); setProductModal("edit"); }} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "6px", padding: "4px 10px", color: G, fontSize: "11px", cursor: "pointer" }}>Edit</button>
+                      <button onClick={() => deleteProduct(p.id)} style={{ background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: "6px", padding: "4px 10px", color: "#f87171", fontSize: "11px", cursor: "pointer" }}>Del</button>
+                    </div>
                   </div>
                 </div>
               ))}
+              {filteredProducts.length === 0 && <div style={{ textAlign: "center", color: "#6b6760", padding: "2rem" }}>No products yet — add your first product!</div>}
             </div>
-            <div style={{ ...card }}>
-              <div style={{ fontSize: "13px", color: "#6b6760" }}>
-                Completed rides: <strong style={{ color: "#f0ede8" }}>{stats.completedRides}</strong>
-                {" · "}Pending deliveries: <strong style={{ color: "#f0ede8" }}>{stats.pendingDeliveries}</strong>
-                {" · "}Driver earnings: <strong style={{ color: G }}>R{stats.driverEarnings}</strong>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── USERS ── */}
-        {!loading && tab === "users" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {users.map(u => (
-              <div key={u.id} style={{ ...card, display: "flex",
-                justifyContent: "space-between", alignItems: "center",
-                flexWrap: "wrap", gap: "10px" }}>
-                <div>
-                  <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "14px" }}>
-                    {u.name}
-                  </div>
-                  <div style={{ fontSize: "12px", color: "#6b6760", marginTop: "2px" }}>
-                    {u.phone} · {u.email || "no email"} · {u.role}
-                  </div>
-                  <div style={{ fontSize: "11px", marginTop: "4px",
-                    color: STATUS_COLOR[u.status] || "#a8a49e", fontWeight: "700" }}>
-                    {u.status}
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                  {u.status !== "ACTIVE" && (
-                    <button onClick={() => updateUserStatus(u.id, "ACTIVE")} style={{
-                      background: "rgba(74,222,128,0.1)", color: "#4ade80",
-                      border: "1px solid rgba(74,222,128,0.3)", borderRadius: "6px",
-                      padding: "5px 10px", fontSize: "12px", cursor: "pointer",
-                    }}>Activate</button>
-                  )}
-                  {u.status !== "SUSPENDED" && (
-                    <button onClick={() => updateUserStatus(u.id, "SUSPENDED")} style={{
-                      background: "rgba(245,158,11,0.1)", color: "#f59e0b",
-                      border: "1px solid rgba(245,158,11,0.3)", borderRadius: "6px",
-                      padding: "5px 10px", fontSize: "12px", cursor: "pointer",
-                    }}>Suspend</button>
-                  )}
-                  {u.status !== "BANNED" && (
-                    <button onClick={() => updateUserStatus(u.id, "BANNED")} style={{
-                      background: "rgba(239,68,68,0.1)", color: "#ef4444",
-                      border: "1px solid rgba(239,68,68,0.3)", borderRadius: "6px",
-                      padding: "5px 10px", fontSize: "12px", cursor: "pointer",
-                    }}>Ban</button>
-                  )}
-                </div>
-              </div>
-            ))}
-            {users.length === 0 && (
-              <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>No users yet</div>
-            )}
-          </div>
-        )}
-
-        {/* ── RIDES ── */}
-        {!loading && tab === "rides" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {rides.map(r => (
-              <div key={r.id} style={{ ...card }}>
-                <div style={{ display: "flex", justifyContent: "space-between",
-                  marginBottom: "6px" }}>
-                  <div style={{ fontSize: "11px", fontWeight: "700",
-                    color: STATUS_COLOR[r.status] || "#a8a49e",
-                    textTransform: "uppercase" }}>{r.status}</div>
-                  <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "800",
-                    color: G }}>{formatFare(r.totalFare)}</div>
-                </div>
-                <div style={{ fontSize: "13px", color: "#f0ede8" }}>📍 {r.pickupAddress}</div>
-                <div style={{ fontSize: "13px", color: "#a8a49e" }}>🏁 {r.dropoffAddress}</div>
-                <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "6px" }}>
-                  {new Date(r.createdAt).toLocaleString("en-ZA")} · {r.zone}
-                </div>
-              </div>
-            ))}
-            {rides.length === 0 && (
-              <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>No rides yet</div>
-            )}
-          </div>
-        )}
-
-        {/* ── DELIVERIES ── */}
-        {!loading && tab === "deliveries" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {deliveries.map(d => (
-              <div key={d.id} style={{ ...card }}>
-                <div style={{ display: "flex", justifyContent: "space-between",
-                  marginBottom: "6px" }}>
-                  <div style={{ fontFamily: "monospace", fontSize: "12px", color: G }}>
-                    {d.trackingNumber}
-                  </div>
-                  <div style={{ fontSize: "11px", fontWeight: "700",
-                    color: STATUS_COLOR[d.status] || "#a8a49e" }}>{d.status}</div>
-                </div>
-                <div style={{ fontSize: "13px", color: "#f0ede8" }}>{d.description}</div>
-                <div style={{ fontSize: "12px", color: "#a8a49e", marginTop: "4px" }}>
-                  {d.pickupAddress} → {d.dropoffAddress}
-                </div>
-                <div style={{ fontSize: "12px", color: G, marginTop: "4px", fontWeight: "700" }}>
-                  {formatFare(d.fare || 60)}
-                </div>
-              </div>
-            ))}
-            {deliveries.length === 0 && (
-              <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>No deliveries yet</div>
-            )}
           </div>
         )}
 
         {/* ── DRIVERS ── */}
         {!loading && tab === "drivers" && (
           <div>
-            <div style={{ fontSize: "13px", color: "#6b6760", marginBottom: "1rem" }}>
-              {pendingDrivers.length} pending application{pendingDrivers.length !== 1 ? "s" : ""}
+            <div style={{ display: "flex", gap: "8px", marginBottom: "1rem", flexWrap: "wrap" }}>
+              <div style={{ ...card, flex: 1, textAlign: "center", padding: "10px" }}>
+                <div style={{ color: "#4ade80", fontWeight: "700", fontSize: "18px" }}>{allDrivers.filter(d => d.driverStatus === "ONLINE").length}</div>
+                <div style={{ fontSize: "11px", color: "#6b6760" }}>Online</div>
+              </div>
+              <div style={{ ...card, flex: 1, textAlign: "center", padding: "10px" }}>
+                <div style={{ color: "#6b6760", fontWeight: "700", fontSize: "18px" }}>{allDrivers.filter(d => d.driverStatus === "OFFLINE" || !d.driverStatus).length}</div>
+                <div style={{ fontSize: "11px", color: "#6b6760" }}>Offline</div>
+              </div>
+              <div style={{ ...card, flex: 1, textAlign: "center", padding: "10px" }}>
+                <div style={{ color: G, fontWeight: "700", fontSize: "18px" }}>{pendingDrivers.length}</div>
+                <div style={{ fontSize: "11px", color: "#6b6760" }}>Pending</div>
+              </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              {pendingDrivers.length === 0 ? (
-                <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>
-                  <div style={{ fontSize: "40px", marginBottom: "1rem" }}>🚗</div>
-                  No pending driver applications
-                </div>
-              ) : pendingDrivers.map(d => (
-                <div key={d.id} style={{ ...card, display: "flex",
-                  justifyContent: "space-between", alignItems: "center",
-                  flexWrap: "wrap", gap: "10px" }}>
+
+            {pendingDrivers.length > 0 && (
+              <div style={{ marginBottom: "1.5rem" }}>
+                <div style={{ fontSize: "12px", fontWeight: "700", color: G, marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Pending Approval</div>
+                {pendingDrivers.map(d => (
+                  <div key={d.id} style={{ ...card, marginBottom: "8px" }}>
+                    <div style={{ fontWeight: "700", color: "#f0ede8" }}>{d.name}</div>
+                    <div style={{ fontSize: "12px", color: "#6b6760" }}>{d.phone} · {d.email || "No email"}</div>
+                    <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "2px" }}>Applied {fmt(d.createdAt)}</div>
+                    <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
+                      <button onClick={() => approveDriver(d.id)} style={{ background: "#166534", border: "1px solid #4ade80", borderRadius: "6px", padding: "6px 16px", color: "#4ade80", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>✓ Approve</button>
+                      <button onClick={() => rejectDriver(d.id)} style={{ background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: "6px", padding: "6px 16px", color: "#f87171", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>✗ Reject</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div style={{ fontSize: "12px", fontWeight: "700", color: "#6b6760", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>All Drivers</div>
+            {allDrivers.filter(d => d.status === "ACTIVE").map(d => (
+              <div key={d.id} style={{ ...card, marginBottom: "8px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
-                    <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "14px" }}>{d.name}</div>
-                    <div style={{ fontSize: "12px", color: "#6b6760", marginTop: "2px" }}>
-                      {d.phone} · {d.email || "no email"}
-                    </div>
-                    <div style={{ fontSize: "11px", color: "#f59e0b", marginTop: "4px", fontWeight: "700" }}>
-                      ⏳ PENDING ACTIVATION
-                    </div>
-                    <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "2px" }}>
-                      Applied: {new Date(d.createdAt).toLocaleDateString("en-ZA")}
-                    </div>
+                    <div style={{ fontWeight: "700", color: "#f0ede8" }}>{d.name}</div>
+                    <div style={{ fontSize: "12px", color: "#6b6760" }}>{d.phone}</div>
                   </div>
-                  <div style={{ display: "flex", gap: "8px" }}>
-                    <button onClick={() => approveDriver(d.id)} style={{
-                      background: "rgba(74,222,128,0.1)", color: "#4ade80",
-                      border: "1px solid rgba(74,222,128,0.3)", borderRadius: "8px",
-                      padding: "8px 16px", fontSize: "13px", fontWeight: "700", cursor: "pointer",
-                    }}>✅ Approve</button>
-                    <button onClick={() => rejectDriver(d.id)} style={{
-                      background: "rgba(239,68,68,0.1)", color: "#ef4444",
-                      border: "1px solid rgba(239,68,68,0.3)", borderRadius: "8px",
-                      padding: "8px 16px", fontSize: "13px", fontWeight: "700", cursor: "pointer",
-                    }}>✕ Reject</button>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: d.driverStatus === "ONLINE" ? "#4ade80" : "#6b6760" }} />
+                    <span style={{ fontSize: "12px", fontWeight: "700", color: d.driverStatus === "ONLINE" ? "#4ade80" : "#6b6760" }}>
+                      {d.driverStatus === "ONLINE" ? "ONLINE" : "OFFLINE"}
+                    </span>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         )}
 
-        {/* ── PRODUCTS ── */}
-        {!loading && tab === "products" && (
-          <div>
-            {/* Toolbar */}
-            <div style={{ display: "flex", gap: "10px", marginBottom: "1rem",
-              flexWrap: "wrap" }}>
-              <input
-                placeholder="Search products..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                style={{ flex: 1, minWidth: "180px", background: BG3,
-                  border: `1px solid ${BORDER}`, borderRadius: "10px",
-                  color: "#f0ede8", padding: "10px 14px", fontSize: "14px",
-                  outline: "none", fontFamily: "'DM Sans',sans-serif" }}
-              />
-              <button onClick={() => setEditProduct({})} style={{
-                background: G, color: "#0a0a0a", border: "none",
-                borderRadius: "10px", padding: "10px 20px", fontSize: "14px",
-                fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap",
-              }}>+ Add Product</button>
-            </div>
-
-            {/* Product count */}
-            <div style={{ fontSize: "12px", color: "#6b6760", marginBottom: "10px" }}>
-              {filteredProducts.length} product{filteredProducts.length !== 1 ? "s" : ""}
-              {search && ` matching "${search}"`}
-            </div>
-
-            {/* Product list */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {filteredProducts.map(p => (
-                <div key={p.id} style={{ ...card,
-                  display: "flex", justifyContent: "space-between",
-                  alignItems: "flex-start", gap: "12px",
-                  opacity: p.isActive ? 1 : 0.5 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px",
-                      marginBottom: "4px", flexWrap: "wrap" }}>
-                      <span style={{ fontWeight: "700", color: "#f0ede8", fontSize: "14px" }}>
-                        {p.name}
-                      </span>
-                      {!p.isActive && (
-                        <span style={{ fontSize: "10px", color: "#f59e0b",
-                          background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)",
-                          borderRadius: "4px", padding: "2px 6px", fontWeight: "700" }}>
-                          INACTIVE
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ fontSize: "11px", color: G, fontWeight: "700",
-                      textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>
-                      {p.category}
-                    </div>
-                    <div style={{ fontSize: "12px", color: "#6b6760",
-                      display: "-webkit-box", WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                      {p.description}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: "right", flexShrink: 0 }}>
-                    <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.1rem",
-                      fontWeight: "800", color: G, marginBottom: "8px" }}>
-                      {p.priceZar > 0 ? `R${p.priceZar}` : "Quote"}
-                    </div>
-                    <div style={{ display: "flex", gap: "6px" }}>
-                      <button onClick={() => setEditProduct(p)} style={{
-                        background: "rgba(232,184,75,0.1)", color: G,
-                        border: `1px solid rgba(232,184,75,0.25)`,
-                        borderRadius: "6px", padding: "5px 10px",
-                        fontSize: "12px", cursor: "pointer", fontWeight: "600",
-                      }}>Edit</button>
-                      <button onClick={() => deleteProduct(p.id)} style={{
-                        background: "rgba(239,68,68,0.1)", color: "#ef4444",
-                        border: "1px solid rgba(239,68,68,0.3)",
-                        borderRadius: "6px", padding: "5px 10px",
-                        fontSize: "12px", cursor: "pointer",
-                      }}>Del</button>
-                    </div>
-                  </div>
+        {/* Product Modal */}
+        {productModal && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+            <div style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "1.5rem", width: "100%", maxWidth: "480px" }}>
+              <h3 style={{ fontFamily: "'Syne',sans-serif", color: G, margin: "0 0 1rem" }}>{productModal === "new" ? "Add Product" : "Edit Product"}</h3>
+              {[["Name","name","text"],["Description","description","text"],["Price (R)","priceZar","number"]].map(([label, key, type]) => (
+                <div key={key} style={{ marginBottom: "10px" }}>
+                  <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "1px" }}>{label}</div>
+                  <input type={type} value={productForm[key] || ""} onChange={e => setProductForm(f => ({ ...f, [key]: type === "number" ? parseFloat(e.target.value) : e.target.value }))} style={inp} />
                 </div>
               ))}
-              {filteredProducts.length === 0 && (
-                <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>
-                  <div style={{ fontSize: "40px", marginBottom: "1rem" }}>🛠️</div>
-                  {search ? `No products matching "${search}"` : "No products yet"}
-                  <br />
-                  <button onClick={() => setEditProduct({})} style={{
-                    marginTop: "1rem", background: G, color: "#0a0a0a",
-                    border: "none", borderRadius: "10px", padding: "10px 20px",
-                    fontWeight: "700", cursor: "pointer",
-                  }}>Add First Product</button>
-                </div>
-              )}
+              <div style={{ marginBottom: "10px" }}>
+                <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "4px", textTransform: "uppercase" }}>Category</div>
+                <input value={productForm.category || "Products"} onChange={e => setProductForm(f => ({ ...f, category: e.target.value }))} style={inp} placeholder="Products" />
+              </div>
+              <div style={{ display: "flex", gap: "8px", marginTop: "1rem" }}>
+                <button onClick={saveProduct} style={{ flex: 1, background: G, color: "#0a0a0a", border: "none", borderRadius: "8px", padding: "10px", fontWeight: "700", cursor: "pointer" }}>Save</button>
+                <button onClick={() => setProductModal(null)} style={{ flex: 1, background: BG3, color: "#a8a49e", border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "10px", cursor: "pointer" }}>Cancel</button>
+              </div>
             </div>
           </div>
         )}
       </div>
-
-      {/* Product modal */}
-      {editProduct !== null && (
-        <ProductModal
-          product={editProduct?.id ? editProduct : null}
-          onClose={() => setEditProduct(null)}
-          onSaved={() => loadTab("products")}
-        />
-      )}
     </div>
   );
 }
