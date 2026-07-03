@@ -474,6 +474,7 @@ export default function BookRidePage() {
               ["/assets/categories/cctv.png", "CCTV"],
               ["/assets/categories/locksmith.png", "Locksmith"],
               ["/assets/categories/pest-control.png", "Pest Control"],
+              ["/assets/categories/projo-rides.png", "Rides", "in-app"],
               ["/assets/categories/runners-deliveries.png", "Runners"],
               ["/assets/categories/pc-console-repair.png", "PC & Console"],
               ["/assets/categories/laundry.png", "Laundry"],
