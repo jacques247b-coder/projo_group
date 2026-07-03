@@ -225,23 +225,30 @@ export default function BookRidePage() {
               letterSpacing: "2px", textTransform: "uppercase", marginBottom: "4px" }}>
               PROJO GROUP
             </div>
-            <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.6rem",
+            <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.4rem",
               fontWeight: "800", color: "#f5ede8", margin: 0, lineHeight: 1.2 }}>
               Book a Ride
-              <span style={{ color: G }}> / </span>
-              Services
+              <span style={{ color: G }}> - </span>
+              Service
+              <span style={{ color: G }}> - </span>
+              Shop
             </h1>
           </div>
-          {/* Shop shortcut button */}
-          <button onClick={() => navigate("/shop")} style={{
-            background: "rgba(232,184,75,0.1)", border: `1px solid ${G}`,
-            borderRadius: "10px", padding: "8px 14px", cursor: "pointer",
-            display: "flex", alignItems: "center", gap: "6px",
-            color: G, fontSize: "13px", fontWeight: "700",
-            fontFamily: "'DM Sans',sans-serif", flexShrink: 0,
-          }}>
-            🛍️ Shop <span style={{ fontSize: "10px", opacity: 0.7 }}>↗</span>
-          </button>
+          {/* Quick nav buttons */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px", flexShrink: 0 }}>
+            <button onClick={() => navigate("/products")} style={{
+              background: "rgba(232,184,75,0.1)", border: `1px solid ${G}`,
+              borderRadius: "8px", padding: "6px 12px", cursor: "pointer",
+              color: G, fontSize: "12px", fontWeight: "700",
+              fontFamily: "'DM Sans',sans-serif",
+            }}>🛍️ Products Shop</button>
+            <button onClick={() => navigate("/shop")} style={{
+              background: "rgba(232,184,75,0.1)", border: `1px solid ${G}`,
+              borderRadius: "8px", padding: "6px 12px", cursor: "pointer",
+              color: G, fontSize: "12px", fontWeight: "700",
+              fontFamily: "'DM Sans',sans-serif",
+            }}>🛠️ Services</button>
+          </div>
         </div>
 
         {/* ── 3 top cards ── */}
@@ -276,8 +283,8 @@ export default function BookRidePage() {
             <div style={{ fontSize: "10px", color: "#7a5a55" }}>R60 flat · Rustenburg</div>
           </div>
 
-          {/* Card 3 — Online Shop */}
-          <div onClick={() => navigate("/shop")} style={{
+          {/* Card 3 — Products Shop */}
+          <div onClick={() => navigate("/products")} style={{
             background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px",
             padding: "1rem", textAlign: "center", cursor: "pointer", transition: "all .2s",
           }}
@@ -286,7 +293,7 @@ export default function BookRidePage() {
             <div style={{ fontSize: "26px", marginBottom: "6px" }}>🛍️</div>
             <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "800",
               color: "#f5ede8", fontSize: "12px", marginBottom: "3px" }}>
-              Online Shop
+              Products Shop
             </div>
             <div style={{ fontSize: "10px", color: "#7a5a55" }}>Browse & order</div>
           </div>

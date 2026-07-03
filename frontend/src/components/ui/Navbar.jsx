@@ -78,7 +78,8 @@ export default function Navbar() {
           <div style={{ display: "flex", gap: "1.5rem", alignItems: "center" }}>
             <Link to="/book"    style={linkStyle("/book")}>Book Ride</Link>
             <Link to="/courier" style={linkStyle("/courier")}>Courier</Link>
-            <Link to="/shop"    style={linkStyle("/shop")}>Shop</Link>
+            <Link to="/shop"    style={linkStyle("/shop")}>Services</Link>
+            <Link to="/products" style={linkStyle("/products")}>Products</Link>
             {user?.role === "DRIVER" && <Link to="/driver" style={linkStyle("/driver")}>Driver</Link>}
             {user?.role === "ADMIN"  && <Link to="/admin"  style={linkStyle("/admin")}>Admin</Link>}
           </div>
@@ -139,7 +140,8 @@ export default function Navbar() {
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
               {drawerLink("/book", "🚗 Book a Ride")}
               {drawerLink("/courier", "📦 Courier")}
-              {drawerLink("/shop", "🛍️ Shop")}
+              {drawerLink("/shop", "🛠️ Services")}
+              {drawerLink("/products", "🛍️ Products Shop")}
               {user && drawerLink("/wallet", "💰 Wallet")}
               {user && drawerLink("/rides", "🕐 Ride History")}
               {user?.role === "DRIVER" && drawerLink("/driver", "🚘 Driver Dashboard")}

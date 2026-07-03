@@ -3,6 +3,7 @@
 // All routes: landing, auth, passenger, driver, admin
 // ============================================================
 import ShopPage from "./pages/shop/ShopPage";
+import ProductsShopPage from "./pages/shop/ProductsShopPage";
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
@@ -66,6 +67,9 @@ function AppRoutes() {
       {/* Public landing page */}
       <Route path="/shop" element={
         <Protected><ShopPage /></Protected>
+      } />
+      <Route path="/products" element={
+        <Protected><ProductsShopPage /></Protected>
       } />
       <Route path="/home" element={<LandingPage />} />
       <Route path="/" element={<Navigate to={homeRoute} replace />} />

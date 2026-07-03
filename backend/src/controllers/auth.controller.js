@@ -68,7 +68,7 @@ function sanitizeUser(user) {
 }
 
 // ─── Email via Resend ────────────────────────────────────────────────────────
-async function sendOTPEmail(email, otp, name = "") {
+async function sendOTPEmail(email, otp, name = "", retries = 2) {
   const apiKey = process.env.RESEND_API_KEY;
   const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
@@ -77,14 +77,15 @@ async function sendOTPEmail(email, otp, name = "") {
     return;
   }
 
-  try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
         from: `PROJO GROUP <${fromEmail}>`,
         to: [email],
         subject: "Your PROJO GROUP Verification Code",
@@ -114,16 +115,26 @@ async function sendOTPEmail(email, otp, name = "") {
       }),
     });
 
-    const data = await response.json();
-    if (response.ok) {
-      console.log(`[PROJO EMAIL] ✅ OTP sent to ${email} via Resend`);
-    } else {
-      console.error(`[PROJO EMAIL] ❌ Resend error:`, data);
-      console.log(`[PROJO EMAIL] Fallback OTP for ${email}: ${otp}`);
+      const data = await response.json();
+      if (response.ok) {
+        console.log(`[PROJO EMAIL] ✅ OTP sent to ${email} via Resend (attempt ${attempt})`);
+        return; // Success — exit retry loop
+      } else {
+        console.error(`[PROJO EMAIL] ❌ Resend error (attempt ${attempt}):`, data);
+        if (attempt < retries) {
+          await new Promise(r => setTimeout(r, 1000 * attempt)); // wait 1s then 2s
+          continue;
+        }
+        throw new Error(`Resend failed after ${retries} attempts: ${JSON.stringify(data)}`);
+      }
+    } catch (err) {
+      console.error(`[PROJO EMAIL] ❌ Failed (attempt ${attempt}): ${err.message}`);
+      if (attempt < retries) {
+        await new Promise(r => setTimeout(r, 1000 * attempt));
+        continue;
+      }
+      throw err; // Re-throw on final attempt so caller gets the error
     }
-  } catch (err) {
-    console.error(`[PROJO EMAIL] ❌ Failed: ${err.message}`);
-    console.log(`[PROJO EMAIL] Fallback OTP for ${email}: ${otp}`);
   }
 }
 
