@@ -412,28 +412,29 @@ export default function SportsHubPage() {
         {/* ── WATCH LIVE ── */}
         {tab === "watch" && (
           <div>
-            <div style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", overflow: "hidden", marginBottom: "1rem" }}>
-              <div style={{ background: RED, padding: "10px 16px", display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontSize: "16px" }}>📺</span>
-                <span style={{ fontWeight: "700", color: "#fff", fontSize: "13px" }}>SABC Sport — Free Live Streaming</span>
-                <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.6)", marginLeft: "auto" }}>Free · Legal</span>
+            {/* SABC Sport — blocks iFrame, link out instead */}
+            <a href="https://sabc-plus.com/live/323/SABC-Sport" target="_blank" rel="noreferrer" style={{ textDecoration: "none", display: "block", marginBottom: "1rem" }}>
+              <div style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", overflow: "hidden" }}>
+                <div style={{ background: RED, padding: "14px 16px", display: "flex", alignItems: "center", gap: "12px" }}>
+                  <span style={{ fontSize: "24px" }}>📺</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "700", color: "#fff", fontSize: "14px" }}>SABC Sport — Watch Live Free</div>
+                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)", marginTop: "2px" }}>PSL Soccer, Rugby, Cricket — Free to air · Opens in browser</div>
+                  </div>
+                  <div style={{ background: "rgba(255,255,255,0.2)", borderRadius: "8px", padding: "8px 14px", color: "#fff", fontSize: "13px", fontWeight: "700" }}>Watch Live ↗</div>
+                </div>
+                <div style={{ padding: "12px 16px", display: "flex", gap: "16px" }}>
+                  {["⚽ PSL Matches", "🏉 Rugby", "🏏 Cricket", "🌍 AFCON"].map(tag => (
+                    <span key={tag} style={{ fontSize: "11px", color: "#6b6760" }}>{tag}</span>
+                  ))}
+                </div>
               </div>
-              <iframe
-                src="https://sabc-plus.com/live/323/SABC-Sport"
-                title="SABC Sport Live"
-                style={{ width: "100%", height: "280px", border: "none", display: "block" }}
-                allow="autoplay; fullscreen"
-                sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-              />
-            </div>
-            <div style={{ fontSize: "11px", color: "#4a3030", textAlign: "center", marginBottom: "1.25rem" }}>
-              SABC Sport broadcasts selected PSL matches, rugby and cricket free-to-air
-            </div>
+            </a>
             <div style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "1rem" }}>
               <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "14px", fontWeight: "800", color: G, marginBottom: "12px" }}>More Live Sport</div>
               {[
                 { name: "DStv Now", url: "https://now.dstv.com", desc: "SuperSport — all SA rugby & soccer live", icon: "📡" },
-                { name: "Showmax", url: "https://www.showmax.com", desc: "Premier League & more on demand", icon: "🎬" },
+                { name: "Showmax", url: "https://www.showmax.com/eng/welcome", desc: "Premier League & more on demand", icon: "🎬" },
               ].map(s => (
                 <a key={s.name} href={s.url} target="_blank" rel="noreferrer" style={{
                   display: "flex", alignItems: "center", gap: "12px", padding: "12px",
