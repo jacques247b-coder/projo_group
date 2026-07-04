@@ -111,7 +111,9 @@ function AppRoutes() {
         <Protected><ProductsShopPage /></Protected>
       } />
       <Route path="/home" element={<LandingPage />} />
-      <Route path="/travel" element={<Protected> />} />
+      <Route path="/travel" element={
+        <Protected><TravelPage /></Protected>
+      } />
       <Route path="/sports" element={
         <Protected><SportsHubPage /></Protected>
       } />
