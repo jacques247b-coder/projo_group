@@ -113,15 +113,25 @@ function AppRoutes() {
         </Protected>
       } />
 
-      {/* Admin */}
-      <Route path="/admin" element={
+      {/* Admin — specific routes MUST come before /admin */}
+      <Route path="/admin/product/new" element={
         <Protected roles={["ADMIN"]}>
-          <AdminDashboard />
+          <AdminProductPage />
+        </Protected>
+      } />
+      <Route path="/admin/product/:id" element={
+        <Protected roles={["ADMIN"]}>
+          <AdminProductPage />
         </Protected>
       } />
       <Route path="/admin/promo-codes" element={
         <Protected roles={["ADMIN"]}>
           <PromoCodesPage />
+        </Protected>
+      } />
+      <Route path="/admin" element={
+        <Protected roles={["ADMIN"]}>
+          <AdminDashboard />
         </Protected>
       } />
 
