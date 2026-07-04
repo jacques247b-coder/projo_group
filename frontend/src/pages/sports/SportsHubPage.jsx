@@ -56,10 +56,40 @@ const BETTING_PARTNERS = [
   },
 ];
 
-const YOUTUBE_VIDEOS = [
-  { id: "springboks", title: "🏉 Springboks Highlights", playlistId: "PLQ5ZTh3GJBE37MtIVqF-g5kGX6JE7zXoE" },
-  { id: "bafana",     title: "⚽ Bafana Bafana Highlights", playlistId: "PLFMKkGlS6z3TdKST_ULwCwnlJv0hRs9Xr" },
-  { id: "psl",        title: "⚽ PSL Match Highlights", playlistId: "PLQ3C6XM6I_JRKiBdChkj8-OzAxxbPUq3c" },
+// Official YouTube channels — linked out (embeds blocked by copyright)
+const YOUTUBE_CHANNELS = [
+  {
+    id: "springboks",
+    title: "🏉 Springboks — Official SA Rugby",
+    desc: "Match highlights, behind the scenes & exclusive Bok content",
+    url: "https://www.youtube.com/@OfficialBokTube",
+    thumb: "https://img.youtube.com/vi/qUAMswHmCjs/maxresdefault.jpg",
+    videoId: "qUAMswHmCjs", // Junior Boks latest highlight - embeddable
+  },
+  {
+    id: "bafana",
+    title: "⚽ SAFA TV — Bafana Bafana",
+    desc: "South African Football Association official highlights",
+    url: "https://www.youtube.com/@SAFAChannel",
+    thumb: "https://i.ytimg.com/vi/oAIfVW4LKFQ/maxresdefault.jpg",
+    videoId: "oAIfVW4LKFQ",
+  },
+  {
+    id: "psl",
+    title: "⚽ PSL — Betway Premiership",
+    desc: "Official Premier Soccer League highlights & clips",
+    url: "https://www.youtube.com/@PSLSouthAfrica",
+    thumb: "https://i.ytimg.com/vi/default.jpg",
+    videoId: null,
+  },
+  {
+    id: "worldrugby",
+    title: "🏉 World Rugby Highlights",
+    desc: "Official World Rugby match highlights",
+    url: "https://www.youtube.com/@worldrugby",
+    thumb: "https://i.ytimg.com/vi/default.jpg",
+    videoId: null,
+  },
 ];
 
 const TABS = [
@@ -399,18 +429,36 @@ export default function SportsHubPage() {
         {/* ── HIGHLIGHTS ── */}
         {tab === "highlights" && (
           <div>
-            {YOUTUBE_VIDEOS.map(v => (
+            <div style={{ fontSize: "12px", color: "#6b6760", marginBottom: "1rem" }}>
+              Tap any channel to watch official highlights on YouTube
+            </div>
+            {YOUTUBE_CHANNELS.map(v => (
               <div key={v.id} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", overflow: "hidden", marginBottom: "1rem" }}>
-                <div style={{ padding: "12px 16px", borderBottom: `1px solid ${BORDER}` }}>
-                  <span style={{ fontWeight: "700", color: "#f0ede8", fontSize: "13px" }}>{v.title}</span>
-                </div>
-                <iframe
-                  src={`https://www.youtube.com/embed/videoseries?list=${v.playlistId}&autoplay=0`}
-                  title={v.title}
-                  style={{ width: "100%", height: "220px", border: "none", display: "block" }}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
+                {/* Embed single video if available, else show channel card */}
+                {v.videoId ? (
+                  <>
+                    <div style={{ padding: "12px 16px", borderBottom: `1px solid ${BORDER}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontWeight: "700", color: "#f0ede8", fontSize: "13px" }}>{v.title}</span>
+                      <a href={v.url} target="_blank" rel="noreferrer" style={{ fontSize: "11px", color: G, textDecoration: "none" }}>View Channel ↗</a>
+                    </div>
+                    <iframe
+                      src={`https://www.youtube.com/embed/${v.videoId}?autoplay=0`}
+                      title={v.title}
+                      style={{ width: "100%", height: "220px", border: "none", display: "block" }}
+                      allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </>
+                ) : (
+                  <a href={v.url} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: "14px", padding: "1rem", textDecoration: "none" }}>
+                    <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: RED, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>▶</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: "13px", fontWeight: "700", color: "#f0ede8" }}>{v.title}</div>
+                      <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "3px" }}>{v.desc}</div>
+                    </div>
+                    <span style={{ color: G, fontSize: "18px" }}>↗</span>
+                  </a>
+                )}
               </div>
             ))}
           </div>
