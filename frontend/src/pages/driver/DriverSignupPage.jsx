@@ -5,8 +5,9 @@
 // Step 3: Document uploads (Operator Card, Vehicle Papers, ID, Photos)
 // Step 4: Pending Activation screen
 // ============================================================
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { io } from "socket.io-client";
 import toast from "react-hot-toast";
 
 const G      = "#e8b84b";
