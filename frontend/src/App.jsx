@@ -34,6 +34,7 @@ import PromoCodesPage from "./pages/admin/PromoCodesPage";
 
 // Landing page
 import LandingPage from "./pages/LandingPage";
+import PushPermissionModal from "./components/ui/PushPermissionModal";
 import DriverSignupPage from "./pages/driver/DriverSignupPage";
 
 // Protected route wrapper
@@ -57,6 +58,35 @@ function Protected({ children, roles }) {
 }
 
 function AppRoutes() {
+  const [showPushModal, setShowPushModal] = React.useState(false);
+
+  React.useEffect(() => {
+    // Show push modal after login if not already accepted
+    const checkPushModal = () => {
+      const accepted = localStorage.getItem("projo_push_accepted");
+      if (accepted) return; // Already accepted, never show again
+
+      const permission = window.Notification?.permission;
+      if (permission === "granted") {
+        localStorage.setItem("projo_push_accepted", "true");
+        return;
+      }
+
+      const dismissedAt = localStorage.getItem("projo_push_dismissed_at");
+      const remindDays = parseInt(localStorage.getItem("projo_push_remind_days") || "0");
+
+      if (dismissedAt) {
+        const daysSince = (Date.now() - parseInt(dismissedAt)) / (1000 * 60 * 60 * 24);
+        const waitDays = remindDays || 0; // 0 = remind every login, 7 = remind weekly
+        if (daysSince < waitDays) return;
+      }
+
+      // Show modal after 3 seconds to let the page load
+      setTimeout(() => setShowPushModal(true), 3000);
+    };
+
+    checkPushModal();
+  }, []);
   const { user } = useAuth();
 
   const homeRoute = !user ? "/home"
@@ -65,6 +95,10 @@ function AppRoutes() {
     : "/book";
 
   return (
+    <>
+      {showPushModal && (
+        <PushPermissionModal onClose={() => setShowPushModal(false)} />
+      )}
     <Routes>
       {/* Public landing page */}
       <Route path="/shop" element={
@@ -144,6 +178,7 @@ function AppRoutes() {
       {/* 404 */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 }
 

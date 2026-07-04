@@ -4,7 +4,6 @@
 // ============================================================
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { authAPI } from "../services/api";
-import { subscribeToPush } from "../services/pushNotifications";
 
 const AuthContext = createContext(null);
 
@@ -24,10 +23,7 @@ export function AuthProvider({ children }) {
           // Cache user data for offline/sleep recovery
           localStorage.setItem("projo_user", JSON.stringify(res.user));
           setLoading(false);
-          // Re-subscribe to push in case subscription expired
-          setTimeout(() => {
-            subscribeToPush().catch(() => {});
-          }, 3000);
+
         })
         .catch((err) => {
           // Only clear token if backend explicitly rejects it (401)
@@ -65,10 +61,7 @@ export function AuthProvider({ children }) {
     setToken(res.token);
     setUser(res.user);
     localStorage.setItem("projo_user", JSON.stringify(res.user));
-    // Subscribe to push notifications after login (slight delay for SW to be ready)
-    setTimeout(() => {
-      subscribeToPush().catch(() => {});
-    }, 2000);
+
     return res.user;
   }, []);
 
