@@ -637,3 +637,73 @@ exports.exportAnalytics = async (req, res) => {
     res.status(500).json({ error: "Could not export: " + err.message });
   }
 };
+
+// POST /api/admin/rides/:id/mark-paid — admin marks ride as paid + sends paid invoice
+exports.markRidePaid = async (req, res) => {
+  try {
+    const ride = await prisma.ride.findUnique({
+      where: { id: req.params.id },
+      include: { passenger: true },
+    });
+    if (!ride) return res.status(404).json({ error: "Ride not found" });
+
+    // Generate paid invoice
+    const { generateAndSendInvoice } = require("../services/invoice.service");
+    const result = await generateAndSendInvoice({
+      type: "ride",
+      data: { ...ride, isPaid: true, paymentConfirmedAt: new Date() },
+      user: ride.passenger,
+      paid: true,
+    });
+
+    res.json({ message: `Paid invoice sent to ${ride.passenger?.email || "customer"}`, invoiceNumber: result?.invoiceNumber });
+  } catch (err) {
+    res.status(500).json({ error: "Could not mark as paid: " + err.message });
+  }
+};
+
+// POST /api/admin/deliveries/:id/mark-paid
+exports.markDeliveryPaid = async (req, res) => {
+  try {
+    const delivery = await prisma.delivery.findUnique({
+      where: { id: req.params.id },
+      include: { sender: true },
+    });
+    if (!delivery) return res.status(404).json({ error: "Delivery not found" });
+
+    const { generateAndSendInvoice } = require("../services/invoice.service");
+    const result = await generateAndSendInvoice({
+      type: "delivery",
+      data: { ...delivery, isPaid: true },
+      user: delivery.sender,
+      paid: true,
+    });
+
+    res.json({ message: `Paid invoice sent`, invoiceNumber: result?.invoiceNumber });
+  } catch (err) {
+    res.status(500).json({ error: "Could not mark as paid: " + err.message });
+  }
+};
+
+// POST /api/admin/service-orders/:id/mark-paid
+exports.markServicePaid = async (req, res) => {
+  try {
+    const order = await prisma.serviceOrder.findUnique({
+      where: { id: req.params.id },
+      include: { user: true },
+    });
+    if (!order) return res.status(404).json({ error: "Order not found" });
+
+    const { generateAndSendInvoice } = require("../services/invoice.service");
+    const result = await generateAndSendInvoice({
+      type: "service",
+      data: { ...order, isPaid: true },
+      user: order.user,
+      paid: true,
+    });
+
+    res.json({ message: `Paid invoice sent`, invoiceNumber: result?.invoiceNumber });
+  } catch (err) {
+    res.status(500).json({ error: "Could not mark as paid: " + err.message });
+  }
+};

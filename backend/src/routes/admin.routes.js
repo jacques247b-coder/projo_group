@@ -36,6 +36,11 @@ router.get("/service-orders", service.getAllOrders);
 // Email export for MailerLite
 router.get("/export/emails", admin.exportEmailsExcel);
 
+// Mark as paid + send paid invoice
+router.post("/rides/:id/mark-paid",          admin.markRidePaid);
+router.post("/deliveries/:id/mark-paid",     admin.markDeliveryPaid);
+router.post("/service-orders/:id/mark-paid", admin.markServicePaid);
+
 // Business analytics
 router.get("/analytics",        admin.getAnalytics);
 router.get("/analytics/export", admin.exportAnalytics);

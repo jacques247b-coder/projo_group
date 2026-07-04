@@ -101,6 +101,14 @@ export default function AdminDashboard() {
     } finally { setLoading(false); }
   }
 
+  async function markAsPaid(type, id) {
+    try {
+      await api.post(`/admin/${type}/${id}/mark-paid`);
+      toast.success("✅ Marked as paid — paid invoice sent to customer");
+      loadAll();
+    } catch { toast.error("Could not mark as paid"); }
+  }
+
   async function cancelRide(id) {
     if (!window.confirm("Cancel this ride? Wallet will be refunded if applicable.")) return;
     try {
@@ -305,6 +313,9 @@ export default function AdminDashboard() {
                   {selectedRide.status !== "CANCELLED" && selectedRide.status !== "COMPLETED" && (
                     <button onClick={() => { cancelRide(selectedRide.id); setSelectedRide(null); }} style={{ background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: "6px", padding: "6px 12px", color: "#f87171", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}>Cancel Ride</button>
                   )}
+                  {!selectedRide.paidWithWallet && (
+                    <button onClick={() => markAsPaid("rides", selectedRide.id)} style={{ background: "#166534", border: "1px solid #4ade80", borderRadius: "6px", padding: "6px 12px", color: "#4ade80", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}>💵 Mark as Paid</button>
+                  )}
                 </div>
               </div>
             ) : (
@@ -319,12 +330,20 @@ export default function AdminDashboard() {
                     <div style={{ fontSize: "13px", color: "#a8a49e" }}>🏁 {r.dropoffAddress}</div>
                     <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px" }}>
                       <div style={{ fontSize: "11px", color: "#6b6760" }}>{fmt(r.createdAt)}</div>
-                      {r.status !== "CANCELLED" && r.status !== "COMPLETED" && (
-                        <button onClick={e => { e.stopPropagation(); cancelRide(r.id); }} style={{
-                          background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: "6px",
-                          padding: "3px 10px", color: "#f87171", fontSize: "11px", fontWeight: "700", cursor: "pointer"
-                        }}>Cancel</button>
-                      )}
+                      <div style={{ display: "flex", gap: "6px" }}>
+                        {r.status !== "CANCELLED" && r.status !== "COMPLETED" && (
+                          <button onClick={e => { e.stopPropagation(); cancelRide(r.id); }} style={{
+                            background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: "6px",
+                            padding: "3px 10px", color: "#f87171", fontSize: "11px", fontWeight: "700", cursor: "pointer"
+                          }}>Cancel</button>
+                        )}
+                        {!r.paidWithWallet && r.status === "COMPLETED" && (
+                          <button onClick={e => { e.stopPropagation(); markAsPaid("rides", r.id); }} style={{
+                            background: "#166534", border: "1px solid #4ade80", borderRadius: "6px",
+                            padding: "3px 10px", color: "#4ade80", fontSize: "11px", fontWeight: "700", cursor: "pointer"
+                          }}>💵 Paid</button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -354,6 +373,9 @@ export default function AdminDashboard() {
                   <div><span style={{ color: "#6b6760" }}>Fare:</span> <span style={{ color: G, fontWeight: "700" }}>{formatFare(selectedDelivery.fare || 60)}</span></div>
                 </div>
                 <div style={{ display: "flex", gap: "8px", marginTop: "1rem", flexWrap: "wrap" }}>
+                  {!selectedDelivery.paidWithWallet && (
+                    <button onClick={() => markAsPaid("deliveries", selectedDelivery.id)} style={{ background: "#166534", border: "1px solid #4ade80", borderRadius: "6px", padding: "6px 12px", color: "#4ade80", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}>💵 Mark as Paid</button>
+                  )}
                   {["PICKED_UP","IN_TRANSIT","DELIVERED","CANCELLED"].map(s => (
                     <button key={s} onClick={() => updateDeliveryStatus(selectedDelivery.id, s)} style={{
                       background: BG3, border: `1px solid ${BORDER}`, borderRadius: "6px",
@@ -408,6 +430,9 @@ export default function AdminDashboard() {
                 {o.scheduledFor && <div style={{ fontSize: "12px", color: "#a8a49e" }}>📅 {fmt(o.scheduledFor)}</div>}
                 {o.notes && <div style={{ fontSize: "12px", color: "#a8a49e", marginTop: "4px" }}>📝 {o.notes}</div>}
                 <div style={{ display: "flex", gap: "6px", marginTop: "10px", flexWrap: "wrap" }}>
+                  {!o.paidWithWallet && (
+                    <button onClick={() => markAsPaid("service-orders", o.id)} style={{ background: "#166534", border: "1px solid #4ade80", borderRadius: "6px", padding: "4px 10px", color: "#4ade80", fontSize: "10px", fontWeight: "700", cursor: "pointer" }}>💵 Mark Paid</button>
+                  )}
                   {["CONFIRMED","IN_PROGRESS","COMPLETED","CANCELLED"].map(s => (
                     <button key={s} onClick={() => updateServiceOrder(o.id, s)} style={{
                       background: o.status === s ? "rgba(232,184,75,0.15)" : BG3,

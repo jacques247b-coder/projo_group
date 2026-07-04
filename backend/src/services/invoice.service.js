@@ -132,12 +132,14 @@ function buildInvoicePDF(invoiceData) {
       .text(`R${invoiceData.total.toFixed(2)}`, 460, y + 9, { width: 80, align: "right" });
     y += 42;
 
-    // Payment status badge
-    const isPaid = invoiceData.status === "PAID" || invoiceData.paymentMethod === "PROJO Wallet";
-    doc.rect(50, y, 100, 22).fill(isPaid ? "#166534" : "#7F1D1D");
-    doc.fillColor(isPaid ? "#4ade80" : "#FCA5A5").fontSize(9).font("Helvetica-Bold")
-      .text(isPaid ? "✓ PAID" : "PENDING PAYMENT", 55, y + 6);
-    y += 40;
+    // Paid stamp - only shown when admin marks as paid
+    if (invoiceData.paid) {
+      doc.rect(50, y, 110, 24).fill("#166534");
+      doc.fillColor("#4ade80").fontSize(10).font("Helvetica-Bold")
+        .text("✓ PAYMENT CONFIRMED", 56, y + 7);
+      y += 34;
+    }
+    y += 10;
 
     // ── Footer ───────────────────────────────────────────────
     doc.moveTo(50, y + 10).lineTo(545, y + 10).strokeColor(GOLD).lineWidth(0.5).stroke();
@@ -153,7 +155,7 @@ function buildInvoicePDF(invoiceData) {
 }
 
 // ── Main Invoice Generator ───────────────────────────────────
-async function generateAndSendInvoice({ type, data, user }) {
+async function generateAndSendInvoice({ type, data, user, paid = false }) {
   try {
     const invoiceNumber = generateInvoiceNumber();
 
@@ -196,7 +198,8 @@ async function generateAndSendInvoice({ type, data, user }) {
       customerPhone: user.phone,
       customerEmail: user.email,
       serviceType,
-      status: "PAID",
+      status: paid ? "PAID ✓" : (data.paidWithWallet ? "Wallet Payment" : "Cash — Payable on Service"),
+      paid,
       paymentMethod: data.paidWithWallet ? "PROJO Wallet" : "Cash",
       lineItems,
       subtotal,
