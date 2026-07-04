@@ -59,3 +59,43 @@ root.render(
     </ErrorBoundary>
   </React.StrictMode>
 );
+
+// ── Service Worker Auto-Update ──────────────────────────────
+// Registers the SW and automatically reloads when a new version is deployed
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").then((registration) => {
+      console.log("[PROJO SW] Registered:", registration.scope);
+
+      // Check for updates every 60 seconds
+      setInterval(() => {
+        registration.update();
+      }, 60 * 1000);
+
+      // When a new SW is found and installed, force reload all clients
+      registration.addEventListener("updatefound", () => {
+        const newWorker = registration.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener("statechange", () => {
+          if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+            console.log("[PROJO SW] New version available — reloading...");
+            // Auto-reload silently for seamless update
+            window.location.reload();
+          }
+        });
+      });
+
+    }).catch((err) => {
+      console.error("[PROJO SW] Registration failed:", err);
+    });
+
+    // Also reload if the SW controller changes (another tab updated it)
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
+  });
+}

@@ -1,5 +1,12 @@
-// PROJO GROUP — Service Worker v3 (with Push Notifications)
-self.addEventListener("install", () => self.skipWaiting());
+// PROJO GROUP — Service Worker v4 (Auto-Update)
+// ⚠️ INCREMENT THIS VERSION NUMBER WITH EVERY DEPLOY to force client updates
+const SW_VERSION = "v4.0.0";
+console.log("[PROJO SW] Version:", SW_VERSION);
+
+self.addEventListener("install", () => {
+  console.log("[PROJO SW] Installing:", SW_VERSION);
+  self.skipWaiting(); // Take control immediately
+});
 
 self.addEventListener("activate", (e) => {
   e.waitUntil(
