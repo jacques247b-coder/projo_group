@@ -9,7 +9,10 @@ const driverApp = require("../controllers/driver.application.controller");
 router.get("/me",            authenticate, requireRole("DRIVER"), driver.getProfile);
 router.post("/status",       authenticate, requireRole("DRIVER"), driver.updateStatus);
 router.get("/earnings",      authenticate, requireRole("DRIVER"), driver.getEarnings);
-router.get("/pending-rides", authenticate, requireRole("DRIVER"), driver.getPendingRides);
+router.get("/pending-rides",    authenticate, requireRole("DRIVER"), driver.getPendingRides);
+router.post("/rides/:id/accept", authenticate, requireRole("DRIVER"), driver.acceptRide);
+router.post("/location",         authenticate, requireRole("DRIVER"), driver.updateLocation);
+router.post("/shift-end",        authenticate, requireRole("DRIVER"), driver.shiftEnd);
 
 // ── Driver application routes ─────────────────────────────────
 // Submit application (any authenticated user)

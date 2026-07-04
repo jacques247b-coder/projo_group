@@ -71,6 +71,7 @@ export const rideAPI = {
   rateRide: (id, stars, comment) => api.post(`/rides/${id}/rate`, { stars, comment }),
   acceptRide: (id) => api.post(`/rides/${id}/accept`),
   updateStatus: (id, status) => api.post(`/rides/${id}/status`, { status }),
+  acceptRide: (id) => api.post(`/driver/rides/${id}/accept`),
 };
 
 export const walletAPI = {
@@ -106,6 +107,8 @@ export const adminAPI = {
 export const driverAPI = {
   getProfile: () => api.get("/drivers/me"),
   updateStatus: (status) => api.post("/drivers/status", { status }),
+  updateLocation: (data) => api.post("/drivers/location", data),
+  shiftEnd: (data) => api.post("/drivers/shift-end", data),
   getEarnings: (period) => api.get(`/drivers/earnings?period=${period}`),
   getPendingRides: () => api.get("/drivers/pending-rides"),
 };

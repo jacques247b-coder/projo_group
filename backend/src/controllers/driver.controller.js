@@ -125,3 +125,55 @@ exports.register = async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 };
+
+// POST /api/driver/rides/:id/accept
+exports.acceptRide = async (req, res) => {
+  try {
+    const ride = await prisma.ride.update({
+      where: { id: req.params.id },
+      data: { driverId: req.user.id, status: "DRIVER_ASSIGNED" },
+    });
+    // Notify passenger via socket
+    const io = req.app.get("io");
+    if (io) {
+      io.to(`passenger:${ride.passengerId}`).emit("ride:driver_assigned", {
+        rideId: ride.id, driverName: req.user.name, driverPhone: req.user.phone,
+      });
+    }
+    res.json({ message: "Ride accepted", ride });
+  } catch (err) {
+    res.status(500).json({ error: "Could not accept ride" });
+  }
+};
+
+// POST /api/driver/location — broadcast driver location to passengers
+exports.updateLocation = async (req, res) => {
+  try {
+    const { lat, lng, rideId } = req.body;
+    const io = req.app.get("io");
+    if (io && rideId) {
+      // Find the ride to get passenger ID
+      const ride = await prisma.ride.findUnique({ where: { id: rideId } });
+      if (ride) {
+        io.to(`passenger:${ride.passengerId}`).emit("driver:location", {
+          lat, lng, driverId: req.user.id, rideId,
+        });
+      }
+    }
+    res.json({ ok: true });
+  } catch {
+    res.json({ ok: false });
+  }
+};
+
+// POST /api/driver/shift-end — submit cash owed at shift end
+exports.shiftEnd = async (req, res) => {
+  try {
+    const { cashOwed, totalEarnings, ridesCount } = req.body;
+    console.log(`[PROJO Driver] Shift end — ${req.user.name}: earned R${totalEarnings}, owes R${cashOwed} cash (${ridesCount} rides)`);
+    // Could save to a ShiftRecord table in future
+    res.json({ message: "Shift recorded", cashOwed, totalEarnings });
+  } catch {
+    res.status(500).json({ error: "Could not record shift" });
+  }
+};
