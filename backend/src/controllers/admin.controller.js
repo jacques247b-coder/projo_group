@@ -447,6 +447,32 @@ exports.getAnalytics = async (req, res) => {
       ? (rideRevenue / rides.length).toFixed(2)
       : 0;
 
+    // ── Products stats ──────────────────────────────────────
+    const productOrders = await prisma.serviceOrder.findMany({
+      where: { createdAt: { gte: startDate }, category: "Products" },
+      select: { productName: true, finalPrice: true, createdAt: true, status: true },
+    }).catch(() => []);
+
+    // Top selling products
+    const productSales = {};
+    productOrders.forEach(o => {
+      if (!productSales[o.productName]) productSales[o.productName] = { name: o.productName, orders: 0, revenue: 0 };
+      productSales[o.productName].orders++;
+      productSales[o.productName].revenue += o.finalPrice || 0;
+    });
+    const topProducts = Object.values(productSales)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 10);
+
+    // Product inventory
+    const lowStockProducts = await prisma.product.findMany({
+      where: { isActive: true, trackInventory: true, stockQty: { lte: 5 } },
+      select: { name: true, category: true, stockQty: true, priceZar: true },
+    }).catch(() => []);
+
+    const totalProducts = await prisma.product.count({ where: { isActive: true } }).catch(() => 0);
+    const productRevenue = productOrders.reduce((s, o) => s + (o.finalPrice || 0), 0);
+
     res.json({
       period: days,
       summary: {
@@ -468,9 +494,14 @@ exports.getAnalytics = async (req, res) => {
         walletRides,
         cashRides,
         cancelledRides,
+        totalProducts,
+        productOrders: productOrders.length,
+        productRevenue: parseFloat(productRevenue.toFixed(2)),
       },
       dailyData,
       categoryRevenue,
+      topProducts,
+      lowStockProducts,
     });
   } catch (err) {
     console.error("[PROJO Analytics]", err.message);

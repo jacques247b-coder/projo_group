@@ -145,6 +145,8 @@ export default function AdminAnalyticsPage() {
               <StatCard icon="👥" label="New Customers" value={s.newUsers} sub={`${s.totalUsers} total`} color="#4ade80" />
               <StatCard icon="💸" label="Avg Ride Fare" value={fmt(s.avgFare)} />
               <StatCard icon="✅" label="Completion Rate" value={`${s.completionRate}%`} sub={`${s.cancelledRides} cancelled`} color={s.completionRate >= 80 ? "#4ade80" : "#f59e0b"} />
+              <StatCard icon="🛍️" label="Product Orders" value={s.productOrders || 0} sub={`${s.totalProducts} active products`} color="#34d399" />
+              <StatCard icon="💎" label="Product Revenue" value={fmt(s.productRevenue)} color="#34d399" />
             </div>
 
             {/* ── Revenue Over Time ── */}
@@ -246,16 +248,63 @@ export default function AdminAnalyticsPage() {
               </div>
             )}
 
+            {/* ── Top Products ── */}
+            {data?.topProducts?.length > 0 && (
+              <div style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "1.25rem", marginBottom: "1.5rem" }}>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "15px", fontWeight: "800", color: G, marginBottom: "1rem" }}>
+                  🛍️ Top Selling Products
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {data.topProducts.map((p, i) => (
+                    <div key={p.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: BG3, borderRadius: "10px", padding: "10px 14px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "14px", fontWeight: "800", color: i === 0 ? G : "#6b6760", width: "24px" }}>#{i+1}</div>
+                        <div>
+                          <div style={{ fontSize: "13px", fontWeight: "700", color: "#f0ede8" }}>{p.name}</div>
+                          <div style={{ fontSize: "11px", color: "#6b6760" }}>{p.orders} order{p.orders !== 1 ? "s" : ""}</div>
+                        </div>
+                      </div>
+                      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "14px", fontWeight: "800", color: "#34d399" }}>{fmt(p.revenue)}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── Low Stock Alert ── */}
+            {data?.lowStockProducts?.length > 0 && (
+              <div style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "16px", padding: "1.25rem", marginBottom: "1.5rem" }}>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "15px", fontWeight: "800", color: "#f59e0b", marginBottom: "1rem" }}>
+                  ⚠️ Low Stock Alert
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {data.lowStockProducts.map(p => (
+                    <div key={p.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: BG3, borderRadius: "10px", padding: "10px 14px" }}>
+                      <div>
+                        <div style={{ fontSize: "13px", fontWeight: "700", color: "#f0ede8" }}>{p.name}</div>
+                        <div style={{ fontSize: "11px", color: "#6b6760" }}>{p.category}</div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: "13px", fontWeight: "800", color: p.stockQty === 0 ? "#ef4444" : "#f59e0b" }}>{p.stockQty} left</div>
+                        <div style={{ fontSize: "11px", color: "#6b6760" }}>{fmt(p.priceZar)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* ── Profit Summary ── */}
             <div style={{ background: "rgba(74,222,128,0.05)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: "16px", padding: "1.25rem" }}>
               <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "15px", fontWeight: "800", color: "#4ade80", marginBottom: "1rem" }}>
                 🏦 PROJO GROUP Profit Summary
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                 {[
                   { label: "Ride Commission (20%)", value: fmt((s.rideRevenue || 0) * 0.2), color: "#60a5fa" },
                   { label: "Delivery Commission (20%)", value: fmt((s.deliveryRevenue || 0) * 0.2), color: "#a78bfa" },
                   { label: "Service Revenue (30%)", value: fmt((s.serviceRevenue || 0) * 0.3), color: "#f59e0b" },
+                  { label: "Product Revenue", value: fmt(s.productRevenue || 0), color: "#34d399" },
                 ].map(item => (
                   <div key={item.label} style={{ background: BG3, borderRadius: "12px", padding: "14px", textAlign: "center" }}>
                     <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "18px", fontWeight: "800", color: item.color }}>{item.value}</div>
