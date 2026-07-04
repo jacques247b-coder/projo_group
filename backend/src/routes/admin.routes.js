@@ -36,6 +36,10 @@ router.get("/service-orders", service.getAllOrders);
 // Email export for MailerLite
 router.get("/export/emails", admin.exportEmailsExcel);
 
+// Business analytics
+router.get("/analytics",        admin.getAnalytics);
+router.get("/analytics/export", admin.exportAnalytics);
+
 // Push notifications
 router.post("/push/broadcast", admin.broadcastPush);
 router.get("/push/stats",      admin.pushStats);

@@ -28,6 +28,7 @@ import DriverEarnings from "./pages/driver/DriverEarnings";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminAnalyticsPage from "./pages/admin/AdminAnalyticsPage";
 import DeliveryTrackingPage from "./pages/passenger/DeliveryTrackingPage";
 import AdminProductPage from "./pages/admin/AdminProductPage";
 import PromoCodesPage from "./pages/admin/PromoCodesPage";
@@ -151,6 +152,11 @@ function AppRoutes() {
       } />
 
       {/* Admin — specific routes MUST come before /admin */}
+      <Route path="/admin/analytics" element={
+        <Protected roles={["ADMIN"]}>
+          <AdminAnalyticsPage />
+        </Protected>
+      } />
       <Route path="/admin/product/new" element={
         <Protected roles={["ADMIN"]}>
           <AdminProductPage />

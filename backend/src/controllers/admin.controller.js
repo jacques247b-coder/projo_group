@@ -345,3 +345,264 @@ exports.pushStats = async (req, res) => {
     res.status(500).json({ error: "Could not get stats" });
   }
 };
+
+// GET /api/admin/analytics — comprehensive business growth data
+exports.getAnalytics = async (req, res) => {
+  try {
+    const { period = "30" } = req.query;
+    const days = parseInt(period);
+    const now = new Date();
+    const startDate = new Date(now - days * 24 * 60 * 60 * 1000);
+    const prevStart = new Date(startDate - days * 24 * 60 * 60 * 1000);
+
+    // ── Revenue & Rides ──────────────────────────────────────
+    const [rides, prevRides, deliveries, prevDeliveries, serviceOrders, users, newUsers] = await Promise.all([
+      prisma.ride.findMany({
+        where: { createdAt: { gte: startDate }, status: "COMPLETED" },
+        select: { totalFare: true, createdAt: true, paidWithWallet: true },
+      }),
+      prisma.ride.findMany({
+        where: { createdAt: { gte: prevStart, lt: startDate }, status: "COMPLETED" },
+        select: { totalFare: true },
+      }),
+      prisma.delivery.findMany({
+        where: { createdAt: { gte: startDate }, status: "DELIVERED" },
+        select: { fare: true, createdAt: true },
+      }),
+      prisma.delivery.findMany({
+        where: { createdAt: { gte: prevStart, lt: startDate }, status: "DELIVERED" },
+        select: { fare: true },
+      }),
+      prisma.serviceOrder.findMany({
+        where: { createdAt: { gte: startDate }, status: "COMPLETED" },
+        select: { finalPrice: true, createdAt: true, category: true },
+      }).catch(() => []),
+      prisma.user.count({ where: { role: "PASSENGER" } }),
+      prisma.user.count({ where: { createdAt: { gte: startDate } } }),
+    ]);
+
+    // ── Revenue calculations ─────────────────────────────────
+    const rideRevenue = rides.reduce((s, r) => s + (r.totalFare || 0), 0);
+    const deliveryRevenue = deliveries.reduce((s, d) => s + (d.fare || 60), 0);
+    const serviceRevenue = serviceOrders.reduce((s, o) => s + (o.finalPrice || 0), 0);
+    const totalRevenue = rideRevenue + deliveryRevenue + serviceRevenue;
+
+    const prevRideRevenue = prevRides.reduce((s, r) => s + (r.totalFare || 0), 0);
+    const prevDeliveryRevenue = prevDeliveries.reduce((s, d) => s + (d.fare || 60), 0);
+    const prevTotalRevenue = prevRideRevenue + prevDeliveryRevenue;
+
+    // PROJO share (80/20 split on rides)
+    const projoRideShare = rideRevenue * 0.2;
+    const projoDeliveryShare = deliveryRevenue * 0.2;
+    const projoServiceShare = serviceRevenue * 0.3;
+    const totalProjoRevenue = projoRideShare + projoDeliveryShare + projoServiceShare + serviceRevenue;
+
+    // Growth %
+    const revenueGrowth = prevTotalRevenue > 0
+      ? ((totalRevenue - prevTotalRevenue) / prevTotalRevenue * 100).toFixed(1)
+      : 100;
+
+    // ── Daily revenue for chart (last N days) ────────────────
+    const dailyData = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const day = new Date(now - i * 24 * 60 * 60 * 1000);
+      const dayStr = day.toLocaleDateString("en-ZA", { day: "2-digit", month: "short" });
+      const dayRides = rides.filter(r => new Date(r.createdAt).toDateString() === day.toDateString());
+      const dayDeliveries = deliveries.filter(d => new Date(d.createdAt).toDateString() === day.toDateString());
+      const dayServices = serviceOrders.filter(o => new Date(o.createdAt).toDateString() === day.toDateString());
+      dailyData.push({
+        date: dayStr,
+        rides: dayRides.reduce((s, r) => s + (r.totalFare || 0), 0),
+        deliveries: dayDeliveries.reduce((s, d) => s + (d.fare || 60), 0),
+        services: dayServices.reduce((s, o) => s + (o.finalPrice || 0), 0),
+        total: dayRides.reduce((s, r) => s + (r.totalFare || 0), 0) +
+               dayDeliveries.reduce((s, d) => s + (d.fare || 60), 0) +
+               dayServices.reduce((s, o) => s + (o.finalPrice || 0), 0),
+      });
+    }
+
+    // ── Revenue by category ──────────────────────────────────
+    const categoryRevenue = {};
+    serviceOrders.forEach(o => {
+      categoryRevenue[o.category] = (categoryRevenue[o.category] || 0) + (o.finalPrice || 0);
+    });
+
+    // ── Payment method split ─────────────────────────────────
+    const walletRides = rides.filter(r => r.paidWithWallet).length;
+    const cashRides = rides.length - walletRides;
+
+    // ── Drivers & active stats ───────────────────────────────
+    const [totalDrivers, onlineDrivers, totalRidesAll, cancelledRides] = await Promise.all([
+      prisma.user.count({ where: { role: "DRIVER", status: "ACTIVE" } }),
+      prisma.user.count({ where: { role: "DRIVER", driverStatus: "ONLINE" } }).catch(() => 0),
+      prisma.ride.count({ where: { createdAt: { gte: startDate } } }),
+      prisma.ride.count({ where: { createdAt: { gte: startDate }, status: "CANCELLED" } }),
+    ]);
+
+    const completionRate = totalRidesAll > 0
+      ? ((rides.length / totalRidesAll) * 100).toFixed(1)
+      : 0;
+
+    const avgFare = rides.length > 0
+      ? (rideRevenue / rides.length).toFixed(2)
+      : 0;
+
+    res.json({
+      period: days,
+      summary: {
+        totalRevenue: parseFloat(totalRevenue.toFixed(2)),
+        projoRevenue: parseFloat(totalProjoRevenue.toFixed(2)),
+        rideRevenue: parseFloat(rideRevenue.toFixed(2)),
+        deliveryRevenue: parseFloat(deliveryRevenue.toFixed(2)),
+        serviceRevenue: parseFloat(serviceRevenue.toFixed(2)),
+        revenueGrowth: parseFloat(revenueGrowth),
+        totalRides: rides.length,
+        totalDeliveries: deliveries.length,
+        totalServices: serviceOrders.length,
+        newUsers,
+        totalUsers: users,
+        totalDrivers,
+        onlineDrivers,
+        avgFare: parseFloat(avgFare),
+        completionRate: parseFloat(completionRate),
+        walletRides,
+        cashRides,
+        cancelledRides,
+      },
+      dailyData,
+      categoryRevenue,
+    });
+  } catch (err) {
+    console.error("[PROJO Analytics]", err.message);
+    res.status(500).json({ error: "Could not load analytics" });
+  }
+};
+
+// GET /api/admin/analytics/export — download full report as Excel
+exports.exportAnalytics = async (req, res) => {
+  try {
+    const ExcelJS = require("exceljs");
+    const { period = "30" } = req.query;
+    const days = parseInt(period);
+    const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const [rides, deliveries, users] = await Promise.all([
+      prisma.ride.findMany({
+        where: { createdAt: { gte: startDate } },
+        select: { totalFare: true, status: true, createdAt: true, paidWithWallet: true, pickupAddress: true, dropoffAddress: true },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.delivery.findMany({
+        where: { createdAt: { gte: startDate } },
+        select: { fare: true, status: true, createdAt: true, description: true, trackingNumber: true },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.user.findMany({
+        where: { createdAt: { gte: startDate } },
+        select: { name: true, phone: true, role: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
+
+    const wb = new ExcelJS.Workbook();
+    wb.creator = "PROJO GROUP";
+    wb.created = new Date();
+
+    const GOLD = "FFE8B84B";
+    const DARK = "FF1A0808";
+
+    function styleHeader(row) {
+      row.font = { bold: true, color: { argb: DARK }, size: 11 };
+      row.fill = { type: "pattern", pattern: "solid", fgColor: { argb: GOLD } };
+      row.alignment = { horizontal: "center", vertical: "middle" };
+      row.height = 22;
+    }
+
+    // ── Summary Sheet ────────────────────────────────────────
+    const ws1 = wb.addWorksheet("Summary");
+    ws1.columns = [{ width: 30 }, { width: 20 }];
+    styleHeader(ws1.addRow(["PROJO GROUP — Business Report", `Last ${days} Days`]));
+    ws1.addRow([]);
+    const completedRides = rides.filter(r => r.status === "COMPLETED");
+    const completedDeliveries = deliveries.filter(d => d.status === "DELIVERED");
+    const rideRev = completedRides.reduce((s, r) => s + (r.totalFare || 0), 0);
+    const delRev = completedDeliveries.reduce((s, d) => s + (d.fare || 60), 0);
+    [
+      ["Total Revenue", `R${(rideRev + delRev).toFixed(2)}`],
+      ["PROJO Share (20%)", `R${((rideRev + delRev) * 0.2).toFixed(2)}`],
+      ["Ride Revenue", `R${rideRev.toFixed(2)}`],
+      ["Delivery Revenue", `R${delRev.toFixed(2)}`],
+      ["Completed Rides", completedRides.length],
+      ["Completed Deliveries", completedDeliveries.length],
+      ["Total Trips", rides.length + deliveries.length],
+      ["Cancelled Rides", rides.filter(r => r.status === "CANCELLED").length],
+      ["New Customers", users.filter(u => u.role === "PASSENGER").length],
+      ["New Drivers", users.filter(u => u.role === "DRIVER").length],
+      ["Avg Fare", `R${completedRides.length > 0 ? (rideRev / completedRides.length).toFixed(2) : "0"}`],
+      ["Wallet Payments", rides.filter(r => r.paidWithWallet).length],
+      ["Cash Payments", rides.filter(r => !r.paidWithWallet).length],
+    ].forEach(([k, v]) => ws1.addRow([k, v]));
+
+    // ── Rides Sheet ──────────────────────────────────────────
+    const ws2 = wb.addWorksheet("Rides");
+    ws2.columns = [
+      { header: "Date", key: "date", width: 18 },
+      { header: "Pickup", key: "pickup", width: 30 },
+      { header: "Dropoff", key: "dropoff", width: 30 },
+      { header: "Fare (R)", key: "fare", width: 12 },
+      { header: "Status", key: "status", width: 15 },
+      { header: "Payment", key: "payment", width: 15 },
+    ];
+    styleHeader(ws2.getRow(1));
+    rides.forEach(r => ws2.addRow({
+      date: new Date(r.createdAt).toLocaleDateString("en-ZA"),
+      pickup: r.pickupAddress,
+      dropoff: r.dropoffAddress,
+      fare: r.totalFare || 0,
+      status: r.status,
+      payment: r.paidWithWallet ? "Wallet" : "Cash",
+    }));
+
+    // ── Deliveries Sheet ─────────────────────────────────────
+    const ws3 = wb.addWorksheet("Deliveries");
+    ws3.columns = [
+      { header: "Date", key: "date", width: 18 },
+      { header: "Tracking #", key: "tracking", width: 20 },
+      { header: "Item", key: "item", width: 25 },
+      { header: "Fare (R)", key: "fare", width: 12 },
+      { header: "Status", key: "status", width: 15 },
+    ];
+    styleHeader(ws3.getRow(1));
+    deliveries.forEach(d => ws3.addRow({
+      date: new Date(d.createdAt).toLocaleDateString("en-ZA"),
+      tracking: d.trackingNumber,
+      item: d.description,
+      fare: d.fare || 60,
+      status: d.status,
+    }));
+
+    // ── New Users Sheet ──────────────────────────────────────
+    const ws4 = wb.addWorksheet("New Users");
+    ws4.columns = [
+      { header: "Name", key: "name", width: 25 },
+      { header: "Phone", key: "phone", width: 18 },
+      { header: "Role", key: "role", width: 12 },
+      { header: "Joined", key: "joined", width: 18 },
+    ];
+    styleHeader(ws4.getRow(1));
+    users.forEach(u => ws4.addRow({
+      name: u.name,
+      phone: u.phone,
+      role: u.role,
+      joined: new Date(u.createdAt).toLocaleDateString("en-ZA"),
+    }));
+
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", `attachment; filename=PROJO_Analytics_${days}days_${new Date().toISOString().slice(0,10)}.xlsx`);
+    await wb.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    console.error("[PROJO Analytics Export]", err.message);
+    res.status(500).json({ error: "Could not export: " + err.message });
+  }
+};
