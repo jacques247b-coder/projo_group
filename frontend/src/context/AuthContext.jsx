@@ -3,7 +3,9 @@
 // FIX: Added login() function that RegisterPage was calling
 // ============================================================
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { subscribeToPush } from "../services/pushNotifications";
 import { authAPI } from "../services/api";
+import { subscribeToPush } from "../services/pushNotifications";
 
 const AuthContext = createContext(null);
 
