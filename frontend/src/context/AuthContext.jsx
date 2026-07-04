@@ -3,8 +3,7 @@
 // FIX: Added login() function that RegisterPage was calling
 // ============================================================
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { authAPI } from '../services/api';
-import { subscribeToPush } from '../services/pushNotifications';
+import { authAPI } from "../services/api";
 
 const AuthContext = createContext(null);
 
@@ -113,5 +112,3 @@ export function useAuth() {
   if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
   return ctx;
 }
-
-

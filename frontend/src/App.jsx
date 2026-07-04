@@ -35,6 +35,7 @@ import PromoCodesPage from "./pages/admin/PromoCodesPage";
 
 // Landing page
 import LandingPage from "./pages/LandingPage";
+import TravelPage from "./pages/travel/TravelPage";
 import SportsHubPage from "./pages/sports/SportsHubPage";
 import PushPermissionModal from "./components/ui/PushPermissionModal";
 import DriverSignupPage from "./pages/driver/DriverSignupPage";
@@ -110,6 +111,7 @@ function AppRoutes() {
         <Protected><ProductsShopPage /></Protected>
       } />
       <Route path="/home" element={<LandingPage />} />
+      <Route path="/travel" element={<Protected> />} />
       <Route path="/sports" element={
         <Protected><SportsHubPage /></Protected>
       } />

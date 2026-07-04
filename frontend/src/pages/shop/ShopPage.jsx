@@ -99,14 +99,17 @@ function CheckoutModal({ product, onClose }) {
 
   function toggleChoice(groupId, choiceId, isMulti) {
     setSelectedChoices(prev => {
+      const current = prev[groupId] || [];
       if (isMulti) {
-        const current = prev[groupId] || [];
+        // Multi: toggle on/off
         const next = current.includes(choiceId)
           ? current.filter(id => id !== choiceId)
           : [...current, choiceId];
         return { ...prev, [groupId]: next };
       } else {
-        return { ...prev, [groupId]: [choiceId] };
+        // Single: click same = deselect, click different = select
+        const next = current.includes(choiceId) ? [] : [choiceId];
+        return { ...prev, [groupId]: next };
       }
     });
   }

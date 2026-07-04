@@ -117,4 +117,11 @@ server.listen(PORT, () => {
   console.log("║  Rustenburg's Own. Ride. Shop. Deliver ║");
   console.log(`║  Port: ${PORT}                              ║`);
   console.log("╚════════════════════════════════════════╝");
+
+// Sports notifications — check every 15 minutes
+try {
+  const { checkAndNotifyMatches } = require("./services/sportsNotifications");
+  setInterval(checkAndNotifyMatches, 15 * 60 * 1000);
+  console.log("[PROJO Sports] Match notification scheduler started");
+} catch (e) { console.log("[PROJO Sports] Scheduler skipped:", e.message); }
 });
