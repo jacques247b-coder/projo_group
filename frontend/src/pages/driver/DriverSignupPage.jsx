@@ -32,6 +32,56 @@ export default function DriverSignupPage() {
   const [step, setStep]     = useState(() => {
     try { return parseInt(localStorage.getItem("drv_step") || "0"); } catch { return 0; }
   });
+  const socketRef = useRef(null);
+  const pollRef = useRef(null);
+
+  // When on pending screen - connect socket + poll for approval
+  useEffect(() => {
+    if (step !== 3) return;
+    const userId = localStorage.getItem("projo_user")
+      ? JSON.parse(localStorage.getItem("projo_user"))?.id
+      : null;
+    if (!userId) return;
+
+    // Connect socket and join pending room
+    const sock = io(
+      process.env.REACT_APP_API_URL?.replace("/api", "") || "http://localhost:5000",
+      { auth: { token: localStorage.getItem("projo_token") } }
+    );
+    socketRef.current = sock;
+    sock.emit("driver:join_pending", { driverId: userId });
+
+    // Listen for approval
+    sock.on("driver:approved", () => {
+      toast.success("🎉 You have been approved! Redirecting to driver dashboard...");
+      // Clear signup localStorage
+      ["drv_step","drv_personal","drv_otpSent","drv_verified","drv_vehicle"].forEach(k => localStorage.removeItem(k));
+      setTimeout(() => navigate("/driver"), 2000);
+    });
+
+    // Poll every 30 seconds as backup (in case socket misses it)
+    pollRef.current = setInterval(async () => {
+      try {
+        const token = localStorage.getItem("projo_token");
+        if (!token) return;
+        const res = await fetch(
+          `${process.env.REACT_APP_API_URL || "http://localhost:5000/api"}/auth/me`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const data = await res.json();
+        if (data.user?.role === "DRIVER" && data.user?.status === "ACTIVE") {
+          toast.success("🎉 Approved! Redirecting...");
+          ["drv_step","drv_personal","drv_otpSent","drv_verified","drv_vehicle"].forEach(k => localStorage.removeItem(k));
+          navigate("/driver");
+        }
+      } catch {}
+    }, 30000);
+
+    return () => {
+      sock.disconnect();
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [step]);
   const [loading, setLoading] = useState(false);
 
   const [personal, setPersonal] = useState(() => {
@@ -500,8 +550,8 @@ export default function DriverSignupPage() {
               {[
                 "Our team reviews your documents",
                 "We may contact you via WhatsApp for any missing info",
-                "Once approved, you'll receive an activation notification",
-                "Log in and go ONLINE to start accepting rides",
+                "Once approved you'll be automatically redirected to the driver dashboard",
+                "Or log back in anytime to check your status",
               ].map((item, i) => (
                 <div key={i} style={{ display: "flex", gap: "10px", marginBottom: "8px",
                   fontSize: "13px", color: "#b8a09a" }}>

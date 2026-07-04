@@ -135,9 +135,55 @@ exports.approveDriver = async (req, res) => {
   try {
     const driver = await prisma.user.update({
       where: { id: req.params.id },
-      data: { status: "ACTIVE" },
+      data: { status: "ACTIVE", role: "DRIVER" },
     });
     console.log(`[PROJO Admin] Driver approved: ${driver.name} (${driver.phone})`);
+
+    // Notify driver via Socket.io — triggers auto-redirect on their device
+    const io = req.app.get("io");
+    if (io) {
+      io.to(`driver_pending:${driver.id}`).emit("driver:approved", {
+        message: "Your driver application has been approved! Welcome to PROJO GROUP.",
+        driverId: driver.id,
+      });
+    }
+
+    // Send approval WhatsApp via CallMeBot
+    try {
+      const { sendWhatsAppNotification } = require("../services/whatsapp.service");
+      await sendWhatsAppNotification(
+        `✅ *DRIVER APPROVED — PROJO GROUP*
+
+` +
+        `Congratulations ${driver.name}!
+` +
+        `Your driver application has been approved.
+` +
+        `Open the PROJO app to start driving.
+
+` +
+        `app.projogroup.co.za`
+      );
+    } catch (e) { console.log("[PROJO Driver] Approval notification failed:", e.message); }
+
+    // Send approval email
+    try {
+      const { Resend } = require("resend");
+      if (process.env.RESEND_API_KEY && driver.email) {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        await resend.emails.send({
+          from: process.env.RESEND_FROM_EMAIL || "noreply@projogroup.co.za",
+          to: driver.email,
+          subject: "✅ Your PROJO Driver Application is Approved!",
+          html: `
+            <h2>Welcome to PROJO GROUP, ${driver.name}!</h2>
+            <p>Your driver application has been approved. You can now log in and start accepting rides.</p>
+            <p><a href="https://app.projogroup.co.za">Open PROJO App</a></p>
+          `,
+        });
+      }
+    } catch (e) { console.log("[PROJO Driver] Email failed:", e.message); }
+
     res.json({ message: "Driver approved and activated", driver });
   } catch (err) {
     res.status(500).json({ error: "Could not approve driver" });

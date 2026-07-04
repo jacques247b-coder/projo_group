@@ -48,6 +48,17 @@ io.on("connection", (socket) => {
     console.log(`[PROJO Socket] Driver ${driverId} joined`);
   });
 
+  // Pending driver joins waiting room — to receive approval notification
+  socket.on("driver:join_pending", ({ driverId }) => {
+    socket.join(`driver_pending:${driverId}`);
+    console.log(`[PROJO Socket] Pending driver ${driverId} waiting for approval`);
+  });
+
+  // Admin joins admin room
+  socket.on("admin:join", () => {
+    socket.join("admin");
+  });
+
   // Passenger joins their room for direct notifications
   socket.on("passenger:join", ({ passengerId }) => {
     socket.join(`passenger:${passengerId}`);
