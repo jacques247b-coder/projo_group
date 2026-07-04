@@ -145,6 +145,24 @@ exports.bookService = async (req, res) => {
       );
     } catch (e) { console.log("[PROJO Service] WhatsApp notification failed:", e.message); }
 
+    // Generate and send invoice immediately on booking
+    try {
+      const { generateAndSendInvoice } = require("../services/invoice.service");
+      const customer = await prisma.user.findUnique({ where: { id: req.user.id } });
+      if (customer) {
+        await generateAndSendInvoice({
+          type: "service",
+          data: {
+            ...order,
+            selections,
+            loyaltyDiscount: discount.discountApplied,
+            loyaltyTier: discount.tierName,
+          },
+          user: customer,
+        });
+      }
+    } catch (e) { console.log("[PROJO Invoice] Service:", e.message); }
+
     res.status(201).json({
       message: discount.discountApplied > 0
         ? `Booked! ${discount.tierName} tier discount of ${discount.discountPct}% applied (R${discount.discountApplied} off)`

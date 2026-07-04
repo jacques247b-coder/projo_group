@@ -81,6 +81,13 @@ exports.bookDelivery = async (req, res) => {
       );
     } catch (e) { console.log("[PROJO Delivery] WhatsApp notification failed:", e.message); }
 
+    // Generate invoice on booking
+    try {
+      const { generateAndSendInvoice } = require("../services/invoice.service");
+      const sender = await prisma.user.findUnique({ where: { id: req.user.id } });
+      if (sender) await generateAndSendInvoice({ type: "delivery", data: delivery, user: sender });
+    } catch (e) { console.log("[PROJO Invoice] Delivery:", e.message); }
+
     res.status(201).json({
       message: discount.discountApplied > 0
         ? `Delivery booked! ${discount.tierName} tier discount of ${discount.discountPct}% applied (R${discount.discountApplied} off)`

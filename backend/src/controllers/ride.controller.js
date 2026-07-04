@@ -168,9 +168,14 @@ exports.updateRideStatus = async (req, res) => {
       data: { status },
     });
 
-    // Award loyalty points when ride COMPLETES
+    // Award loyalty points + generate invoice when ride COMPLETES
     if (status === "COMPLETED") {
       await awardPoints(ride.passengerId, ride.totalFare, `Ride completed`);
+      try {
+        const { generateAndSendInvoice } = require("../services/invoice.service");
+        const passenger = await prisma.user.findUnique({ where: { id: ride.passengerId } });
+        if (passenger) await generateAndSendInvoice({ type: "ride", data: ride, user: passenger });
+      } catch (e) { console.log("[PROJO Invoice] Ride:", e.message); }
       console.log(`[PROJO Ride] Points awarded for completed ride ${ride.id}`);
     }
 
