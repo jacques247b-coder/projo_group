@@ -68,11 +68,11 @@ const YOUTUBE_CHANNELS = [
   },
   {
     id: "bafana",
-    title: "⚽ SAFA TV — Bafana Bafana",
-    desc: "South African Football Association official highlights",
+    title: "⚽ Bafana Bafana — AFCON 2025 Highlights",
+    desc: "Bafana Bafana beat Angola in their AFCON 2025 opener",
     url: "https://www.youtube.com/@SAFAChannel",
-    thumb: "https://i.ytimg.com/vi/oAIfVW4LKFQ/maxresdefault.jpg",
-    videoId: "oAIfVW4LKFQ",
+    thumb: "https://i.ytimg.com/vi/G77xiAX0ImE/maxresdefault.jpg",
+    videoId: "G77xiAX0ImE",
   },
   {
     id: "psl",
