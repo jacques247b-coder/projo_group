@@ -32,6 +32,7 @@ const TABS = [
   { key: "services",   label: "🛠️ Services" },
   { key: "products",   label: "🛍️ Products" },
   { key: "drivers",    label: "🚘 Drivers" },
+  { key: "push",       label: "📣 Broadcast" },
 ];
 
 const SERVICE_CATEGORIES = [
@@ -64,13 +65,17 @@ export default function AdminDashboard() {
   const [selectedDelivery, setSelectedDelivery] = useState(null);
   const [productModal, setProductModal] = useState(null);
   const [productForm, setProductForm] = useState({});
+  const [pushForm, setPushForm] = useState({ title: "", body: "", url: "", target: "all" });
+  const [pushStats, setPushStats] = useState(null);
+  const [pushSending, setPushSending] = useState(false);
+  const [pushResult, setPushResult] = useState(null);
 
   useEffect(() => { loadAll(); }, []);
 
   async function loadAll() {
     setLoading(true);
     try {
-      const [s, u, r, d, p, dr, so] = await Promise.all([
+      const [s, u, r, d, p, dr, so, ps] = await Promise.all([
         api.get("/admin/stats"),
         api.get("/admin/users"),
         api.get("/admin/rides"),
@@ -78,6 +83,7 @@ export default function AdminDashboard() {
         api.get("/admin/products"),
         api.get("/admin/drivers"),
         api.get("/admin/service-orders").catch(() => ({ orders: [] })),
+        api.get("/admin/push/stats").catch(() => null),
       ]);
       setStats(s.stats);
       setUsers(u.users || []);
@@ -85,6 +91,7 @@ export default function AdminDashboard() {
       setDeliveries(d.deliveries || []);
       setProducts(p.products || []);
       setServiceOrders(so.orders || []);
+      if (ps) setPushStats(ps);
       const drivers = dr.drivers || [];
       setPendingDrivers(drivers.filter(d => d.status === "PENDING_VERIFICATION"));
       setAllDrivers(drivers);
@@ -163,6 +170,19 @@ export default function AdminDashboard() {
       toast.success("Deleted");
       loadAll();
     } catch { toast.error("Could not delete"); }
+  }
+
+  async function sendBroadcast() {
+    if (!pushForm.title.trim() || !pushForm.body.trim()) return toast.error("Title and message required");
+    setPushSending(true);
+    setPushResult(null);
+    try {
+      const res = await api.post("/admin/push/broadcast", pushForm);
+      setPushResult(res);
+      toast.success(`✅ Sent to ${res.sent} device${res.sent !== 1 ? "s" : ""}!`);
+      setPushForm({ title: "", body: "", url: "", target: "all" });
+    } catch { toast.error("Could not send notification"); }
+    finally { setPushSending(false); }
   }
 
   async function updateServiceOrder(id, status) {
@@ -478,6 +498,118 @@ export default function AdminDashboard() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* ── BROADCAST PUSH ── */}
+        {!loading && tab === "push" && (
+          <div>
+            {/* Stats */}
+            {pushStats && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", marginBottom: "1.5rem" }}>
+                {[
+                  { label: "Total Devices", value: pushStats.total, icon: "📱" },
+                  { label: "Passengers", value: pushStats.passengers, icon: "👥" },
+                  { label: "Drivers", value: pushStats.drivers, icon: "🚗" },
+                ].map(s => (
+                  <div key={s.label} style={{ ...card, textAlign: "center" }}>
+                    <div style={{ fontSize: "24px", marginBottom: "4px" }}>{s.icon}</div>
+                    <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.4rem", fontWeight: "800", color: G }}>{s.value}</div>
+                    <div style={{ fontSize: "11px", color: "#6b6760" }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Compose notification */}
+            <div style={{ ...card }}>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "15px", fontWeight: "800", color: G, marginBottom: "1rem" }}>
+                📣 Send Push Notification
+              </div>
+
+              {/* Target audience */}
+              <div style={{ marginBottom: "12px" }}>
+                <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "1px" }}>Send To</div>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  {[["all","👥 Everyone"],["passengers","🧑 Passengers"],["drivers","🚗 Drivers"]].map(([val, lbl]) => (
+                    <button key={val} onClick={() => setPushForm(f => ({ ...f, target: val }))} style={{
+                      background: pushForm.target === val ? "rgba(232,184,75,0.15)" : BG3,
+                      border: `1px solid ${pushForm.target === val ? G : BORDER}`,
+                      borderRadius: "8px", padding: "8px 14px",
+                      color: pushForm.target === val ? G : "#6b6760",
+                      fontSize: "12px", fontWeight: "700", cursor: "pointer",
+                    }}>{lbl}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Title */}
+              <div style={{ marginBottom: "12px" }}>
+                <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "5px", textTransform: "uppercase", letterSpacing: "1px" }}>Title *</div>
+                <input value={pushForm.title} onChange={e => setPushForm(f => ({ ...f, title: e.target.value }))}
+                  placeholder="e.g. 🎉 Special Offer — 20% off all services!"
+                  maxLength={50}
+                  style={{ width: "100%", background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", color: "#f0ede8", padding: "10px 12px", fontSize: "13px", outline: "none", fontFamily: "'DM Sans',sans-serif", boxSizing: "border-box" }} />
+                <div style={{ fontSize: "10px", color: "#6b6760", marginTop: "3px", textAlign: "right" }}>{pushForm.title.length}/50</div>
+              </div>
+
+              {/* Message */}
+              <div style={{ marginBottom: "12px" }}>
+                <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "5px", textTransform: "uppercase", letterSpacing: "1px" }}>Message *</div>
+                <textarea value={pushForm.body} onChange={e => setPushForm(f => ({ ...f, body: e.target.value }))}
+                  placeholder="e.g. Book any cleaning service this weekend and get 20% off. Tap to book now!"
+                  maxLength={150}
+                  style={{ width: "100%", background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", color: "#f0ede8", padding: "10px 12px", fontSize: "13px", outline: "none", fontFamily: "'DM Sans',sans-serif", boxSizing: "border-box", minHeight: "80px", resize: "vertical" }} />
+                <div style={{ fontSize: "10px", color: "#6b6760", marginTop: "3px", textAlign: "right" }}>{pushForm.body.length}/150</div>
+              </div>
+
+              {/* Link */}
+              <div style={{ marginBottom: "16px" }}>
+                <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "5px", textTransform: "uppercase", letterSpacing: "1px" }}>Deep Link (optional)</div>
+                <select value={pushForm.url} onChange={e => setPushForm(f => ({ ...f, url: e.target.value }))}
+                  style={{ width: "100%", background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", color: "#f0ede8", padding: "10px 12px", fontSize: "13px", outline: "none", fontFamily: "'DM Sans',sans-serif" }}>
+                  <option value="/home">Home</option>
+                  <option value="/shop">Services / Book a Service</option>
+                  <option value="/products">Products Shop</option>
+                  <option value="/book">Book a Ride</option>
+                  <option value="/courier">Courier / Delivery</option>
+                  <option value="/wallet">Wallet & Loyalty Points</option>
+                  <option value="/travel">Travel Bookings</option>
+                </select>
+              </div>
+
+              {/* Preview */}
+              {pushForm.title && (
+                <div style={{ background: "#1a1a2e", border: "1px solid rgba(100,100,200,0.3)", borderRadius: "12px", padding: "12px", marginBottom: "16px" }}>
+                  <div style={{ fontSize: "10px", color: "#6b6760", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Preview</div>
+                  <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                    <img src="/assets/logo/PROJO_LOGO.png" style={{ width: "36px", height: "36px", borderRadius: "8px" }} alt="PROJO" />
+                    <div>
+                      <div style={{ fontSize: "13px", fontWeight: "700", color: "#f0ede8" }}>PROJO GROUP · {pushForm.title}</div>
+                      <div style={{ fontSize: "12px", color: "#a8a49e", marginTop: "2px" }}>{pushForm.body || "Message preview"}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Send button */}
+              <button onClick={sendBroadcast} disabled={pushSending || !pushForm.title || !pushForm.body} style={{
+                width: "100%", background: pushSending ? "#6b6760" : G,
+                color: "#0a0a0a", border: "none", borderRadius: "10px",
+                padding: "14px", fontWeight: "800", fontSize: "15px",
+                cursor: pushSending ? "not-allowed" : "pointer",
+              }}>
+                {pushSending ? "⏳ Sending..." : `📣 Send to ${pushForm.target === "all" ? "All Users" : pushForm.target === "passengers" ? "Passengers" : "Drivers"}`}
+              </button>
+
+              {/* Result */}
+              {pushResult && (
+                <div style={{ marginTop: "12px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", borderRadius: "10px", padding: "12px", textAlign: "center" }}>
+                  <div style={{ color: "#4ade80", fontWeight: "700" }}>✅ Notification sent to {pushResult.sent} device{pushResult.sent !== 1 ? "s" : ""}</div>
+                  {pushResult.failed > 0 && <div style={{ color: "#f59e0b", fontSize: "12px", marginTop: "4px" }}>{pushResult.failed} expired subscriptions removed</div>}
+                </div>
+              )}
+            </div>
           </div>
         )}
 

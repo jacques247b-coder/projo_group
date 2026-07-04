@@ -266,3 +266,81 @@ exports.exportEmailsExcel = async (req, res) => {
     res.status(500).json({ error: "Could not export emails: " + err.message });
   }
 };
+
+// POST /api/admin/push/broadcast — send push notification to all or targeted users
+exports.broadcastPush = async (req, res) => {
+  try {
+    const { title, body, icon, url, target, role } = req.body;
+    // target: "all" | "passengers" | "drivers"
+
+    if (!title || !body) return res.status(400).json({ error: "Title and body required" });
+
+    const { sendPushNotification } = require("../services/push.service");
+
+    // Filter users based on target
+    let whereClause = { pushSubscription: { not: null } };
+    if (target === "passengers") whereClause.role = "PASSENGER";
+    if (target === "drivers")    whereClause.role = "DRIVER";
+
+    const users = await prisma.user.findMany({
+      where: whereClause,
+      select: { id: true, name: true, pushSubscription: true },
+    });
+
+    const payload = {
+      title,
+      body,
+      icon: icon || "/assets/logo/PROJO_LOGO.png",
+      badge: "/assets/logo/PROJO_LOGO.png",
+      data: { url: url || "/home" },
+    };
+
+    let sent = 0, failed = 0;
+    for (const user of users) {
+      try {
+        const subscription = JSON.parse(user.pushSubscription);
+        await sendPushNotification(subscription, payload);
+        sent++;
+      } catch {
+        failed++;
+        // Remove expired subscriptions
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { pushSubscription: null },
+        }).catch(() => {});
+      }
+    }
+
+    // Log notification in DB
+    await prisma.notification.createMany({
+      data: users.map(u => ({
+        userId: u.id,
+        title,
+        body,
+        type: "BROADCAST",
+      })),
+      skipDuplicates: true,
+    }).catch(() => {});
+
+    console.log(`[PROJO Push] Broadcast: ${sent} sent, ${failed} failed`);
+    res.json({
+      message: `Notification sent to ${sent} device${sent !== 1 ? "s" : ""}`,
+      sent, failed, total: users.length,
+    });
+  } catch (err) {
+    console.error("[PROJO Push] Broadcast error:", err.message);
+    res.status(500).json({ error: "Could not send notification: " + err.message });
+  }
+};
+
+// GET /api/admin/push/stats — get push subscription stats
+exports.pushStats = async (req, res) => {
+  try {
+    const total = await prisma.user.count({ where: { pushSubscription: { not: null } } });
+    const passengers = await prisma.user.count({ where: { pushSubscription: { not: null }, role: "PASSENGER" } });
+    const drivers = await prisma.user.count({ where: { pushSubscription: { not: null }, role: "DRIVER" } });
+    res.json({ total, passengers, drivers });
+  } catch {
+    res.status(500).json({ error: "Could not get stats" });
+  }
+};
