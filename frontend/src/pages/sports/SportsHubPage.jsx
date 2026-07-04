@@ -47,12 +47,12 @@ const BETTING_PARTNERS = [
     icon: "🔴",
   },
   {
-    name: "SuperSport Bet",
-    url: "https://www.supersportbet.co.za/",
-    offer: "Watch & Bet Live",
-    color: "#003087",
-    desc: "Live streaming + betting in one place",
-    icon: "🔵",
+    name: "Supabets",
+    url: `https://www.supabets.co.za${process.env.REACT_APP_SUPABETS_REF ? `?ref=${process.env.REACT_APP_SUPABETS_REF}` : ""}`,
+    offer: "R50 Signup Bonus",
+    color: "#ff6600",
+    desc: "2 million+ SA players — PSL, rugby, cricket & more",
+    icon: "🟠",
   },
 ];
 
