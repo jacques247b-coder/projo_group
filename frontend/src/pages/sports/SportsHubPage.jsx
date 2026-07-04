@@ -419,7 +419,7 @@ export default function SportsHubPage() {
                   <span style={{ fontSize: "24px" }}>📺</span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: "700", color: "#fff", fontSize: "14px" }}>SABC Sport — Watch Live Free</div>
-                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)", marginTop: "2px" }}>PSL Soccer, Rugby, Cricket — Free to air · Opens in browser</div>
+                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)", marginTop: "2px" }}>PSL Soccer, Rugby, Cricket — Free · Requires free SABC+ account</div>
                   </div>
                   <div style={{ background: "rgba(255,255,255,0.2)", borderRadius: "8px", padding: "8px 14px", color: "#fff", fontSize: "13px", fontWeight: "700" }}>Watch Live ↗</div>
                 </div>
