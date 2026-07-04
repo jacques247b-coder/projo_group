@@ -398,7 +398,7 @@ export default function AdminDashboard() {
           <div>
             <div style={{ display: "flex", gap: "10px", marginBottom: "1rem", alignItems: "center" }}>
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products..." style={{ ...inp, flex: 1 }} />
-              <button onClick={() => { setProductForm({ category: "Products", priceZar: 0, isActive: true }); setProductModal("new"); }} style={{
+              <button onClick={() => navigate("/admin/product/new")} style={{
                 background: G, color: "#0a0a0a", border: "none", borderRadius: "8px",
                 padding: "8px 16px", fontWeight: "700", fontSize: "13px", cursor: "pointer", whiteSpace: "nowrap"
               }}>+ New Product</button>
@@ -412,7 +412,7 @@ export default function AdminDashboard() {
                       <div style={{ fontSize: "11px", color: "#6b6760" }}>{p.category} · R{p.priceZar} · {p.isActive ? "Active" : "Inactive"}</div>
                     </div>
                     <div style={{ display: "flex", gap: "6px" }}>
-                      <button onClick={() => { setProductForm({ ...p }); setProductModal("edit"); }} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "6px", padding: "4px 10px", color: G, fontSize: "11px", cursor: "pointer" }}>Edit</button>
+                      <button onClick={() => navigate(`/admin/product/${p.id}`)} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "6px", padding: "4px 10px", color: G, fontSize: "11px", cursor: "pointer" }}>Edit</button>
                       <button onClick={() => deleteProduct(p.id)} style={{ background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: "6px", padding: "4px 10px", color: "#f87171", fontSize: "11px", cursor: "pointer" }}>Del</button>
                     </div>
                   </div>

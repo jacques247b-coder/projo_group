@@ -28,6 +28,7 @@ import DriverEarnings from "./pages/driver/DriverEarnings";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminProductPage from "./pages/admin/AdminProductPage";
 import PromoCodesPage from "./pages/admin/PromoCodesPage";
 
 // Landing page
