@@ -292,7 +292,8 @@ exports.broadcastPush = async (req, res) => {
       body,
       icon: icon || "/assets/logo/PROJO_LOGO.png",
       badge: "/assets/logo/PROJO_LOGO.png",
-      data: { url: url || "/home" },
+      image: req.body.image || null,  // base64 or URL
+      data: { url: url || "/home", image: req.body.image || null },
     };
 
     let sent = 0, failed = 0;

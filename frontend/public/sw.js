@@ -35,6 +35,7 @@ self.addEventListener("push", (e) => {
   try { data = e.data.json(); } catch {}
 
   const options = {
+    image: data.image || undefined,
     body: data.body,
     icon: "/assets/logo/PROJO_LOGO.png",
     badge: "/assets/logo/PROJO_LOGO.png",

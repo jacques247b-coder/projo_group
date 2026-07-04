@@ -65,7 +65,8 @@ export default function AdminDashboard() {
   const [selectedDelivery, setSelectedDelivery] = useState(null);
   const [productModal, setProductModal] = useState(null);
   const [productForm, setProductForm] = useState({});
-  const [pushForm, setPushForm] = useState({ title: "", body: "", url: "", target: "all" });
+  const [pushForm, setPushForm] = useState({ title: "", body: "", url: "", target: "all", image: "" });
+  const pushImageRef = React.useRef();
   const [pushStats, setPushStats] = useState(null);
   const [pushSending, setPushSending] = useState(false);
   const [pushResult, setPushResult] = useState(null);
@@ -563,6 +564,40 @@ export default function AdminDashboard() {
                 <div style={{ fontSize: "10px", color: "#6b6760", marginTop: "3px", textAlign: "right" }}>{pushForm.body.length}/150</div>
               </div>
 
+              {/* Image Upload */}
+              <div style={{ marginBottom: "12px" }}>
+                <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "5px", textTransform: "uppercase", letterSpacing: "1px" }}>Ad Image (optional — Instagram size 1080×1080)</div>
+                {pushForm.image ? (
+                  <div style={{ position: "relative", marginBottom: "8px" }}>
+                    <img src={pushForm.image} alt="Ad" style={{ width: "100%", maxHeight: "200px", objectFit: "cover", borderRadius: "10px", border: `1px solid ${BORDER}` }} />
+                    <button onClick={() => setPushForm(f => ({ ...f, image: "" }))} style={{
+                      position: "absolute", top: "8px", right: "8px", background: "rgba(0,0,0,0.7)",
+                      border: "none", color: "#fff", borderRadius: "50%", width: "28px", height: "28px",
+                      cursor: "pointer", fontSize: "14px",
+                    }}>✕</button>
+                  </div>
+                ) : (
+                  <div onClick={() => pushImageRef.current?.click()} style={{
+                    border: `2px dashed ${BORDER}`, borderRadius: "10px", padding: "1.5rem",
+                    textAlign: "center", cursor: "pointer", background: BG3,
+                  }}>
+                    <div style={{ fontSize: "24px", marginBottom: "6px" }}>🖼️</div>
+                    <div style={{ fontSize: "12px", color: "#6b6760" }}>
+                      Click to upload ad image <span style={{ color: G }}>(PNG, JPG)</span>
+                    </div>
+                    <div style={{ fontSize: "10px", color: "#4a3030", marginTop: "3px" }}>Recommended: 1080×1080px (Instagram size)</div>
+                  </div>
+                )}
+                <input ref={pushImageRef} type="file" accept="image/*" style={{ display: "none" }}
+                  onChange={e => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = ev => setPushForm(f => ({ ...f, image: ev.target.result }));
+                    reader.readAsDataURL(file);
+                  }} />
+              </div>
+
               {/* Link */}
               <div style={{ marginBottom: "16px" }}>
                 <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "5px", textTransform: "uppercase", letterSpacing: "1px" }}>Deep Link (optional)</div>
@@ -584,9 +619,10 @@ export default function AdminDashboard() {
                   <div style={{ fontSize: "10px", color: "#6b6760", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Preview</div>
                   <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
                     <img src="/assets/logo/PROJO_LOGO.png" style={{ width: "36px", height: "36px", borderRadius: "8px" }} alt="PROJO" />
-                    <div>
+                    <div style={{ flex: 1 }}>
                       <div style={{ fontSize: "13px", fontWeight: "700", color: "#f0ede8" }}>PROJO GROUP · {pushForm.title}</div>
                       <div style={{ fontSize: "12px", color: "#a8a49e", marginTop: "2px" }}>{pushForm.body || "Message preview"}</div>
+                      {pushForm.image && <img src={pushForm.image} alt="Ad" style={{ width: "100%", borderRadius: "8px", marginTop: "8px", objectFit: "cover", maxHeight: "120px" }} />}
                     </div>
                   </div>
                 </div>
