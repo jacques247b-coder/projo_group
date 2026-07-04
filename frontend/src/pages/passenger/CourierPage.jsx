@@ -208,7 +208,13 @@ export default function CourierPage() {
             )}
             <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.5rem", fontWeight: "800", color: G, marginBottom: "1.5rem" }}>{formatFare(booked.fare || 60)}</div>
             <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-              <button onClick={() => { setTab("track"); if (booked.trackingNumber) setTrackingNo(booked.trackingNumber); }} style={{ background: G, color: "#0a0a0a", border: "none", borderRadius: "10px", padding: "10px 20px", fontWeight: "700", cursor: "pointer" }}>Track Parcel</button>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center" }}>
+                <button onClick={() => { setTab("track"); if (booked.trackingNumber) setTrackingNo(booked.trackingNumber); }} style={{ background: G, color: "#0a0a0a", border: "none", borderRadius: "10px", padding: "10px 20px", fontWeight: "700", cursor: "pointer" }}>Track Parcel</button>
+                <button onClick={() => {
+                  const url = `${window.location.origin}/track/delivery/${booked.trackingNumber}`;
+                  navigator.clipboard?.writeText(url).then(() => toast.success("Tracking link copied!")).catch(() => toast.success("Share: " + url));
+                }} style={{ background: "transparent", color: G, border: `1px solid ${G}`, borderRadius: "10px", padding: "10px 20px", fontWeight: "700", cursor: "pointer" }}>📋 Copy Tracking Link</button>
+              </div>
               <button onClick={() => { setBooked(null); setForm({ description: "", isFragile: false, pickupAddress: "", pickupLat: "", pickupLng: "", recipientName: "", recipientPhone: "", dropoffAddress: "", dropoffLat: "", dropoffLng: "" }); }} style={{ background: BG3, color: "#a8a49e", border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "10px 20px", fontWeight: "600", cursor: "pointer" }}>Book Another</button>
             </div>
           </div>

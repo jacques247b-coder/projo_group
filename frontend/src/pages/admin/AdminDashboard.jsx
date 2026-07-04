@@ -317,7 +317,7 @@ export default function AdminDashboard() {
                   <button onClick={() => setSelectedDelivery(null)} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "6px", padding: "4px 12px", color: "#a8a49e", cursor: "pointer" }}>← Back</button>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "13px" }}>
-                  <div><span style={{ color: "#6b6760" }}>Tracking:</span> <span style={{ color: G, fontFamily: "monospace", wordBreak: "break-all" }}>{selectedDelivery.trackingNumber}</span></div>
+                  <div><span style={{ color: "#6b6760" }}>Tracking:</span> <span onClick={() => window.open(`/track/delivery/${selectedDelivery.trackingNumber}`, "_blank")} style={{ color: G, fontFamily: "monospace", wordBreak: "break-all", cursor: "pointer", textDecoration: "underline" }}>{selectedDelivery.trackingNumber} ↗</span></div>
                   <div><span style={{ color: "#6b6760" }}>Status:</span> <span style={{ color: STATUS_COLOR[selectedDelivery.status], fontWeight: "700" }}>{selectedDelivery.status}</span></div>
                   <div><span style={{ color: "#6b6760" }}>Date/Time:</span> <span style={{ color: "#f0ede8" }}>{fmt(selectedDelivery.createdAt)}</span></div>
                   <div><span style={{ color: "#6b6760" }}>Item:</span> <span style={{ color: "#f0ede8" }}>{selectedDelivery.description}</span></div>
@@ -341,7 +341,10 @@ export default function AdminDashboard() {
                 {deliveries.map(d => (
                   <div key={d.id} style={{ ...card, cursor: "pointer" }} onClick={() => setSelectedDelivery(d)}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                      <div style={{ fontFamily: "monospace", fontSize: "11px", color: G, wordBreak: "break-all" }}>{d.trackingNumber}</div>
+                      <div onClick={e => { e.stopPropagation(); window.open(`/track/delivery/${d.trackingNumber}`, "_blank"); }}
+                      style={{ fontFamily: "monospace", fontSize: "11px", color: G, wordBreak: "break-all", cursor: "pointer", textDecoration: "underline" }}>
+                      {d.trackingNumber} ↗
+                    </div>
                       <div style={{ fontSize: "11px", fontWeight: "700", color: STATUS_COLOR[d.status] || "#a8a49e" }}>{d.status}</div>
                     </div>
                     <div style={{ fontSize: "13px", color: "#f0ede8" }}>{d.description}</div>

@@ -28,6 +28,7 @@ import DriverEarnings from "./pages/driver/DriverEarnings";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import DeliveryTrackingPage from "./pages/passenger/DeliveryTrackingPage";
 import AdminProductPage from "./pages/admin/AdminProductPage";
 import PromoCodesPage from "./pages/admin/PromoCodesPage";
 
@@ -81,6 +82,8 @@ function AppRoutes() {
 
       {/* Public share link */}
       <Route path="/track/:token" element={<RideTrackingPage shared />} />
+      <Route path="/track/delivery/:trackingNumber" element={<DeliveryTrackingPage />} />
+      <Route path="/track/delivery" element={<DeliveryTrackingPage />} />
 
       {/* Passenger */}
       <Route path="/book" element={
