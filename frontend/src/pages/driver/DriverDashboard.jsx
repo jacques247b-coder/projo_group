@@ -75,6 +75,7 @@ export default function DriverDashboard() {
             lng: location.lng,
             rideId: currentRide?.id || null,
             deliveryId: currentDelivery?.id || null,
+            passengerId: currentRide?.passengerId || null,
           });
         }
       },
@@ -198,11 +199,30 @@ export default function DriverDashboard() {
         setCurrentDelivery(pendingRide);
       } else {
         await rideAPI.acceptRide(pendingRide.id);
-        setCurrentRide(pendingRide);
+        setCurrentRide({ ...pendingRide, status: "DRIVER_ASSIGNED" });
       }
+
+      // Immediately notify passenger with driver info and current location
+      socketRef.current?.emit("ride:accepted", {
+        rideId: pendingRide.id,
+        driverId: user?.id,
+        driverName: user?.name,
+        driverPhone: user?.phone,
+      });
+
+      // Start broadcasting location to passenger immediately
+      if (posRef.current) {
+        socketRef.current?.emit("driver:location_update", {
+          driverId: user?.id,
+          lat: posRef.current.lat,
+          lng: posRef.current.lng,
+          rideId: pendingRide.id,
+          passengerId: pendingRide.passengerId,
+        });
+      }
+
       setPendingRide(null);
-      socketRef.current?.emit("ride:accepted", { rideId: pendingRide.id, driverId: user?.id });
-      toast.success("Ride accepted! Head to pickup location");
+      toast.success("✅ Ride accepted! Head to pickup");
     } catch { toast.error("Could not accept ride"); }
   }
 
