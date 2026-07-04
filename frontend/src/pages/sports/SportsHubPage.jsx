@@ -56,39 +56,38 @@ const BETTING_PARTNERS = [
   },
 ];
 
-// Official YouTube channels — linked out (embeds blocked by copyright)
+// YouTube channel IDs — latest video fetched automatically via API
+// Get free API key: console.cloud.google.com → YouTube Data API v3
+const YOUTUBE_API_KEY = process.env.REACT_APP_YOUTUBE_API_KEY || "";
+
 const YOUTUBE_CHANNELS = [
   {
     id: "springboks",
     title: "🏉 Springboks — Official SA Rugby",
-    desc: "Match highlights, behind the scenes & exclusive Bok content",
+    channelId: "UCVI5iqtQOsWZwtAg1o3SIAQ",
     url: "https://www.youtube.com/@OfficialBokTube",
-    thumb: "https://img.youtube.com/vi/qUAMswHmCjs/maxresdefault.jpg",
-    videoId: "qUAMswHmCjs", // Junior Boks latest highlight - embeddable
+    fallbackVideoId: "qUAMswHmCjs",
   },
   {
     id: "bafana",
-    title: "⚽ Bafana Bafana — AFCON 2025 Highlights",
-    desc: "Bafana Bafana beat Angola in their AFCON 2025 opener",
+    title: "⚽ Bafana Bafana — SAFA TV",
+    channelId: "UCXOkN4e7M7J3UH5BcY1bRpw",
     url: "https://www.youtube.com/@SAFAChannel",
-    thumb: "https://i.ytimg.com/vi/G77xiAX0ImE/maxresdefault.jpg",
-    videoId: "G77xiAX0ImE",
+    fallbackVideoId: "G77xiAX0ImE",
   },
   {
     id: "psl",
     title: "⚽ PSL — Betway Premiership",
-    desc: "Official Premier Soccer League highlights & clips",
+    channelId: "UCqYPhGiB9tkShZorfgcL2lA",
     url: "https://www.youtube.com/@PSLSouthAfrica",
-    thumb: "https://i.ytimg.com/vi/default.jpg",
-    videoId: null,
+    fallbackVideoId: null,
   },
   {
     id: "worldrugby",
     title: "🏉 World Rugby Highlights",
-    desc: "Official World Rugby match highlights",
+    channelId: "UCupKzQoGKzsMfTAlIzC8zEA",
     url: "https://www.youtube.com/@worldrugby",
-    thumb: "https://i.ytimg.com/vi/default.jpg",
-    videoId: null,
+    fallbackVideoId: null,
   },
 ];
 
@@ -178,6 +177,32 @@ export default function SportsHubPage() {
   const [fixtures, setFixtures] = useState([]);
   const [loading, setLoading] = useState(false);
   const [notifEnabled, setNotifEnabled] = useState(false);
+  const [latestVideos, setLatestVideos] = useState({});
+
+  // Fetch latest video from each YouTube channel
+  useEffect(() => {
+    if (!YOUTUBE_API_KEY) return;
+    YOUTUBE_CHANNELS.forEach(async (ch) => {
+      try {
+        const res = await fetch(
+          `https://www.googleapis.com/youtube/v3/search?key=${YOUTUBE_API_KEY}&channelId=${ch.channelId}&part=snippet&order=date&maxResults=1&type=video`
+        );
+        const data = await res.json();
+        const item = data.items?.[0];
+        if (item) {
+          setLatestVideos(prev => ({
+            ...prev,
+            [ch.id]: {
+              videoId: item.id.videoId,
+              title: item.snippet.title,
+              thumb: item.snippet.thumbnails?.high?.url,
+              date: new Date(item.snippet.publishedAt).toLocaleDateString("en-ZA", { day: "2-digit", month: "short", year: "numeric" }),
+            }
+          }));
+        }
+      } catch {}
+    });
+  }, []);
   const pollRef = useRef(null);
 
   // Check notification preference
@@ -432,35 +457,46 @@ export default function SportsHubPage() {
             <div style={{ fontSize: "12px", color: "#6b6760", marginBottom: "1rem" }}>
               Tap any channel to watch official highlights on YouTube
             </div>
-            {YOUTUBE_CHANNELS.map(v => (
-              <div key={v.id} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", overflow: "hidden", marginBottom: "1rem" }}>
-                {/* Embed single video if available, else show channel card */}
-                {v.videoId ? (
-                  <>
-                    <div style={{ padding: "12px 16px", borderBottom: `1px solid ${BORDER}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontWeight: "700", color: "#f0ede8", fontSize: "13px" }}>{v.title}</span>
-                      <a href={v.url} target="_blank" rel="noreferrer" style={{ fontSize: "11px", color: G, textDecoration: "none" }}>View Channel ↗</a>
-                    </div>
-                    <iframe
-                      src={`https://www.youtube.com/embed/${v.videoId}?autoplay=0`}
-                      title={v.title}
-                      style={{ width: "100%", height: "220px", border: "none", display: "block" }}
-                      allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  </>
-                ) : (
-                  <a href={v.url} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: "14px", padding: "1rem", textDecoration: "none" }}>
-                    <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: RED, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>▶</div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: "13px", fontWeight: "700", color: "#f0ede8" }}>{v.title}</div>
-                      <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "3px" }}>{v.desc}</div>
-                    </div>
-                    <span style={{ color: G, fontSize: "18px" }}>↗</span>
-                  </a>
-                )}
-              </div>
-            ))}
+            {YOUTUBE_CHANNELS.map(v => {
+              const latest = latestVideos[v.id];
+              const videoId = latest?.videoId || v.fallbackVideoId;
+              const videoTitle = latest?.title || v.title;
+              const videoDate = latest?.date;
+              return (
+                <div key={v.id} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", overflow: "hidden", marginBottom: "1rem" }}>
+                  {videoId ? (
+                    <>
+                      <div style={{ padding: "12px 16px", borderBottom: `1px solid ${BORDER}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "13px" }}>{v.title}</div>
+                          {videoDate && <div style={{ fontSize: "10px", color: "#4ade80", marginTop: "2px" }}>🆕 Latest: {videoDate}</div>}
+                        </div>
+                        <a href={v.url} target="_blank" rel="noreferrer" style={{ fontSize: "11px", color: G, textDecoration: "none", whiteSpace: "nowrap", marginLeft: "8px" }}>Channel ↗</a>
+                      </div>
+                      <iframe
+                        src={`https://www.youtube.com/embed/${videoId}?autoplay=0`}
+                        title={videoTitle}
+                        style={{ width: "100%", height: "220px", border: "none", display: "block" }}
+                        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                      {videoTitle !== v.title && (
+                        <div style={{ padding: "8px 12px", fontSize: "11px", color: "#6b6760", borderTop: `1px solid ${BORDER}` }}>{videoTitle}</div>
+                      )}
+                    </>
+                  ) : (
+                    <a href={v.url} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: "14px", padding: "1rem", textDecoration: "none" }}>
+                      <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: RED, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>▶</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: "13px", fontWeight: "700", color: "#f0ede8" }}>{v.title}</div>
+                        <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "3px" }}>Tap to watch latest highlights on YouTube</div>
+                      </div>
+                      <span style={{ color: G, fontSize: "18px" }}>↗</span>
+                    </a>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 
