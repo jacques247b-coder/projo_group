@@ -1411,12 +1411,8 @@ export default function EntertainmentHub() {
     if (newsHeadlines[source.name]?.length > 0) return;
     setNewsLoading(true);
     try {
-      const API = "https://projo-group-backend.onrender.com/api";
-      const url = `${API}/news/${source.feedKey}`;
-      console.log("[PROJO News] Fetching:", url);
-      const res = await fetch(url);
+      const res = await fetch(`https://projo-group-backend.onrender.com/api/news/${source.feedKey}`);
       const data = await res.json();
-      console.log("[PROJO News] Got:", data.count, "items");
       if (data.items?.length > 0) {
         setNewsHeadlines(prev => ({ ...prev, [source.name]: data.items }));
       }
