@@ -31,9 +31,9 @@ const CONTENT = {
   kids: [
     { id: "k1", title: "ABC Song for Kids", videoId: "75p-N9YKqNo", category: "Kids", thumb: "https://img.youtube.com/vi/75p-N9YKqNo/maxresdefault.jpg" },
     { id: "k2", title: "Count 1 to 20 with Songs", videoId: "DR-cfDsHCGA", category: "Kids", thumb: "https://img.youtube.com/vi/DR-cfDsHCGA/maxresdefault.jpg" },
-    { id: "k3", title: "African Safari — Animals for Kids", videoId: "pPpxPNBflpI", category: "Kids", thumb: "https://img.youtube.com/vi/pPpxPNBflpI/maxresdefault.jpg" },
+    { id: "k3", title: "African Safari — Animals for Kids", videoId: "14LDUtA7G84", category: "Kids", thumb: "https://img.youtube.com/vi/pPpxPNBflpI/maxresdefault.jpg" },
     { id: "k4", title: "Solar System for Kids", videoId: "libKVRa01L8", category: "Kids", thumb: "https://img.youtube.com/vi/libKVRa01L8/maxresdefault.jpg" },
-    { id: "k5", title: "Animal Sounds — Learn & Play", videoId: "5aLPE9e5K6E", category: "Kids", thumb: "https://img.youtube.com/vi/5aLPE9e5K6E/maxresdefault.jpg" },
+    { id: "k5", title: "Animal Sounds — Learn & Play", videoId: "wlpMmEI6Eaw", category: "Kids", thumb: "https://img.youtube.com/vi/5aLPE9e5K6E/maxresdefault.jpg" },
   ],
   music: [
     { id: "m1", title: "Best of Amapiano Mix 2025 — OSOCITY", videoId: "XZhu91HwUR0", category: "Music", thumb: "https://img.youtube.com/vi/XZhu91HwUR0/maxresdefault.jpg" },
@@ -49,7 +49,7 @@ const CONTENT = {
     { id: "l5", title: "Start a Business — Full Guide", videoId: "Fl7WLnpVgD0", category: "Learning", thumb: "https://img.youtube.com/vi/Fl7WLnpVgD0/maxresdefault.jpg" },
   ],
   podcasts: [
-    { id: "p1", title: "Motivation — How to Build a Better Life", videoId: "mgmVOuLgFB0", category: "Podcast", thumb: "https://img.youtube.com/vi/mgmVOuLgFB0/maxresdefault.jpg" },
+    { id: "p1", title: "Motivation — How to Build a Better Life", videoId: "HQzoZfc3GwQ", category: "Podcast", thumb: "https://img.youtube.com/vi/mgmVOuLgFB0/maxresdefault.jpg" },
     { id: "p2", title: "AI for Beginners — Tech Talk", videoId: "ad79nYk2keg", category: "Podcast", thumb: "https://img.youtube.com/vi/ad79nYk2keg/maxresdefault.jpg" },
     { id: "p3", title: "Personal Finance Masterclass", videoId: "HQzoZfc3GwQ", category: "Podcast", thumb: "https://img.youtube.com/vi/HQzoZfc3GwQ/maxresdefault.jpg" },
   ],
@@ -77,8 +77,8 @@ const FREE_MUSIC = [
   { id: "fm2", title: "Amapiano Mix December 2025", videoId: "Lgtz-8T3DIc", artist: "Romeo Makota", genre: "Amapiano", thumb: "https://img.youtube.com/vi/Lgtz-8T3DIc/maxresdefault.jpg" },
   { id: "fm3", title: "Afrobeat & Amapiano Mix 2025", videoId: "3wDbin9ByAk", artist: "DJ Perez", genre: "Afrobeat", thumb: "https://img.youtube.com/vi/3wDbin9ByAk/maxresdefault.jpg" },
   { id: "fm4", title: "Amapiano Vibes Vol.2 2025", videoId: "UsdxV4Ay3Jk", artist: "Various Artists", genre: "Amapiano", thumb: "https://img.youtube.com/vi/UsdxV4Ay3Jk/maxresdefault.jpg" },
-  { id: "fm5", title: "African Relaxation Music", videoId: "1ZYbU82GVz4", artist: "Relaxing Africa", genre: "Relaxation", thumb: "https://img.youtube.com/vi/1ZYbU82GVz4/maxresdefault.jpg" },
-  { id: "fm6", title: "SA Gospel Praise Mix", videoId: "2P-6JpHN4RU", artist: "Gospel SA", genre: "Gospel", thumb: "https://img.youtube.com/vi/2P-6JpHN4RU/maxresdefault.jpg" },
+  { id: "fm5", title: "African Relaxation Music", videoId: "3wDbin9ByAk", artist: "Relaxing Africa", genre: "Relaxation", thumb: "https://img.youtube.com/vi/1ZYbU82GVz4/maxresdefault.jpg" },
+  { id: "fm6", title: "SA Gospel Praise Mix", videoId: "DlqOIMal8FQ", artist: "Gospel SA", genre: "Gospel", thumb: "https://img.youtube.com/vi/2P-6JpHN4RU/maxresdefault.jpg" },
   { id: "fm7", title: "DJ Maphorisa & Xduppy — Ngomoya Album", videoId: "sc5-g-fmlyg", artist: "DJ Maphorisa", genre: "Amapiano", thumb: "https://img.youtube.com/vi/sc5-g-fmlyg/maxresdefault.jpg" },
   { id: "fm8", title: "Best Amapiano Mix Vol.179", videoId: "0tMGChhzIRw", artist: "DJ Webaba", genre: "Amapiano", thumb: "https://img.youtube.com/vi/0tMGChhzIRw/maxresdefault.jpg" },
 ];
@@ -284,6 +284,139 @@ function MemoryGame() {
         ))}
       </div>
       <button onClick={() => { setCards([...emojis,...emojis].sort(() => Math.random()-0.5).map((e,i) => ({id:i,emoji:e,flipped:false,matched:false}))); setFlipped([]); setMoves(0); }} style={{ background: G, color: "#0a0a0a", border: "none", borderRadius: "8px", padding: "8px 20px", fontWeight: "700", cursor: "pointer" }}>New Game</button>
+    </div>
+  );
+}
+
+// ── SNAKE GAME ───────────────────────────────────────────────
+function SnakeGame() {
+  const canvasRef = React.useRef(null);
+  const gameRef = React.useRef({ running: false, dir: "RIGHT", nextDir: "RIGHT", snake: [{x:10,y:10}], food: {x:15,y:15}, score: 0, speed: 150 });
+  const [score, setScore] = React.useState(0);
+  const [best, setBest] = React.useState(() => parseInt(localStorage.getItem("projo_snake_best")||"0"));
+  const [status, setStatus] = React.useState("idle"); // idle, playing, over
+  const loopRef = React.useRef(null);
+
+  const COLS = 20, ROWS = 20, CELL = 16;
+
+  function randomFood(snake) {
+    let pos;
+    do { pos = { x: Math.floor(Math.random()*COLS), y: Math.floor(Math.random()*ROWS) }; }
+    while (snake.some(s => s.x===pos.x && s.y===pos.y));
+    return pos;
+  }
+
+  function draw() {
+    const canvas = canvasRef.current; if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const g = gameRef.current;
+    ctx.fillStyle = "#0a0a0a"; ctx.fillRect(0,0,COLS*CELL,ROWS*CELL);
+    // Grid
+    ctx.strokeStyle = "rgba(232,184,75,0.05)";
+    for (let i=0;i<=COLS;i++) { ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,ROWS*CELL); ctx.stroke(); }
+    for (let i=0;i<=ROWS;i++) { ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(COLS*CELL,i*CELL); ctx.stroke(); }
+    // Snake
+    g.snake.forEach((s,i) => {
+      ctx.fillStyle = i===0 ? "#e8b84b" : "#4ade80";
+      ctx.beginPath(); ctx.roundRect(s.x*CELL+1, s.y*CELL+1, CELL-2, CELL-2, 3); ctx.fill();
+    });
+    // Food
+    ctx.fillStyle = "#ef4444";
+    ctx.beginPath(); ctx.arc(g.food.x*CELL+CELL/2, g.food.y*CELL+CELL/2, CELL/2-2, 0, Math.PI*2); ctx.fill();
+  }
+
+  function gameLoop() {
+    const g = gameRef.current;
+    g.dir = g.nextDir;
+    const head = { ...g.snake[0] };
+    if (g.dir==="UP") head.y--; if (g.dir==="DOWN") head.y++;
+    if (g.dir==="LEFT") head.x--; if (g.dir==="RIGHT") head.x++;
+    // Wall or self collision
+    if (head.x<0||head.x>=COLS||head.y<0||head.y>=ROWS||g.snake.some(s=>s.x===head.x&&s.y===head.y)) {
+      clearInterval(loopRef.current);
+      g.running = false;
+      if (g.score > best) { setBest(g.score); localStorage.setItem("projo_snake_best", g.score); }
+      setStatus("over");
+      return;
+    }
+    g.snake.unshift(head);
+    if (head.x===g.food.x && head.y===g.food.y) {
+      g.score++; setScore(g.score);
+      g.food = randomFood(g.snake);
+      // Speed up
+      if (g.score % 5 === 0 && g.speed > 80) {
+        clearInterval(loopRef.current);
+        g.speed -= 10;
+        loopRef.current = setInterval(gameLoop, g.speed);
+      }
+    } else { g.snake.pop(); }
+    draw();
+  }
+
+  function startGame() {
+    const g = gameRef.current;
+    g.snake = [{x:10,y:10},{x:9,y:10},{x:8,y:10}];
+    g.dir = "RIGHT"; g.nextDir = "RIGHT";
+    g.food = randomFood(g.snake);
+    g.score = 0; g.speed = 150; g.running = true;
+    setScore(0); setStatus("playing");
+    clearInterval(loopRef.current);
+    loopRef.current = setInterval(gameLoop, g.speed);
+    draw();
+  }
+
+  React.useEffect(() => {
+    draw();
+    return () => clearInterval(loopRef.current);
+  }, []);
+
+  React.useEffect(() => {
+    function handleKey(e) {
+      const g = gameRef.current; if (!g.running) return;
+      const map = { ArrowUp:"UP", ArrowDown:"DOWN", ArrowLeft:"LEFT", ArrowRight:"RIGHT", w:"UP", s:"DOWN", a:"LEFT", d:"RIGHT" };
+      const newDir = map[e.key];
+      if (!newDir) return;
+      const opp = {UP:"DOWN",DOWN:"UP",LEFT:"RIGHT",RIGHT:"LEFT"};
+      if (newDir !== opp[g.dir]) g.nextDir = newDir;
+      e.preventDefault();
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
+
+  function handleSwipe(dir) {
+    const g = gameRef.current; if (!g.running) return;
+    const opp = {UP:"DOWN",DOWN:"UP",LEFT:"RIGHT",RIGHT:"LEFT"};
+    if (dir !== opp[g.dir]) g.nextDir = dir;
+  }
+
+  return (
+    <div style={{ textAlign: "center" }}>
+      <div style={{ display: "flex", justifyContent: "center", gap: "16px", marginBottom: "12px" }}>
+        <div style={{ fontSize: "13px", color: G, fontWeight: "700" }}>Score: {score}</div>
+        <div style={{ fontSize: "13px", color: "#6b6760" }}>Best: {best}</div>
+      </div>
+      <canvas ref={canvasRef} width={COLS*CELL} height={ROWS*CELL} style={{ border: "1px solid rgba(232,184,75,0.2)", borderRadius: "8px", display: "block", margin: "0 auto" }} />
+      {status !== "playing" && (
+        <button onClick={startGame} style={{ marginTop: "12px", background: "#4ade80", color: "#0a0a0a", border: "none", borderRadius: "8px", padding: "10px 24px", fontWeight: "800", cursor: "pointer", fontSize: "14px" }}>
+          {status === "over" ? "🐍 Play Again" : "🐍 Start Game"}
+        </button>
+      )}
+      {status === "over" && <div style={{ color: "#f87171", marginTop: "8px", fontWeight: "700" }}>Game Over! Score: {score}</div>}
+      {/* Mobile controls */}
+      {status === "playing" && (
+        <div style={{ marginTop: "12px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px", maxWidth: "150px", margin: "0 auto" }}>
+            <div />
+            <button onClick={() => handleSwipe("UP")} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "10px", color: G, fontSize: "16px", cursor: "pointer" }}>↑</button>
+            <div />
+            <button onClick={() => handleSwipe("LEFT")} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "10px", color: G, fontSize: "16px", cursor: "pointer" }}>←</button>
+            <button onClick={() => handleSwipe("DOWN")} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "10px", color: G, fontSize: "16px", cursor: "pointer" }}>↓</button>
+            <button onClick={() => handleSwipe("RIGHT")} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "10px", color: G, fontSize: "16px", cursor: "pointer" }}>→</button>
+          </div>
+          <div style={{ fontSize: "10px", color: "#4a3030", marginTop: "6px" }}>Keyboard: WASD or Arrow Keys · Mobile: tap arrows above</div>
+        </div>
+      )}
     </div>
   );
 }
@@ -755,10 +888,28 @@ export default function EntertainmentHub() {
               <div style={{ fontSize: "13px", color: "#6b6760", marginBottom: "1rem" }}>
                 Live news headlines from trusted sources
               </div>
-              {["News24 SA","BBC News","TimesLive","Daily Maverick","EWN"].map(source => (
-                <a key={source} href={`https://www.google.com/search?q=${encodeURIComponent(source + " latest news")}`} target="_blank" rel="noreferrer" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${BORDER}`, textDecoration: "none" }}>
-                  <div style={{ fontSize: "13px", color: "#f0ede8", fontWeight: "600" }}>{source}</div>
-                  <span style={{ color: G, fontSize: "12px" }}>Read ↗</span>
+              {[
+                { name: "News24", url: "https://www.news24.com", desc: "SA's biggest news site" },
+                { name: "TimesLive", url: "https://www.timeslive.co.za", desc: "Breaking SA news" },
+                { name: "Daily Maverick", url: "https://www.dailymaverick.co.za", desc: "Investigative journalism" },
+                { name: "EWN", url: "https://ewn.co.za", desc: "eNCA news portal" },
+                { name: "BBC World News", url: "https://www.bbc.com/news/world", desc: "International news" },
+                { name: "Netwerk24", url: "https://www.netwerk24.com", desc: "Afrikaans news" },
+                { name: "Sowetan Live", url: "https://www.sowetanlive.co.za", desc: "Community news" },
+                { name: "IOL", url: "https://www.iol.co.za", desc: "Independent Online" },
+              ].filter(s => {
+                if (newsCategory === 0) return true;
+                if (newsCategory === 1) return ["News24","TimesLive","Daily Maverick","EWN","Sowetan Live","IOL","Netwerk24"].includes(s.name);
+                if (newsCategory === 2) return ["BBC World News","Daily Maverick","IOL"].includes(s.name);
+                if (newsCategory === 3) return ["News24","TimesLive","EWN"].includes(s.name);
+                return true;
+              }).map(source => (
+                <a key={source.name} href={source.url} target="_blank" rel="noreferrer" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${BORDER}`, textDecoration: "none" }}>
+                  <div>
+                    <div style={{ fontSize: "13px", color: "#f0ede8", fontWeight: "600" }}>{source.name}</div>
+                    <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "2px" }}>{source.desc}</div>
+                  </div>
+                  <span style={{ color: G, fontSize: "12px", flexShrink: 0 }}>Read ↗</span>
                 </a>
               ))}
               <div style={{ marginTop: "12px", fontSize: "11px", color: "#4a3030" }}>News opens in browser — all content from original publishers</div>
@@ -796,12 +947,7 @@ export default function EntertainmentHub() {
                   {activeGame === "tictactoe"&& <TicTacToe />}
                   {activeGame === "memory"   && <MemoryGame />}
                   {activeGame === "trivia"   && <TriviaGame />}
-                  {activeGame === "snake"    && (
-                    <div style={{ textAlign: "center", padding: "2rem", color: "#6b6760" }}>
-                      <div style={{ fontSize: "48px", marginBottom: "12px" }}>🐍</div>
-                      <div>Snake coming soon!</div>
-                    </div>
-                  )}
+                  {activeGame === "snake" && <SnakeGame />}
                 </div>
               </div>
             )}
