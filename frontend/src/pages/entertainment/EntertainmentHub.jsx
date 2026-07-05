@@ -1405,19 +1405,20 @@ export default function EntertainmentHub() {
   const [newsHeadlines, setNewsHeadlines] = useState({});
   const [newsLoading, setNewsLoading] = useState(false);
 
-  // Fetch RSS headlines via free proxy
+  // Fetch RSS headlines via our own backend proxy
   async function fetchHeadlines(source) {
     if (newsHeadlines[source.name]) return; // already loaded
     setNewsLoading(true);
     try {
-      // Use rss2json free API to parse RSS feeds
-      const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.rss)}&api_key=FREE&count=8`;
-      const res = await fetch(apiUrl);
+      const API = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+      const res = await fetch(`${API}/news?url=${encodeURIComponent(source.rss)}`);
       const data = await res.json();
       if (data.items?.length > 0) {
         setNewsHeadlines(prev => ({ ...prev, [source.name]: data.items }));
       }
-    } catch {}
+    } catch (e) {
+      console.log("News fetch failed:", e.message);
+    }
     setNewsLoading(false);
   }
 
