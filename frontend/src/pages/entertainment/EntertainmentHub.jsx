@@ -1778,13 +1778,13 @@ export default function EntertainmentHub() {
               <div>
                 {[
                   { name: "SA News",        feedKey: "safrica",    url: "https://allafrica.com/southafrica/", desc: "South Africa headlines — AllAfrica",  cat: [0,1] },
-                  { name: "SA Business",    feedKey: "safricabiz", url: "https://allafrica.com/economy/",     desc: "SA economy & business news",          cat: [0,1,2] },
-                  { name: "Sport24",        feedKey: "sport24",    url: "https://www.sport24.co.za",          desc: "South African sport news",            cat: [0,3] },
+                  { name: "BBC Business",   feedKey: "safricabiz", url: "https://www.bbc.com/news/business",  desc: "Business & economy news",             cat: [0,2,3] },
+                  { name: "Football News",  feedKey: "sport24",    url: "https://www.bbc.com/sport/football", desc: "Football headlines from BBC Sport",   cat: [0,4] },
                   { name: "BBC World",      feedKey: "bbcworld",   url: "https://www.bbc.com/news/world",     desc: "International headlines",             cat: [0,2] },
                   { name: "BBC Sport",      feedKey: "bbcsport",   url: "https://www.bbc.com/sport",          desc: "World sport news",                    cat: [0,3] },
                   { name: "BBC Business",   feedKey: "bbcbusiness",url: "https://www.bbc.com/news/business",  desc: "Business & economy news",             cat: [0,2] },
                   { name: "BBC Technology", feedKey: "bbctech",    url: "https://www.bbc.com/news/technology","desc": "Tech news from BBC",                cat: [0,2] },
-                  { name: "Reuters",        feedKey: "reuters",    url: "https://www.reuters.com",            desc: "Global news from Reuters",            cat: [0,2] },
+                  { name: "Sky News",       feedKey: "reuters",    url: "https://news.sky.com",               desc: "UK & world breaking news",            cat: [0,2] },
                   { name: "Al Jazeera",     feedKey: "aljazeera",  url: "https://www.aljazeera.com",          desc: "Middle East & world news",            cat: [0,2] },
                   { name: "Sky News",       feedKey: "skynews",    url: "https://news.sky.com",               desc: "UK & world news",                     cat: [0,2] },
                 ].filter(s => s.cat.includes(newsCategory)).map(source => (

@@ -74,7 +74,7 @@ const FEEDS = {
   "bbcbusiness":   "https://feeds.bbci.co.uk/news/business/rss.xml",
   "bbctech":       "https://feeds.bbci.co.uk/news/technology/rss.xml",
   // Reuters
-  "reuters":       "https://feeds.reuters.com/reuters/topNews",
+  "reuters":       "https://feeds.skynews.com/feeds/rss/world.xml",
   "reutersbiz":    "https://feeds.reuters.com/reuters/businessNews",
   // Al Jazeera
   "aljazeera":     "https://www.aljazeera.com/xml/rss/all.xml",
@@ -82,9 +82,9 @@ const FEEDS = {
   "skynews":       "https://feeds.skynews.com/feeds/rss/world.xml",
   // SA — use AllAfrica which aggregates SA news with open RSS
   "safrica":       "https://allafrica.com/tools/headlines/rdf/southafrica/headlines.rdf",
-  "safricabiz":    "https://allafrica.com/tools/headlines/rdf/economy/headlines.rdf",
+  "safricabiz":    "https://feeds.bbci.co.uk/news/business/rss.xml",
   // Sport
-  "sport24":       "https://feeds.24.com/articles/sport24/TopStories/rss",
+  "sport24":       "https://feeds.bbci.co.uk/sport/football/rss.xml",
 };
 
 // GET /api/news/:feed
