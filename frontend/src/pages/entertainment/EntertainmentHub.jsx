@@ -1722,11 +1722,23 @@ export default function EntertainmentHub() {
                 const filteredNews = NEWS_SOURCES.filter(s => s.cat.includes(newsCategory));
                 return activeNews ? (
                   <div>
-                    <button onClick={() => setActiveNews(null)} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "8px 14px", color: "#a8a49e", cursor: "pointer", fontSize: "12px", marginBottom: "12px" }}>← Back</button>
-                    <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "13px", marginBottom: "8px" }}>{activeNews.name}</div>
-                    <iframe src={activeNews.url} title={activeNews.name} style={{ width: "100%", height: "65vh", border: "none", borderRadius: "12px" }} sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-top-navigation" />
-                    <div style={{ fontSize: "10px", color: "#4a3030", textAlign: "center", marginTop: "6px" }}>
-                      If blocked: <a href={activeNews.url} target="_blank" rel="noreferrer" style={{ color: G }}>open in browser ↗</a>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+                      <button onClick={() => setActiveNews(null)} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "8px 14px", color: "#a8a49e", cursor: "pointer", fontSize: "12px" }}>← Back</button>
+                      <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "13px" }}>{activeNews.name}</div>
+                    </div>
+                    <div style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "2rem", textAlign: "center" }}>
+                      <div style={{ fontSize: "36px", marginBottom: "12px" }}>📰</div>
+                      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "16px", fontWeight: "800", color: "#f0ede8", marginBottom: "8px" }}>{activeNews.name}</div>
+                      <div style={{ fontSize: "12px", color: "#6b6760", marginBottom: "20px", lineHeight: 1.6 }}>
+                        {activeNews.desc}<br/>
+                        <span style={{ fontSize: "11px", color: "#4a3030" }}>News sites block in-app loading for security reasons.</span>
+                      </div>
+                      <a href={activeNews.url} target="_blank" rel="noreferrer" style={{
+                        display: "block", background: G, color: "#0a0a0a",
+                        textDecoration: "none", borderRadius: "12px", padding: "14px",
+                        fontWeight: "800", fontSize: "15px", marginBottom: "10px",
+                      }}>📖 Read {activeNews.name} ↗</a>
+                      <div style={{ fontSize: "10px", color: "#4a3030" }}>Opens in your browser · Free to read</div>
                     </div>
                   </div>
                 ) : (
