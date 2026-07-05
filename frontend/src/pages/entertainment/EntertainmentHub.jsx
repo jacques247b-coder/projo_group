@@ -14,46 +14,74 @@ const BG3 = "#1a1a1a";
 const BORDER = "rgba(232,184,75,0.08)";
 
 // ── CONTENT LIBRARY ──────────────────────────────────────────
-// All YouTube video IDs — free, legal, embeddable
+// All verified YouTube video IDs (checked July 2026)
 const CONTENT = {
   featured: [
-    { id: "f1", title: "Springboks 2023 World Cup Champions", videoId: "qUAMswHmCjs", category: "Sports", thumb: "https://img.youtube.com/vi/qUAMswHmCjs/maxresdefault.jpg" },
-    { id: "f2", title: "South Africa Travel Guide 2025", videoId: "5DNVpVWrHMI", category: "Travel", thumb: "https://img.youtube.com/vi/5DNVpVWrHMI/maxresdefault.jpg" },
-    { id: "f3", title: "How to Start a Business in SA", videoId: "Fl7WLnpVgD0", category: "Learning", thumb: "https://img.youtube.com/vi/Fl7WLnpVgD0/maxresdefault.jpg" },
+    { id: "f1", title: "Springboks vs All Blacks Highlights", videoId: "qUAMswHmCjs", category: "Sports", thumb: "https://img.youtube.com/vi/qUAMswHmCjs/maxresdefault.jpg" },
+    { id: "f2", title: "South Africa Travel Guide 2026", videoId: "DjoL1ehafFw", category: "Travel", thumb: "https://img.youtube.com/vi/DjoL1ehafFw/maxresdefault.jpg" },
+    { id: "f3", title: "Learn Python in 4 Hours — Full Course", videoId: "rfscVS0vtbw", category: "Learning", thumb: "https://img.youtube.com/vi/rfscVS0vtbw/maxresdefault.jpg" },
   ],
   trending: [
-    { id: "t1", title: "Top 10 SA Street Foods", videoId: "XwA0g7TCBOA", category: "Food", thumb: "https://img.youtube.com/vi/XwA0g7TCBOA/maxresdefault.jpg" },
-    { id: "t2", title: "Cape Town Hidden Gems", videoId: "5DNVpVWrHMI", category: "Travel", thumb: "https://img.youtube.com/vi/5DNVpVWrHMI/maxresdefault.jpg" },
-    { id: "t3", title: "Amapiano Mix 2025", videoId: "GKyYlIJNEJk", category: "Music", thumb: "https://img.youtube.com/vi/GKyYlIJNEJk/maxresdefault.jpg" },
-    { id: "t4", title: "SA Comedy Gold", videoId: "D-Umfqx7_sA", category: "Comedy", thumb: "https://img.youtube.com/vi/D-Umfqx7_sA/maxresdefault.jpg" },
-    { id: "t5", title: "Learn Zulu in 30 minutes", videoId: "t8kA9Y7RixI", category: "Learning", thumb: "https://img.youtube.com/vi/t8kA9Y7RixI/maxresdefault.jpg" },
+    { id: "t1", title: "Best of Amapiano Mix 2025", videoId: "XZhu91HwUR0", category: "Music", thumb: "https://img.youtube.com/vi/XZhu91HwUR0/maxresdefault.jpg" },
+    { id: "t2", title: "Cape Town Travel Guide 2026", videoId: "13u-JcPWbkQ", category: "Travel", thumb: "https://img.youtube.com/vi/13u-JcPWbkQ/maxresdefault.jpg" },
+    { id: "t3", title: "Amapiano Mix Dec 2025 — Romeo Makota", videoId: "Lgtz-8T3DIc", category: "Music", thumb: "https://img.youtube.com/vi/Lgtz-8T3DIc/maxresdefault.jpg" },
+    { id: "t4", title: "AI for Beginners 2025", videoId: "ad79nYk2keg", category: "Learning", thumb: "https://img.youtube.com/vi/ad79nYk2keg/maxresdefault.jpg" },
+    { id: "t5", title: "Personal Finance Basics", videoId: "HQzoZfc3GwQ", category: "Learning", thumb: "https://img.youtube.com/vi/HQzoZfc3GwQ/maxresdefault.jpg" },
   ],
   kids: [
     { id: "k1", title: "ABC Song for Kids", videoId: "75p-N9YKqNo", category: "Kids", thumb: "https://img.youtube.com/vi/75p-N9YKqNo/maxresdefault.jpg" },
-    { id: "k2", title: "Numbers 1-20", videoId: "DR-cfDsHCGA", category: "Kids", thumb: "https://img.youtube.com/vi/DR-cfDsHCGA/maxresdefault.jpg" },
-    { id: "k3", title: "Animal Sounds for Kids", videoId: "5aLPE9e5K6E", category: "Kids", thumb: "https://img.youtube.com/vi/5aLPE9e5K6E/maxresdefault.jpg" },
+    { id: "k2", title: "Count 1 to 20 with Songs", videoId: "DR-cfDsHCGA", category: "Kids", thumb: "https://img.youtube.com/vi/DR-cfDsHCGA/maxresdefault.jpg" },
+    { id: "k3", title: "African Safari — Animals for Kids", videoId: "pPpxPNBflpI", category: "Kids", thumb: "https://img.youtube.com/vi/pPpxPNBflpI/maxresdefault.jpg" },
     { id: "k4", title: "Solar System for Kids", videoId: "libKVRa01L8", category: "Kids", thumb: "https://img.youtube.com/vi/libKVRa01L8/maxresdefault.jpg" },
-    { id: "k5", title: "African Animals Safari", videoId: "pPpxPNBflpI", category: "Kids", thumb: "https://img.youtube.com/vi/pPpxPNBflpI/maxresdefault.jpg" },
+    { id: "k5", title: "Animal Sounds — Learn & Play", videoId: "5aLPE9e5K6E", category: "Kids", thumb: "https://img.youtube.com/vi/5aLPE9e5K6E/maxresdefault.jpg" },
   ],
   music: [
-    { id: "m1", title: "Amapiano Mix 2025", videoId: "GKyYlIJNEJk", category: "Music", thumb: "https://img.youtube.com/vi/GKyYlIJNEJk/maxresdefault.jpg" },
-    { id: "m2", title: "SA Gospel Music", videoId: "2P-6JpHN4RU", category: "Music", thumb: "https://img.youtube.com/vi/2P-6JpHN4RU/maxresdefault.jpg" },
-    { id: "m3", title: "African Jazz Mix", videoId: "hd9a9V0bH7Q", category: "Music", thumb: "https://img.youtube.com/vi/hd9a9V0bH7Q/maxresdefault.jpg" },
-    { id: "m4", title: "Relaxation Music Africa", videoId: "1ZYbU82GVz4", category: "Music", thumb: "https://img.youtube.com/vi/1ZYbU82GVz4/maxresdefault.jpg" },
+    { id: "m1", title: "Best of Amapiano Mix 2025 — OSOCITY", videoId: "XZhu91HwUR0", category: "Music", thumb: "https://img.youtube.com/vi/XZhu91HwUR0/maxresdefault.jpg" },
+    { id: "m2", title: "Amapiano Mix April 2025 — DJ ClassCom", videoId: "DlqOIMal8FQ", category: "Music", thumb: "https://img.youtube.com/vi/DlqOIMal8FQ/maxresdefault.jpg" },
+    { id: "m3", title: "Amapiano Vibes 2025 Vol. 2", videoId: "UsdxV4Ay3Jk", category: "Music", thumb: "https://img.youtube.com/vi/UsdxV4Ay3Jk/maxresdefault.jpg" },
+    { id: "m4", title: "Amapiano Mix Dec 2025 — Romeo Makota", videoId: "Lgtz-8T3DIc", category: "Music", thumb: "https://img.youtube.com/vi/Lgtz-8T3DIc/maxresdefault.jpg" },
   ],
   learning: [
-    { id: "l1", title: "How to Start a Business in SA", videoId: "Fl7WLnpVgD0", category: "Learning", thumb: "https://img.youtube.com/vi/Fl7WLnpVgD0/maxresdefault.jpg" },
-    { id: "l2", title: "Learn Python for Beginners", videoId: "rfscVS0vtbw", category: "Learning", thumb: "https://img.youtube.com/vi/rfscVS0vtbw/maxresdefault.jpg" },
-    { id: "l3", title: "Personal Finance Basics", videoId: "HQzoZfc3GwQ", category: "Learning", thumb: "https://img.youtube.com/vi/HQzoZfc3GwQ/maxresdefault.jpg" },
-    { id: "l4", title: "AI for Beginners 2025", videoId: "ad79nYk2keg", category: "Learning", thumb: "https://img.youtube.com/vi/ad79nYk2keg/maxresdefault.jpg" },
-    { id: "l5", title: "Photography Masterclass", videoId: "LxO-6rlihSg", category: "Learning", thumb: "https://img.youtube.com/vi/LxO-6rlihSg/maxresdefault.jpg" },
+    { id: "l1", title: "Learn Python in 4 Hours — Full Course", videoId: "rfscVS0vtbw", category: "Learning", thumb: "https://img.youtube.com/vi/rfscVS0vtbw/maxresdefault.jpg" },
+    { id: "l2", title: "Personal Finance Basics", videoId: "HQzoZfc3GwQ", category: "Learning", thumb: "https://img.youtube.com/vi/HQzoZfc3GwQ/maxresdefault.jpg" },
+    { id: "l3", title: "AI for Beginners 2025", videoId: "ad79nYk2keg", category: "Learning", thumb: "https://img.youtube.com/vi/ad79nYk2keg/maxresdefault.jpg" },
+    { id: "l4", title: "Photography Masterclass for Beginners", videoId: "LxO-6rlihSg", category: "Learning", thumb: "https://img.youtube.com/vi/LxO-6rlihSg/maxresdefault.jpg" },
+    { id: "l5", title: "Start a Business — Full Guide", videoId: "Fl7WLnpVgD0", category: "Learning", thumb: "https://img.youtube.com/vi/Fl7WLnpVgD0/maxresdefault.jpg" },
   ],
   podcasts: [
-    { id: "p1", title: "SA Entrepreneurs Podcast", videoId: "Fl7WLnpVgD0", category: "Podcast", thumb: "https://img.youtube.com/vi/Fl7WLnpVgD0/maxresdefault.jpg" },
-    { id: "p2", title: "Motivation Monday", videoId: "mgmVOuLgFB0", category: "Podcast", thumb: "https://img.youtube.com/vi/mgmVOuLgFB0/maxresdefault.jpg" },
-    { id: "p3", title: "Tech Talk Africa", videoId: "ad79nYk2keg", category: "Podcast", thumb: "https://img.youtube.com/vi/ad79nYk2keg/maxresdefault.jpg" },
+    { id: "p1", title: "Motivation — How to Build a Better Life", videoId: "mgmVOuLgFB0", category: "Podcast", thumb: "https://img.youtube.com/vi/mgmVOuLgFB0/maxresdefault.jpg" },
+    { id: "p2", title: "AI for Beginners — Tech Talk", videoId: "ad79nYk2keg", category: "Podcast", thumb: "https://img.youtube.com/vi/ad79nYk2keg/maxresdefault.jpg" },
+    { id: "p3", title: "Personal Finance Masterclass", videoId: "HQzoZfc3GwQ", category: "Podcast", thumb: "https://img.youtube.com/vi/HQzoZfc3GwQ/maxresdefault.jpg" },
   ],
 };
+
+// ── RADIO STATIONS ───────────────────────────────────────────
+// North West + SA national stations
+// Links open in browser (audio streams can't embed directly)
+const RADIO_STATIONS = [
+  // North West Province
+  { id: "nwfm",      name: "North West FM", freq: "89.8-103.9 FM", desc: "Home of the best music — Rustenburg & NW Province", region: "North West", color: "#e8b84b", icon: "📻", url: "https://onlineradiobox.com/za/northwestfm/", stream: "https://stream.zeno.fm/northwestfm" },
+  { id: "groot",     name: "Groot FM", freq: "90.4 FM", desc: "Afrikaans music & entertainment — NW Province", region: "North West", color: "#60a5fa", icon: "📻", url: "https://www.grootfm.co.za", stream: "https://playerservices.streamtheworld.com/api/livestream-redirect/GROOT_FM.mp3" },
+  { id: "mmabatho",  name: "Mmabatho Community Radio", freq: "Community FM", desc: "Serving Mmabatho & surrounds", region: "North West", color: "#4ade80", icon: "📻", url: "https://onlineradiobox.com/za/", stream: null },
+  // National SA
+  { id: "5fm",       name: "5FM", freq: "SA National", desc: "SA's youth music station — hits, Amapiano & more", region: "National", color: "#f59e0b", icon: "🎵", url: "https://www.5fm.co.za", stream: "https://playerservices.streamtheworld.com/api/livestream-redirect/SABC_5FM.mp3" },
+  { id: "metro",     name: "Metro FM", freq: "SA National", desc: "Urban music, Amapiano & R&B", region: "National", color: "#a78bfa", icon: "🎵", url: "https://www.metrofm.co.za", stream: "https://playerservices.streamtheworld.com/api/livestream-redirect/SABC_METRO.mp3" },
+  { id: "jacaranda", name: "Jacaranda FM", freq: "94.2 FM", desc: "Good music, great vibes — Pretoria/Rustenburg area", region: "National", color: "#f87171", icon: "🌸", url: "https://www.jacarandafm.com", stream: "https://playerservices.streamtheworld.com/api/livestream-redirect/JACARANDA_FM.mp3" },
+  { id: "safm",      name: "SAfm", freq: "104-107 FM", desc: "News, talk & current affairs", region: "National", color: "#34d399", icon: "📰", url: "https://www.sabc.co.za/sabc/safm/", stream: "https://playerservices.streamtheworld.com/api/livestream-redirect/SABC_SAFM.mp3" },
+];
+
+// ── FREE MUSIC TRACKS ─────────────────────────────────────────
+// YouTube Music — free, embeddable tracks
+const FREE_MUSIC = [
+  { id: "fm1", title: "Amapiano Mix 2025 — Best of Year", videoId: "XZhu91HwUR0", artist: "OSOCITY", genre: "Amapiano", thumb: "https://img.youtube.com/vi/XZhu91HwUR0/maxresdefault.jpg" },
+  { id: "fm2", title: "Amapiano Mix December 2025", videoId: "Lgtz-8T3DIc", artist: "Romeo Makota", genre: "Amapiano", thumb: "https://img.youtube.com/vi/Lgtz-8T3DIc/maxresdefault.jpg" },
+  { id: "fm3", title: "Afrobeat & Amapiano Mix 2025", videoId: "3wDbin9ByAk", artist: "DJ Perez", genre: "Afrobeat", thumb: "https://img.youtube.com/vi/3wDbin9ByAk/maxresdefault.jpg" },
+  { id: "fm4", title: "Amapiano Vibes Vol.2 2025", videoId: "UsdxV4Ay3Jk", artist: "Various Artists", genre: "Amapiano", thumb: "https://img.youtube.com/vi/UsdxV4Ay3Jk/maxresdefault.jpg" },
+  { id: "fm5", title: "African Relaxation Music", videoId: "1ZYbU82GVz4", artist: "Relaxing Africa", genre: "Relaxation", thumb: "https://img.youtube.com/vi/1ZYbU82GVz4/maxresdefault.jpg" },
+  { id: "fm6", title: "SA Gospel Praise Mix", videoId: "2P-6JpHN4RU", artist: "Gospel SA", genre: "Gospel", thumb: "https://img.youtube.com/vi/2P-6JpHN4RU/maxresdefault.jpg" },
+  { id: "fm7", title: "DJ Maphorisa & Xduppy — Ngomoya Album", videoId: "sc5-g-fmlyg", artist: "DJ Maphorisa", genre: "Amapiano", thumb: "https://img.youtube.com/vi/sc5-g-fmlyg/maxresdefault.jpg" },
+  { id: "fm8", title: "Best Amapiano Mix Vol.179", videoId: "0tMGChhzIRw", artist: "DJ Webaba", genre: "Amapiano", thumb: "https://img.youtube.com/vi/0tMGChhzIRw/maxresdefault.jpg" },
+];
 
 // ── NEWS SOURCES (RSS via proxy) ─────────────────────────────
 const NEWS_FEEDS = [
@@ -466,6 +494,32 @@ export default function EntertainmentHub() {
   const [playing, setPlaying] = useState(null);
   const [activeGame, setActiveGame] = useState(null);
   const [featuredIdx, setFeaturedIdx] = useState(0);
+  const [radioPlaying, setRadioPlaying] = useState(null);
+  const [radioFilter, setRadioFilter] = useState("All");
+  const audioRef = React.useRef(null);
+
+  function playRadio(station) {
+    if (!station.stream) {
+      window.open(station.url, "_blank");
+      return;
+    }
+    if (radioPlaying?.id === station.id) {
+      audioRef.current?.pause();
+      setRadioPlaying(null);
+      return;
+    }
+    setRadioPlaying(station);
+    setTimeout(() => {
+      if (audioRef.current) {
+        audioRef.current.src = station.stream;
+        audioRef.current.play().catch(() => {
+          // Fallback to browser
+          window.open(station.url, "_blank");
+          setRadioPlaying(null);
+        });
+      }
+    }, 100);
+  }
   const [search, setSearch] = useState("");
   const [newsCategory, setNewsCategory] = useState(0);
 
@@ -591,8 +645,80 @@ export default function EntertainmentHub() {
         {/* ── MUSIC TAB ── */}
         {tab === "music" && (
           <div>
-            <VideoRow title="🎵 Now Playing" items={CONTENT.music} onPlay={playVideo} />
-            <VideoRow title="📻 Podcasts" items={CONTENT.podcasts} onPlay={playVideo} />
+            {/* Hidden audio element for radio */}
+            <audio ref={audioRef} style={{ display: "none" }} />
+
+            {/* Radio section */}
+            <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "16px", fontWeight: "800", color: "#f0ede8", marginBottom: "12px" }}>📻 Live Radio</div>
+            <div style={{ display: "flex", gap: "8px", marginBottom: "12px", overflowX: "auto" }}>
+              {["All", "North West", "National"].map(f => (
+                <button key={f} onClick={() => setRadioFilter(f)} style={{
+                  background: radioFilter === f ? "rgba(232,184,75,0.15)" : BG2,
+                  border: `1px solid ${radioFilter === f ? G : BORDER}`,
+                  borderRadius: "8px", padding: "6px 14px", color: radioFilter === f ? G : "#6b6760",
+                  fontSize: "12px", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap",
+                }}>{f}</button>
+              ))}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "1.5rem" }}>
+              {RADIO_STATIONS.filter(s => radioFilter === "All" || s.region === radioFilter).map(station => (
+                <div key={station.id} onClick={() => playRadio(station)} style={{
+                  background: radioPlaying?.id === station.id ? "rgba(232,184,75,0.08)" : BG2,
+                  border: `1px solid ${radioPlaying?.id === station.id ? G : BORDER}`,
+                  borderRadius: "14px", padding: "12px 14px", cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: "12px",
+                }}>
+                  <div style={{ width: "44px", height: "44px", borderRadius: "50%", background: `${station.color}20`, border: `2px solid ${station.color}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", flexShrink: 0 }}>
+                    {radioPlaying?.id === station.id ? "⏸" : station.icon}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "13px" }}>{station.name}</div>
+                    <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "2px" }}>{station.freq} · {station.desc}</div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                    {radioPlaying?.id === station.id && (
+                      <div style={{ display: "flex", gap: "3px", alignItems: "center" }}>
+                        {[1,2,3].map(i => <div key={i} style={{ width: "3px", background: G, borderRadius: "2px", animation: `eq${i} 0.8s ease-in-out infinite alternate`, height: `${8+i*4}px` }} />)}
+                      </div>
+                    )}
+                    <div style={{ fontSize: "10px", color: station.region === "North West" ? G : "#6b6760", fontWeight: "700" }}>{station.region}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Now Playing bar */}
+            {radioPlaying && (
+              <div style={{ position: "fixed", bottom: "70px", left: 0, right: 0, zIndex: 100, padding: "0 1rem", maxWidth: "900px", margin: "0 auto" }}>
+                <div style={{ background: BG3, border: `1px solid ${G}`, borderRadius: "14px", padding: "10px 14px", display: "flex", alignItems: "center", gap: "12px", boxShadow: `0 0 20px rgba(232,184,75,0.2)` }}>
+                  <div style={{ fontSize: "20px" }}>{radioPlaying.icon}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: "13px", fontWeight: "700", color: G }}>{radioPlaying.name}</div>
+                    <div style={{ fontSize: "11px", color: "#6b6760" }}>🔴 LIVE</div>
+                  </div>
+                  <button onClick={() => { audioRef.current?.pause(); setRadioPlaying(null); }} style={{ background: "none", border: "none", color: "#f87171", fontSize: "18px", cursor: "pointer" }}>⏹</button>
+                </div>
+              </div>
+            )}
+
+            {/* Free Music */}
+            <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "16px", fontWeight: "800", color: "#f0ede8", marginBottom: "12px" }}>🎵 Free Music</div>
+            <div style={{ display: "flex", gap: "12px", overflowX: "auto", paddingBottom: "8px", marginBottom: "1.5rem" }}>
+              {FREE_MUSIC.map(track => (
+                <div key={track.id} onClick={() => playVideo({ ...track, title: track.title })} style={{ flexShrink: 0, width: "160px", cursor: "pointer" }}>
+                  <div style={{ position: "relative", width: "160px", height: "160px", borderRadius: "12px", overflow: "hidden", background: BG3, marginBottom: "8px" }}>
+                    <img src={track.thumb} alt={track.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.style.display="none"} />
+                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(0,0,0,0.7)", padding: "6px 8px" }}>
+                      <div style={{ fontSize: "9px", color: G, fontWeight: "700" }}>{track.genre}</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: "11px", color: "#f0ede8", fontWeight: "600", lineHeight: 1.3 }}>{track.title}</div>
+                  <div style={{ fontSize: "10px", color: "#6b6760", marginTop: "2px" }}>{track.artist}</div>
+                </div>
+              ))}
+            </div>
+
+            <VideoRow title="🎙️ Podcasts" items={CONTENT.podcasts} onPlay={playVideo} />
           </div>
         )}
 
