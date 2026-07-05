@@ -433,8 +433,8 @@ export default function SportsHubPage() {
             <div style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "1rem" }}>
               <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "14px", fontWeight: "800", color: G, marginBottom: "12px" }}>More Live Sport</div>
               {[
-                { name: "DStv Now", url: "https://now.dstv.com", desc: "SuperSport — all SA rugby & soccer live", icon: "📡" },
-                { name: "DStv Stream", url: "https://www.dstv.com/en-za/streaming", desc: "Premier League, PSL & all SuperSport live — replaces Showmax", icon: "📡" },
+                
+                { name: "DStv Now", url: "https://now.dstv.com", desc: "SuperSport live — Premier League, PSL, rugby & more", icon: "📡" },
               ].map(s => (
                 <a key={s.name} href={s.url} target="_blank" rel="noreferrer" style={{
                   display: "flex", alignItems: "center", gap: "12px", padding: "12px",
