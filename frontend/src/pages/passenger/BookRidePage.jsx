@@ -218,36 +218,47 @@ export default function BookRidePage() {
       <div style={{ maxWidth: "600px", margin: "0 auto", padding: "84px 1rem 2rem" }}>
 
         {/* ── Page header ── */}
-        <div style={{ display: "flex", justifyContent: "space-between",
-          alignItems: "flex-start", marginBottom: "20px" }}>
-          <div>
-            <div style={{ fontSize: "11px", fontWeight: "700", color: G,
-              letterSpacing: "2px", textTransform: "uppercase", marginBottom: "4px" }}>
-              PROJO GROUP
-            </div>
-            <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.4rem",
-              fontWeight: "800", color: "#f5ede8", margin: 0, lineHeight: 1.2 }}>
-              Book a Ride
-              <span style={{ color: G }}> - </span>
-              Service
-              <span style={{ color: G }}> - </span>
-              Shop
-            </h1>
+        <div style={{ marginBottom: "16px" }}>
+          <div style={{ fontSize: "11px", fontWeight: "700", color: G,
+            letterSpacing: "2px", textTransform: "uppercase", marginBottom: "4px" }}>
+            PROJO GROUP
           </div>
-          {/* Quick nav buttons */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px", flexShrink: 0 }}>
-            <button onClick={() => navigate("/products")} style={{
-              background: "rgba(232,184,75,0.1)", border: `1px solid ${G}`,
-              borderRadius: "8px", padding: "6px 12px", cursor: "pointer",
-              color: G, fontSize: "12px", fontWeight: "700",
-              fontFamily: "'DM Sans',sans-serif",
-            }}>🛍️ Products Shop</button>
-            <button onClick={() => navigate("/shop")} style={{
-              background: "rgba(232,184,75,0.1)", border: `1px solid ${G}`,
-              borderRadius: "8px", padding: "6px 12px", cursor: "pointer",
-              color: G, fontSize: "12px", fontWeight: "700",
-              fontFamily: "'DM Sans',sans-serif",
-            }}>🛠️ Services</button>
+          <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.4rem",
+            fontWeight: "800", color: "#f5ede8", margin: "0 0 14px 0", lineHeight: 1.2 }}>
+            Book a Ride
+            <span style={{ color: G }}> · </span>
+            Service
+            <span style={{ color: G }}> · </span>
+            Shop
+          </h1>
+
+          {/* Quick access grid — all app features */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", marginBottom: "4px" }}>
+            {[
+              { icon: "🎬", label: "Entertainment", path: "/entertainment" },
+              { icon: "🏆", label: "Sports", path: "/sports" },
+              { icon: "✈️", label: "Travel", path: "/travel" },
+              { icon: "💰", label: "Airtime & Bills", path: "/bills" },
+              { icon: "📦", label: "Courier", path: "/courier" },
+              { icon: "👛", label: "Wallet", path: "/wallet" },
+              { icon: "🎰", label: "Casino 18+", path: "/entertainment" },
+              { icon: "📰", label: "News", path: "/entertainment" },
+              { icon: "🎵", label: "Music", path: "/entertainment" },
+              { icon: "🎮", label: "Games", path: "/entertainment" },
+              { icon: "😂", label: "Comedy", path: "/entertainment" },
+              { icon: "🧘", label: "Wellness", path: "/entertainment" },
+            ].map(item => (
+              <button key={item.label} onClick={() => navigate(item.path)} style={{
+                background: "rgba(232,184,75,0.05)",
+                border: "1px solid rgba(232,184,75,0.12)",
+                borderRadius: "10px", padding: "8px 4px",
+                display: "flex", flexDirection: "column", alignItems: "center", gap: "3px",
+                cursor: "pointer",
+              }}>
+                <span style={{ fontSize: "18px", lineHeight: 1 }}>{item.icon}</span>
+                <span style={{ fontSize: "9px", color: "#b8a09a", fontWeight: "700", whiteSpace: "nowrap" }}>{item.label}</span>
+              </button>
+            ))}
           </div>
         </div>
 

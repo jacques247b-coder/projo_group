@@ -364,38 +364,6 @@ export default function LandingPage() {
           }}>🚗 Drive with PROJO</button>
         </div>
 
-        {/* Quick Access Links — all app features */}
-        <div style={{ width:"100%", maxWidth:"600px", padding:"0 0.5rem", marginBottom:"1.5rem" }}>
-          <div style={{ fontSize:"11px", color:"#7a5a55", textAlign:"center", marginBottom:"10px", letterSpacing:"1px", textTransform:"uppercase" }}>Quick Access</div>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:"8px" }}>
-            {[
-              { icon:"🚗", label:"Rides", path:"/book" },
-              { icon:"📦", label:"Courier", path:"/courier" },
-              { icon:"🛠️", label:"Services", path:"/shop" },
-              { icon:"🛍️", label:"Shop", path:"/products" },
-              { icon:"🎬", label:"Entertainment", path:"/entertainment" },
-              { icon:"🏆", label:"Sports", path:"/sports" },
-              { icon:"✈️", label:"Travel", path:"/travel" },
-              { icon:"💰", label:"Airtime/Bills", path:"/bills" },
-              { icon:"👛", label:"Wallet", path:"/wallet" },
-              { icon:"🎰", label:"Casino 18+", path:"/entertainment" },
-              { icon:"📰", label:"News", path:"/entertainment" },
-              { icon:"🎮", label:"Games", path:"/entertainment" },
-            ].map(item => (
-              <button key={item.label} onClick={() => navigate(user ? item.path : "/login")} style={{
-                background:"rgba(255,255,255,0.03)",
-                border:"1px solid rgba(232,184,75,0.1)",
-                borderRadius:"12px", padding:"10px 6px",
-                display:"flex", flexDirection:"column", alignItems:"center", gap:"4px",
-                cursor:"pointer",
-              }}>
-                <span style={{ fontSize:"20px" }}>{item.icon}</span>
-                <span style={{ fontSize:"9px", color:"#b8a09a", fontWeight:"700", whiteSpace:"nowrap" }}>{item.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
         <div style={{ width:"100%", maxWidth:"560px", padding:"0 0.5rem" }}>
           <BookingWidget />
         </div>
