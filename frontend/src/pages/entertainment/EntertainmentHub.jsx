@@ -1051,6 +1051,7 @@ export default function EntertainmentHub() {
     try { return JSON.parse(localStorage.getItem("projo_content_ratings") || "{}"); } catch { return {}; }
   });
   const [showMore, setShowMore] = useState({});
+  const [musicFilter, setMusicFilter] = useState('All');
 
   function rateContent(id, stars) {
     const nr = { ...ratings, [id]: stars };
@@ -1285,7 +1286,6 @@ export default function EntertainmentHub() {
             {/* Free Music */}
             <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "16px", fontWeight: "800", color: "#f0ede8", marginBottom: "8px" }}>🎵 Free Music</div>
             {(() => {
-              const [musicFilter, setMusicFilter] = React.useState("All");
               const genres = ["All", "Amapiano", "Afrikaans", "2026 Hits", "International", "Gospel", "Relaxation"];
               const filtered = musicFilter === "All" ? FREE_MUSIC : FREE_MUSIC.filter(t => t.genre.includes(musicFilter));
               return (
