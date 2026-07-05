@@ -109,7 +109,7 @@ const TABS = [
   { key: "scores",     label: "📊 Scores" },
   { key: "watch",      label: "📺 Watch" },
   { key: "highlights", label: "🎬 Highlights" },
-  { key: "betting",    label: "🎯 Betting" },
+  { key: "betting",    label: "🎯 Betting & Casino" },
 ];
 
 function statusLabel(status) {
@@ -337,7 +337,7 @@ export default function SportsHubPage() {
             <div>
               <div style={{ fontSize: "11px", color: G, fontWeight: "700", letterSpacing: "2px", textTransform: "uppercase" }}>PROJO GROUP</div>
               <h1 style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.8rem", fontWeight: "800", color: "#f0ede8", margin: "4px 0" }}>
-                Sports Hub 🏆
+                Sports & Betting 🏆🎰
               </h1>
               {liveCount > 0 && (
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -515,12 +515,22 @@ export default function SportsHubPage() {
           </div>
         )}
 
-        {/* ── BETTING ── */}
+        {/* ── BETTING & CASINO ── */}
         {tab === "betting" && (
           <div>
             <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "12px", padding: "10px 14px", marginBottom: "1.25rem", fontSize: "11px", color: "#f87171", lineHeight: 1.6 }}>
               ⚠️ <strong>Gamble responsibly. 18+ only.</strong> Gambling is addictive — play within your means.<br />
               Help: <strong>0800 006 008</strong> (National Responsible Gambling Programme — free, 24/7)
+            </div>
+            {/* Casino Offers CTA */}
+            <div onClick={() => window.location.href="/entertainment"} style={{ background: "linear-gradient(135deg, rgba(232,184,75,0.15), rgba(167,139,250,0.1))", border: "1px solid rgba(232,184,75,0.3)", borderRadius: "14px", padding: "1rem", marginBottom: "1.25rem", cursor: "pointer" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "15px", fontWeight: "800", color: G }}>🎰 Casino Offers (18+)</div>
+                  <div style={{ fontSize: "12px", color: "#6b6760", marginTop: "2px" }}>Betway, Hollywood Bets, Supabets, Sunbet & more</div>
+                </div>
+                <span style={{ color: G, fontSize: "20px" }}>→</span>
+              </div>
             </div>
             {BETTING_PARTNERS.map(p => (
               <div key={p.name} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "1.25rem", marginBottom: "1rem" }}>

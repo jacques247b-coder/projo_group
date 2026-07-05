@@ -1203,7 +1203,7 @@ function CasinoOffersTab({ user }) {
 function LocalAdsTab({ user }) {
   const [ads, setAds] = useState([]);
   const [showSubmit, setShowSubmit] = useState(false);
-  const [form, setForm] = useState({ businessName: "", category: "Restaurant", offer: "", description: "", phone: "", website: "" });
+  const [form, setForm] = useState({ businessName: "", category: "Restaurant", offer: "", description: "", phone: "", website: "", mediaData: null, mediaType: null, mediaName: null, isPaid: false });
   const [submitting, setSubmitting] = useState(false);
 
   const CATEGORIES = ["Restaurant","Retail","Service","Health","Beauty","Auto","Property","Events","Other"];
@@ -1250,6 +1250,40 @@ function LocalAdsTab({ user }) {
         </button>
       </div>
 
+      {/* Paid Ads Banner */}
+      {ads.filter(a => a.isPaid).length > 0 && (
+        <div style={{ marginBottom: "1.25rem" }}>
+          <div style={{ background: "linear-gradient(135deg, rgba(232,184,75,0.15), rgba(232,184,75,0.05))", border: `1px solid ${G}`, borderRadius: "14px", padding: "10px 14px", marginBottom: "10px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "14px" }}>⭐</span>
+            <span style={{ fontFamily: "'Syne',sans-serif", fontSize: "13px", fontWeight: "800", color: G }}>Featured Businesses</span>
+            <span style={{ fontSize: "10px", color: "#6b6760", marginLeft: "auto" }}>Promoted</span>
+          </div>
+          {ads.filter(a => a.isPaid).map(ad => (
+            <div key={ad.id} style={{ background: BG2, border: `2px solid ${G}40`, borderRadius: "14px", padding: "1rem", marginBottom: "10px" }}>
+              {ad.mediaData && ad.mediaType?.startsWith("image") && (
+                <img src={ad.mediaData} alt={ad.businessName} style={{ width: "100%", borderRadius: "10px", marginBottom: "10px", maxHeight: "200px", objectFit: "cover" }} />
+              )}
+              {ad.mediaData && ad.mediaType?.startsWith("video") && (
+                <video src={ad.mediaData} controls style={{ width: "100%", borderRadius: "10px", marginBottom: "10px", maxHeight: "200px" }} />
+              )}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                <div>
+                  <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "15px" }}>{ad.businessName}</div>
+                  <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "2px" }}>{ad.category}</div>
+                </div>
+                <div style={{ background: "rgba(232,184,75,0.15)", border: `1px solid ${G}`, borderRadius: "8px", padding: "4px 10px", fontSize: "11px", color: G, fontWeight: "700" }}>⭐ Featured</div>
+              </div>
+              <div style={{ fontSize: "14px", color: G, fontWeight: "700", margin: "8px 0" }}>{ad.offer}</div>
+              {ad.description && <div style={{ fontSize: "12px", color: "#6b6760", marginBottom: "8px" }}>{ad.description}</div>}
+              <div style={{ display: "flex", gap: "8px" }}>
+                {ad.phone && <a href={`tel:${ad.phone}`} style={{ background: "#166534", border: "1px solid #4ade80", borderRadius: "8px", padding: "6px 12px", color: "#4ade80", fontSize: "12px", fontWeight: "700", textDecoration: "none" }}>📞 Call</a>}
+                {ad.website && <a href={ad.website} target="_blank" rel="noreferrer" style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "6px 12px", color: G, fontSize: "12px", fontWeight: "700", textDecoration: "none" }}>🌐 Website ↗</a>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {ads.length === 0 && (
         <div style={{ textAlign: "center", padding: "3rem", color: "#6b6760" }}>
           <div style={{ fontSize: "48px", marginBottom: "12px" }}>🏪</div>
@@ -1295,6 +1329,44 @@ function LocalAdsTab({ user }) {
             <textarea style={{...inp, minHeight: "80px", resize: "vertical"}} placeholder="Description (optional)" value={form.description} onChange={e => setForm(f => ({...f, description: e.target.value}))} />
             <input style={inp} placeholder="Phone Number" value={form.phone} onChange={e => setForm(f => ({...f, phone: e.target.value}))} />
             <input style={inp} placeholder="Website (optional)" value={form.website} onChange={e => setForm(f => ({...f, website: e.target.value}))} />
+
+            {/* Media upload */}
+            <div style={{ marginBottom: "10px" }}>
+              <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "6px", textTransform: "uppercase" }}>Ad Media (Optional)</div>
+              <input type="file" accept="image/png,image/jpeg,video/mp4,video/mpeg" onChange={e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (file.size > 10 * 1024 * 1024) return toast.error("File too large. Max 10MB");
+                const reader = new FileReader();
+                reader.onload = ev => setForm(f => ({ ...f, mediaData: ev.target.result, mediaType: file.type, mediaName: file.name }));
+                reader.readAsDataURL(file);
+              }} style={{ ...inp, padding: "8px" }} />
+              {form.mediaData && (
+                <div style={{ marginTop: "8px" }}>
+                  {form.mediaType?.startsWith("image") ? (
+                    <img src={form.mediaData} alt="Ad preview" style={{ width: "100%", borderRadius: "8px", maxHeight: "150px", objectFit: "cover" }} />
+                  ) : (
+                    <video src={form.mediaData} controls style={{ width: "100%", borderRadius: "8px", maxHeight: "150px" }} />
+                  )}
+                </div>
+              )}
+              <div style={{ fontSize: "10px", color: "#4a3030", marginTop: "4px" }}>Supported: PNG, JPEG, MP4, MPEG · Max 10MB</div>
+            </div>
+
+            {/* Paid promotion option */}
+            <div style={{ background: "rgba(232,184,75,0.05)", border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", marginBottom: "10px" }}>
+              <div style={{ fontSize: "12px", color: G, fontWeight: "700", marginBottom: "6px" }}>⭐ Paid Promotion — R170/month</div>
+              <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "8px", lineHeight: 1.5 }}>
+                Get featured at the top of the app AND posted to PROJO social media platforms & groups once per week. Upscalable for more posts.
+              </div>
+              <div onClick={() => setForm(f => ({ ...f, isPaid: !f.isPaid }))} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+                <div style={{ width: "44px", height: "24px", borderRadius: "12px", background: form.isPaid ? G : BG3, border: `1px solid ${form.isPaid ? G : BORDER}`, position: "relative", transition: "all .2s" }}>
+                  <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: form.isPaid ? "#0a0a0a" : "#6b6760", position: "absolute", top: "3px", left: form.isPaid ? "22px" : "3px", transition: "left .2s" }} />
+                </div>
+                <span style={{ fontSize: "12px", color: "#f0ede8", fontWeight: "700" }}>Include Paid Promotion (R170/month)</span>
+              </div>
+            </div>
+
             <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "12px" }}>
               ✓ Free to submit · ✓ PROJO reviews within 24hrs · ✓ Reaches all app users · ✓ Basic listings are free
             </div>
@@ -1631,31 +1703,43 @@ export default function EntertainmentHub() {
               <div style={{ fontSize: "13px", color: "#6b6760", marginBottom: "1rem" }}>
                 Live news headlines from trusted sources
               </div>
-              {[
-                { name: "News24", url: "https://www.news24.com", desc: "SA's biggest news site" },
-                { name: "TimesLive", url: "https://www.timeslive.co.za", desc: "Breaking SA news" },
-                { name: "Daily Maverick", url: "https://www.dailymaverick.co.za", desc: "Investigative journalism" },
-                { name: "EWN", url: "https://ewn.co.za", desc: "eNCA news portal" },
-                { name: "BBC World News", url: "https://www.bbc.com/news/world", desc: "International news" },
-                { name: "Netwerk24", url: "https://www.netwerk24.com", desc: "Afrikaans news" },
-                { name: "Sowetan Live", url: "https://www.sowetanlive.co.za", desc: "Community news" },
-                { name: "IOL", url: "https://www.iol.co.za", desc: "Independent Online" },
-              ].filter(s => {
-                if (newsCategory === 0) return true;
-                if (newsCategory === 1) return ["News24","TimesLive","Daily Maverick","EWN","Sowetan Live","IOL","Netwerk24"].includes(s.name);
-                if (newsCategory === 2) return ["BBC World News","Daily Maverick","IOL"].includes(s.name);
-                if (newsCategory === 3) return ["News24","TimesLive","EWN"].includes(s.name);
-                return true;
-              }).map(source => (
-                <a key={source.name} href={source.url} target="_blank" rel="noreferrer" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${BORDER}`, textDecoration: "none" }}>
+              {(() => {
+                const NEWS_SOURCES = [
+                  { name: "News24", url: "https://www.news24.com", desc: "SA's biggest news site", cat: [0,1] },
+                  { name: "TimesLive", url: "https://www.timeslive.co.za", desc: "Breaking SA news", cat: [0,1] },
+                  { name: "Daily Maverick", url: "https://www.dailymaverick.co.za", desc: "Investigative journalism", cat: [0,1,2] },
+                  { name: "EWN", url: "https://ewn.co.za", desc: "eNCA news portal", cat: [0,1,3] },
+                  { name: "BBC World News", url: "https://www.bbc.com/news/world", desc: "International news", cat: [0,2] },
+                  { name: "Netwerk24", url: "https://www.netwerk24.com", desc: "Afrikaans news", cat: [0,1] },
+                  { name: "Sowetan Live", url: "https://www.sowetanlive.co.za", desc: "Community news", cat: [0,1] },
+                  { name: "IOL", url: "https://www.iol.co.za", desc: "Independent Online", cat: [0,1,2] },
+                ];
+                const [activeNews, setActiveNews] = React.useState(null);
+                const filteredNews = NEWS_SOURCES.filter(s => s.cat.includes(newsCategory));
+                return activeNews ? (
                   <div>
-                    <div style={{ fontSize: "13px", color: "#f0ede8", fontWeight: "600" }}>{source.name}</div>
-                    <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "2px" }}>{source.desc}</div>
+                    <button onClick={() => setActiveNews(null)} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "8px 14px", color: "#a8a49e", cursor: "pointer", fontSize: "12px", marginBottom: "12px" }}>← Back</button>
+                    <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "13px", marginBottom: "8px" }}>{activeNews.name}</div>
+                    <iframe src={activeNews.url} title={activeNews.name} style={{ width: "100%", height: "65vh", border: "none", borderRadius: "12px" }} sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-top-navigation" />
+                    <div style={{ fontSize: "10px", color: "#4a3030", textAlign: "center", marginTop: "6px" }}>
+                      If blocked: <a href={activeNews.url} target="_blank" rel="noreferrer" style={{ color: G }}>open in browser ↗</a>
+                    </div>
                   </div>
-                  <span style={{ color: G, fontSize: "12px", flexShrink: 0 }}>Read ↗</span>
-                </a>
-              ))}
-              <div style={{ marginTop: "12px", fontSize: "11px", color: "#4a3030" }}>News opens in browser — all content from original publishers</div>
+                ) : (
+                  <div>
+                    {filteredNews.map(source => (
+                      <div key={source.name} onClick={() => setActiveNews(source)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px", background: BG2, borderRadius: "10px", marginBottom: "8px", cursor: "pointer", border: `1px solid ${BORDER}` }}>
+                        <div>
+                          <div style={{ fontSize: "13px", color: "#f0ede8", fontWeight: "600" }}>{source.name}</div>
+                          <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "2px" }}>{source.desc}</div>
+                        </div>
+                        <span style={{ color: G, fontSize: "18px" }}>→</span>
+                      </div>
+                    ))}
+                    <div style={{ fontSize: "10px", color: "#4a3030", textAlign: "center", marginTop: "4px" }}>Tap to read in-app</div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}

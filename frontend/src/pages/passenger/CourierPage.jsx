@@ -113,7 +113,7 @@ export default function CourierPage() {
         </div>
 
         <div style={{ display: "flex", gap: "8px", marginBottom: "1.5rem" }}>
-          {[{ key: "book", label: "📦 Book" }, { key: "track", label: "🔍 Track" }, { key: "history", label: "📋 History" }].map(t => (
+          {[{ key: "track", label: "🔍 Track" }, { key: "history", label: "📋 History" }].map(t => (
             <button key={t.key} onClick={() => setTab(t.key)} style={{
               padding: "9px 18px", borderRadius: "50px", fontSize: "13px", fontWeight: "700", cursor: "pointer",
               background: tab === t.key ? G : BG3, color: tab === t.key ? "#0a0a0a" : "#a8a49e",
@@ -124,74 +124,21 @@ export default function CourierPage() {
 
         {/* BOOK */}
         {tab === "book" && !booked && (
-          <form onSubmit={handleBook} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-            <div style={card}>
-              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "700", color: "#f0ede8", marginBottom: "12px", fontSize: "13px" }}>📦 Package Details</div>
-              <input style={inp} placeholder="What are you sending? (e.g. Documents, Clothes)" required value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "10px" }}>
-                
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px 14px", cursor: "pointer" }} onClick={() => setForm(f => ({ ...f, isFragile: !f.isFragile }))}>
-                  <div style={{ width: "18px", height: "18px", borderRadius: "4px", border: "2px solid rgba(232,184,75,0.4)", display: "flex", alignItems: "center", justifyContent: "center", background: form.isFragile ? G : "transparent" }}>
-                    {form.isFragile && <span style={{ fontSize: "11px", color: "#0a0a0a", fontWeight: "800" }}>✓</span>}
-                  </div>
-                  <span style={{ fontSize: "13px", color: "#a8a49e" }}>Fragile</span>
-                </div>
+          <div style={{ textAlign: "center", padding: "2rem 1rem" }}>
+              <div style={{ fontSize: "48px", marginBottom: "12px" }}>📦</div>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "18px", fontWeight: "800", color: G, marginBottom: "8px" }}>Book a Delivery</div>
+              <div style={{ fontSize: "13px", color: "#6b6760", marginBottom: "1.5rem", lineHeight: 1.6 }}>
+                Book your delivery on the main Booking page alongside rides and services.
+              </div>
+              <button onClick={() => navigate("/book-ride?tab=delivery")} style={{
+                background: G, color: "#0a0a0a", border: "none", borderRadius: "12px",
+                padding: "14px 32px", fontWeight: "800", fontSize: "15px", cursor: "pointer",
+                width: "100%",
+              }}>📦 Book a Delivery</button>
+              <div style={{ fontSize: "12px", color: "#4a3030", marginTop: "12px" }}>
+                Flat rate R60 within Rustenburg · Door to door service
               </div>
             </div>
-
-            <div style={card}>
-              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "700", color: "#f0ede8", marginBottom: "10px", fontSize: "13px" }}>📍 Pickup Area</div>
-              {form.pickupAddress ? (
-                <div style={{ background: "rgba(232,184,75,0.08)", border: `1px solid ${G}`, borderRadius: "8px", padding: "8px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "13px", color: G, fontWeight: "600" }}>✅ {form.pickupAddress}</span>
-                  <button type="button" onClick={() => clearArea("pickup")} style={{ background: "none", border: "none", color: "#6b6760", cursor: "pointer", fontSize: "16px" }}>✕</button>
-                </div>
-              ) : (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                  {RUSTENBURG_AREAS.filter(a => a.zone === 1).map(area => (
-                    <button key={area.name} type="button" onClick={() => setArea("pickup", area)} style={areaBtn(false)}>{area.name}</button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div style={{ ...card, display: "flex", flexDirection: "column", gap: "10px" }}>
-              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "700", color: "#f0ede8", fontSize: "13px" }}>🏁 Recipient & Dropoff</div>
-              <input style={inp} placeholder="Recipient's full name" required value={form.recipientName} onChange={e => setForm(f => ({ ...f, recipientName: e.target.value }))} />
-              <div style={{ display: "flex", gap: "8px", alignItems: "center", background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "0 14px" }}>
-                <span style={{ color: G, fontWeight: "700", flexShrink: 0 }}>+27</span>
-                <input placeholder="Recipient phone" type="tel" style={{ background: "transparent", border: "none", color: "#f0ede8", padding: "12px 0", fontSize: "14px", outline: "none", flex: 1 }} value={form.recipientPhone} onChange={e => setForm(f => ({ ...f, recipientPhone: "+27" + e.target.value.replace(/\D/g, "").replace(/^27/, "") }))} />
-              </div>
-              {form.dropoffAddress ? (
-                <div style={{ background: "rgba(232,184,75,0.08)", border: `1px solid ${G}`, borderRadius: "8px", padding: "8px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "13px", color: G, fontWeight: "600" }}>✅ {form.dropoffAddress}</span>
-                  <button type="button" onClick={() => clearArea("dropoff")} style={{ background: "none", border: "none", color: "#6b6760", cursor: "pointer", fontSize: "16px" }}>✕</button>
-                </div>
-              ) : (
-                <>
-                  <div style={{ fontSize: "10px", color: "#6b6760", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>Rustenburg Area (R60 flat)</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                    {RUSTENBURG_AREAS.filter(a => a.zone === 1).map(area => (
-                      <button key={area.name} type="button" onClick={() => setArea("dropoff", area)} style={areaBtn(false)}>{area.name}</button>
-                    ))}
-                  </div>
-                  <div style={{ fontSize: "10px", color: "#6b6760", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", marginTop: "4px" }}>Outside Rustenburg (R7.50/km)</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                    {RUSTENBURG_AREAS.filter(a => a.zone === 2).map(area => (
-                      <button key={area.name} type="button" onClick={() => setArea("dropoff", area)} style={{ ...areaBtn(false), color: "#7a5a55", border: "1px solid rgba(139,26,26,0.3)" }}>{area.name} ↗</button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-
-            <button type="submit" disabled={loading} style={{ background: G, color: "#0a0a0a", border: "none", borderRadius: "12px", padding: "15px", fontSize: "15px", fontWeight: "700", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1 }}>
-              {loading ? "Booking..." : "Book Courier Pickup"}
-            </button>
-            <div style={{ textAlign: "center", fontSize: "12px", color: "#3d3d3d" }}>
-              Questions? <a href={CONTACT.whatsappLink} target="_blank" rel="noreferrer" style={{ color: G, textDecoration: "none" }}>{CONTACT.phone}</a>
-            </div>
-          </form>
         )}
 
         {/* CONFIRMATION */}

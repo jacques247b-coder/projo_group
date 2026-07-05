@@ -80,7 +80,7 @@ export default function Navbar() {
             <Link to="/courier" style={linkStyle("/courier")}>Courier</Link>
             <Link to="/shop"    style={linkStyle("/shop")}>Services</Link>
             <Link to="/products" style={linkStyle("/products")}>Products</Link>
-            <Link to="/sports" style={linkStyle("/sports")}>🏆 Sports</Link>
+            <Link to="/sports" style={linkStyle("/sports")}>🏆 Sports & Betting</Link>
             <Link to="/entertainment" style={linkStyle("/entertainment")}>🎬 Entertainment</Link>
             <Link to="/travel" style={linkStyle("/travel")}>✈️ Travel</Link>
             {user?.role === "DRIVER" && <Link to="/driver" style={linkStyle("/driver")}>Driver</Link>}
@@ -142,11 +142,15 @@ export default function Navbar() {
 
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
               {drawerLink("/book", "🚗 Book a Ride")}
-              {drawerLink("/courier", "📦 Courier")}
+              {drawerLink("/courier", "📦 Courier & Delivery")}
               {drawerLink("/shop", "🛠️ Services")}
               {drawerLink("/products", "🛍️ Products Shop")}
-              {user && drawerLink("/wallet", "💰 Wallet")}
-              {user && drawerLink("/rides", "🕐 Ride History")}
+              {drawerLink("/entertainment", "🎬 Entertainment")}
+              {drawerLink("/sports", "🏆 Sports Hub")}
+              {drawerLink("/travel", "✈️ Travel")}
+              {drawerLink("/bills", "💰 Airtime & Bills")}
+              {user && drawerLink("/wallet", "👛 Wallet")}
+              {user && drawerLink("/rides", "🕐 Ride & Delivery History")}
               {user?.role === "DRIVER" && drawerLink("/driver", "🚘 Driver Dashboard")}
               {user?.role === "ADMIN"  && drawerLink("/admin",  "⚙️ Admin Panel")}
             </div>

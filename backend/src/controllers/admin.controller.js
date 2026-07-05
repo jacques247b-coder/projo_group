@@ -647,16 +647,22 @@ exports.markRidePaid = async (req, res) => {
     });
     if (!ride) return res.status(404).json({ error: "Ride not found" });
 
-    // Generate paid invoice
-    const { generateAndSendInvoice } = require("../services/invoice.service");
-    const result = await generateAndSendInvoice({
-      type: "ride",
-      data: { ...ride, isPaid: true, paymentConfirmedAt: new Date() },
-      user: ride.passenger,
-      paid: true,
-    });
+    // Try to generate paid invoice (non-blocking)
+    let invoiceNumber = null;
+    try {
+      const { generateAndSendInvoice } = require("../services/invoice.service");
+      const result = await generateAndSendInvoice({
+        type: "ride",
+        data: { ...ride, isPaid: true, paymentConfirmedAt: new Date() },
+        user: ride.passenger,
+        paid: true,
+      });
+      invoiceNumber = result?.invoiceNumber;
+    } catch (invoiceErr) {
+      console.log("[PROJO Invoice] Non-fatal:", invoiceErr.message);
+    }
 
-    res.json({ message: `Paid invoice sent to ${ride.passenger?.email || "customer"}`, invoiceNumber: result?.invoiceNumber });
+    res.json({ message: `✅ Ride marked as paid${invoiceNumber ? ` · Invoice ${invoiceNumber} sent` : ""}` });
   } catch (err) {
     res.status(500).json({ error: "Could not mark as paid: " + err.message });
   }
@@ -671,15 +677,21 @@ exports.markDeliveryPaid = async (req, res) => {
     });
     if (!delivery) return res.status(404).json({ error: "Delivery not found" });
 
-    const { generateAndSendInvoice } = require("../services/invoice.service");
-    const result = await generateAndSendInvoice({
-      type: "delivery",
-      data: { ...delivery, isPaid: true },
-      user: delivery.sender,
-      paid: true,
-    });
+    let invoiceNumber = null;
+    try {
+      const { generateAndSendInvoice } = require("../services/invoice.service");
+      const result = await generateAndSendInvoice({
+        type: "delivery",
+        data: { ...delivery, isPaid: true },
+        user: delivery.sender,
+        paid: true,
+      });
+      invoiceNumber = result?.invoiceNumber;
+    } catch (invoiceErr) {
+      console.log("[PROJO Invoice] Non-fatal:", invoiceErr.message);
+    }
 
-    res.json({ message: `Paid invoice sent`, invoiceNumber: result?.invoiceNumber });
+    res.json({ message: `✅ Delivery marked as paid${invoiceNumber ? ` · Invoice ${invoiceNumber} sent` : ""}` });
   } catch (err) {
     res.status(500).json({ error: "Could not mark as paid: " + err.message });
   }
@@ -694,15 +706,21 @@ exports.markServicePaid = async (req, res) => {
     });
     if (!order) return res.status(404).json({ error: "Order not found" });
 
-    const { generateAndSendInvoice } = require("../services/invoice.service");
-    const result = await generateAndSendInvoice({
-      type: "service",
-      data: { ...order, isPaid: true },
-      user: order.user,
-      paid: true,
-    });
+    let invoiceNumber = null;
+    try {
+      const { generateAndSendInvoice } = require("../services/invoice.service");
+      const result = await generateAndSendInvoice({
+        type: "service",
+        data: { ...order, isPaid: true },
+        user: order.user,
+        paid: true,
+      });
+      invoiceNumber = result?.invoiceNumber;
+    } catch (invoiceErr) {
+      console.log("[PROJO Invoice] Non-fatal:", invoiceErr.message);
+    }
 
-    res.json({ message: `Paid invoice sent`, invoiceNumber: result?.invoiceNumber });
+    res.json({ message: `✅ Service marked as paid${invoiceNumber ? ` · Invoice ${invoiceNumber} sent` : ""}` });
   } catch (err) {
     res.status(500).json({ error: "Could not mark as paid: " + err.message });
   }
