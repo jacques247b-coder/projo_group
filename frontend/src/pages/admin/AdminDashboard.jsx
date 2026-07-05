@@ -33,6 +33,7 @@ const TABS = [
   { key: "products",   label: "🛍️ Products" },
   { key: "drivers",    label: "🚘 Drivers" },
   { key: "push",       label: "📣 Broadcast" },
+  { key: "ads",        label: "🏪 Local Ads" },
 ];
 
 const SERVICE_CATEGORIES = [
@@ -70,6 +71,9 @@ export default function AdminDashboard() {
   const [pushStats, setPushStats] = useState(null);
   const [pushSending, setPushSending] = useState(false);
   const [pushResult, setPushResult] = useState(null);
+  const [localAds, setLocalAds] = useState([]);
+  const [adForm, setAdForm] = useState({ businessName: "", category: "Restaurant", offer: "", description: "", phone: "", website: "" });
+  const [showAdForm, setShowAdForm] = useState(false);
 
   useEffect(() => { loadAll(); }, []);
 
@@ -85,6 +89,7 @@ export default function AdminDashboard() {
         api.get("/admin/drivers"),
         api.get("/admin/service-orders").catch(() => ({ orders: [] })),
         api.get("/admin/push/stats").catch(() => null),
+        api.get("/admin/entertainment/ads").catch(() => ({ ads: [] })),
       ]);
       setStats(s.stats);
       setUsers(u.users || []);
@@ -93,6 +98,7 @@ export default function AdminDashboard() {
       setProducts(p.products || []);
       setServiceOrders(so.orders || []);
       if (ps) setPushStats(ps);
+      setLocalAds(la?.ads || []);
       const drivers = dr.drivers || [];
       setPendingDrivers(drivers.filter(d => d.status === "PENDING_VERIFICATION"));
       setAllDrivers(drivers);
@@ -179,6 +185,42 @@ export default function AdminDashboard() {
       toast.success("Deleted");
       loadAll();
     } catch { toast.error("Could not delete"); }
+  }
+
+  async function approveAd(id) {
+    try {
+      await api.put(`/admin/entertainment/ads/${id}`, { status: "APPROVED" });
+      toast.success("Ad approved!");
+      loadAll();
+    } catch { toast.error("Could not approve"); }
+  }
+
+  async function rejectAd(id) {
+    try {
+      await api.put(`/admin/entertainment/ads/${id}`, { status: "REJECTED" });
+      toast.success("Ad rejected");
+      loadAll();
+    } catch { toast.error("Could not reject"); }
+  }
+
+  async function deleteAd(id) {
+    if (!window.confirm("Delete this ad?")) return;
+    try {
+      await api.delete(`/admin/entertainment/ads/${id}`);
+      toast.success("Deleted");
+      loadAll();
+    } catch { toast.error("Could not delete"); }
+  }
+
+  async function createAd() {
+    if (!adForm.businessName || !adForm.offer) return toast.error("Business name and offer required");
+    try {
+      await api.post("/admin/entertainment/ads", adForm);
+      toast.success("Ad created and approved!");
+      setShowAdForm(false);
+      setAdForm({ businessName: "", category: "Restaurant", offer: "", description: "", phone: "", website: "" });
+      loadAll();
+    } catch { toast.error("Could not create ad"); }
   }
 
   async function sendBroadcast() {
@@ -677,6 +719,107 @@ export default function AdminDashboard() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* ── LOCAL ADS ── */}
+        {!loading && tab === "ads" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <div>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "15px", fontWeight: "800", color: G }}>🏪 Local Business Ads</div>
+                <div style={{ fontSize: "12px", color: "#6b6760" }}>Approve, reject or create ads for the Entertainment Hub</div>
+              </div>
+              <button onClick={() => setShowAdForm(true)} style={{ background: G, color: "#0a0a0a", border: "none", borderRadius: "8px", padding: "8px 14px", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>+ Add Ad</button>
+            </div>
+
+            {/* Stats */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", marginBottom: "1rem" }}>
+              {[
+                { label: "Pending", value: localAds.filter(a => a.status === "PENDING").length, color: "#f59e0b" },
+                { label: "Approved", value: localAds.filter(a => a.status === "APPROVED").length, color: "#4ade80" },
+                { label: "Total", value: localAds.length, color: G },
+              ].map(s => (
+                <div key={s.label} style={{ ...card, textAlign: "center", padding: "10px" }}>
+                  <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "20px", fontWeight: "800", color: s.color }}>{s.value}</div>
+                  <div style={{ fontSize: "11px", color: "#6b6760" }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pending first */}
+            {localAds.filter(a => a.status === "PENDING").length > 0 && (
+              <div style={{ marginBottom: "1rem" }}>
+                <div style={{ fontSize: "11px", color: "#f59e0b", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>⏳ Pending Approval</div>
+                {localAds.filter(a => a.status === "PENDING").map(ad => (
+                  <div key={ad.id} style={{ ...card, borderColor: "rgba(245,158,11,0.3)", marginBottom: "8px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                      <div>
+                        <div style={{ fontWeight: "700", color: "#f0ede8" }}>{ad.businessName}</div>
+                        <div style={{ fontSize: "11px", color: "#6b6760" }}>{ad.category} · Submitted by {ad.submittedBy?.name}</div>
+                      </div>
+                      <div style={{ fontSize: "11px", color: "#f59e0b", fontWeight: "700" }}>PENDING</div>
+                    </div>
+                    <div style={{ fontSize: "13px", color: G, fontWeight: "700", marginBottom: "6px" }}>{ad.offer}</div>
+                    {ad.description && <div style={{ fontSize: "12px", color: "#6b6760", marginBottom: "8px" }}>{ad.description}</div>}
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <button onClick={() => approveAd(ad.id)} style={{ background: "#166534", border: "1px solid #4ade80", borderRadius: "6px", padding: "6px 14px", color: "#4ade80", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>✓ Approve</button>
+                      <button onClick={() => rejectAd(ad.id)} style={{ background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: "6px", padding: "6px 14px", color: "#f87171", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>✗ Reject</button>
+                      <button onClick={() => deleteAd(ad.id)} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "6px", padding: "6px 14px", color: "#6b6760", fontSize: "12px", cursor: "pointer" }}>Delete</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* All ads */}
+            <div style={{ fontSize: "11px", color: "#6b6760", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>All Ads</div>
+            {localAds.map(ad => (
+              <div key={ad.id} style={{ ...card, marginBottom: "8px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "13px" }}>{ad.businessName}</div>
+                    <div style={{ fontSize: "12px", color: G, marginTop: "2px" }}>{ad.offer}</div>
+                    <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "2px" }}>{ad.category} · {ad.phone}</div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "11px", fontWeight: "700", color: ad.status === "APPROVED" ? "#4ade80" : ad.status === "PENDING" ? "#f59e0b" : "#ef4444" }}>{ad.status}</span>
+                    <button onClick={() => deleteAd(ad.id)} style={{ background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: "6px", padding: "3px 8px", color: "#f87171", fontSize: "10px", cursor: "pointer" }}>Del</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {localAds.length === 0 && (
+              <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>No ads submitted yet</div>
+            )}
+
+            {/* Add Ad Modal */}
+            {showAdForm && (
+              <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+                <div style={{ background: BG2, borderRadius: "20px 20px 0 0", padding: "1.5rem", width: "100%", maxWidth: "500px", maxHeight: "90vh", overflowY: "auto" }}>
+                  <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "16px", fontWeight: "800", color: G, marginBottom: "1rem" }}>➕ Add Business Ad</div>
+                  {[["Business Name *","businessName"],["Special Offer *","offer"],["Description","description"],["Phone","phone"],["Website","website"]].map(([label,key]) => (
+                    <div key={key} style={{ marginBottom: "10px" }}>
+                      <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "4px", textTransform: "uppercase" }}>{label}</div>
+                      <input value={adForm[key]} onChange={e => setAdForm(f => ({...f, [key]: e.target.value}))}
+                        style={{ width: "100%", background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", color: "#f0ede8", padding: "10px 12px", fontSize: "13px", outline: "none", boxSizing: "border-box" }} />
+                    </div>
+                  ))}
+                  <div style={{ marginBottom: "12px" }}>
+                    <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "4px", textTransform: "uppercase" }}>Category</div>
+                    <select value={adForm.category} onChange={e => setAdForm(f => ({...f, category: e.target.value}))}
+                      style={{ width: "100%", background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", color: "#f0ede8", padding: "10px 12px", fontSize: "13px", outline: "none" }}>
+                      {["Restaurant","Retail","Service","Health","Beauty","Auto","Property","Events","Other"].map(c => <option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button onClick={createAd} style={{ flex: 1, background: G, color: "#0a0a0a", border: "none", borderRadius: "10px", padding: "12px", fontWeight: "800", cursor: "pointer" }}>Create & Approve</button>
+                    <button onClick={() => setShowAdForm(false)} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px 20px", color: "#6b6760", cursor: "pointer" }}>Cancel</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
