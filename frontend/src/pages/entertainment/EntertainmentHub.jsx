@@ -1396,6 +1396,7 @@ export default function EntertainmentHub() {
   });
   const [showMore, setShowMore] = useState({});
   const [musicFilter, setMusicFilter] = useState('All');
+  const [activeNews, setActiveNews] = useState(null);
 
   function rateContent(id, stars) {
     const nr = { ...ratings, [id]: stars };
@@ -1714,7 +1715,6 @@ export default function EntertainmentHub() {
                   { name: "Sowetan Live", url: "https://www.sowetanlive.co.za", desc: "Community news", cat: [0,1] },
                   { name: "IOL", url: "https://www.iol.co.za", desc: "Independent Online", cat: [0,1,2] },
                 ];
-                const [activeNews, setActiveNews] = React.useState(null);
                 const filteredNews = NEWS_SOURCES.filter(s => s.cat.includes(newsCategory));
                 return activeNews ? (
                   <div>
