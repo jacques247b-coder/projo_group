@@ -52,8 +52,8 @@ const CONTENT = {
     { id: "c2", title: "Prins Comedian — SA Stand-Up Special 2025", videoId: "nWCZzL9KyhQ", category: "Comedy", thumb: "https://img.youtube.com/vi/nWCZzL9KyhQ/maxresdefault.jpg" },
     { id: "c3", title: "Savanna Newcomer Showcase 2025", videoId: "Fu8GK_BulR8", category: "Comedy", thumb: "https://img.youtube.com/vi/Fu8GK_BulR8/maxresdefault.jpg" },
     { id: "c4", title: "Loyiso Madinga — Comedians of the World", videoId: "sytJFA8ES6o", category: "Comedy", thumb: "https://img.youtube.com/vi/sytJFA8ES6o/maxresdefault.jpg" },
-    { id: "c5", title: "Sgudi 'Snaysi 2025 — Full Episode", videoId: "Ppw0S2-5-ro", category: "Comedy", thumb: "https://img.youtube.com/vi/Ppw0S2-5-ro/maxresdefault.jpg" },
-    { id: "c6", title: "SA Comedy at the Comedy Store London", videoId: "IGsqGa9cngs", category: "Comedy", thumb: "https://img.youtube.com/vi/IGsqGa9cngs/maxresdefault.jpg" },
+    { id: "c5", title: "Trevor Noah — South Africa Stand-Up", videoId: "sytJFA8ES6o", category: "Comedy", thumb: "https://img.youtube.com/vi/sytJFA8ES6o/maxresdefault.jpg" },
+    { id: "c6", title: "Prins Live & Recorded — SA Comedy Special", videoId: "n5OWI-5Y-Y0", category: "Comedy", thumb: "https://img.youtube.com/vi/n5OWI-5Y-Y0/maxresdefault.jpg" },
   ],
   fitness: [
     { id: "fi1", title: "20 Min Full Body Beginner Workout — No Equipment", videoId: "ZeJLIdQenTo", category: "Fitness", thumb: "https://img.youtube.com/vi/ZeJLIdQenTo/maxresdefault.jpg" },
@@ -106,6 +106,12 @@ const FREE_MUSIC = [
   { id: "fm6", title: "SA Gospel Praise Mix", videoId: "DlqOIMal8FQ", artist: "Gospel SA", genre: "Gospel", thumb: "https://img.youtube.com/vi/2P-6JpHN4RU/maxresdefault.jpg" },
   { id: "fm7", title: "DJ Maphorisa & Xduppy — Ngomoya Album", videoId: "sc5-g-fmlyg", artist: "DJ Maphorisa", genre: "Amapiano", thumb: "https://img.youtube.com/vi/sc5-g-fmlyg/maxresdefault.jpg" },
   { id: "fm8", title: "Best Amapiano Mix Vol.179", videoId: "0tMGChhzIRw", artist: "DJ Webaba", genre: "Amapiano", thumb: "https://img.youtube.com/vi/0tMGChhzIRw/maxresdefault.jpg" },
+  { id: "fm9",  title: "Top Hits 2025 — TikTok Viral Songs Mix", videoId: "UN5t2BxBUos", artist: "Various Artists", genre: "Pop/Hits", thumb: "https://img.youtube.com/vi/UN5t2BxBUos/maxresdefault.jpg" },
+  { id: "fm10", title: "Top 40 Global Songs 2025", videoId: "9vSdEHTVWGY", artist: "Global Hits", genre: "Pop/Dance", thumb: "https://img.youtube.com/vi/9vSdEHTVWGY/maxresdefault.jpg" },
+  { id: "fm11", title: "Mega Hit List 2025 — Top Songs Right Now", videoId: "1AzkGpeUQZI", artist: "Chart Toppers", genre: "International", thumb: "https://img.youtube.com/vi/1AzkGpeUQZI/maxresdefault.jpg" },
+  { id: "fm12", title: "Top Hits 2025 — Best Viral Songs Mix", videoId: "4V_qMmAdCCA", artist: "Various Artists", genre: "Viral Hits", thumb: "https://img.youtube.com/vi/4V_qMmAdCCA/maxresdefault.jpg" },
+  { id: "fm13", title: "Top Hits 2025 — Summer Playlist", videoId: "vp2ZoXIFJfw", artist: "Various Artists", genre: "Pop/Summer", thumb: "https://img.youtube.com/vi/vp2ZoXIFJfw/maxresdefault.jpg" },
+  { id: "fm14", title: "Top Hits 2025 — Summer Vibes Spotify Mix", videoId: "DjXDJ8ZD5BA", artist: "Various Artists", genre: "Pop/Vibes", thumb: "https://img.youtube.com/vi/DjXDJ8ZD5BA/maxresdefault.jpg" },
 ];
 
 // ── NEWS SOURCES (RSS via proxy) ─────────────────────────────
@@ -1223,6 +1229,7 @@ export default function EntertainmentHub() {
 
             {/* Free Music */}
             <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "16px", fontWeight: "800", color: "#f0ede8", marginBottom: "12px" }}>🎵 Free Music</div>
+            <div style={{ fontSize: "12px", color: "#6b6760", marginBottom: "10px" }}>SA Amapiano · International Hits · Gospel · Relaxation</div>
             <div style={{ display: "flex", gap: "12px", overflowX: "auto", paddingBottom: "8px", marginBottom: "1.5rem" }}>
               {FREE_MUSIC.map(track => (
                 <div key={track.id} onClick={() => playVideo({ ...track, title: track.title })} style={{ flexShrink: 0, width: "160px", cursor: "pointer" }}>
