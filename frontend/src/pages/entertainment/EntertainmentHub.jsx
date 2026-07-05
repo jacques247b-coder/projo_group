@@ -1407,17 +1407,21 @@ export default function EntertainmentHub() {
 
   // Fetch RSS headlines via our backend proxy
   async function fetchHeadlines(source) {
-    if (newsHeadlines[source.name]) return;
+    if (!source?.feedKey) return;
+    if (newsHeadlines[source.name]?.length > 0) return;
     setNewsLoading(true);
     try {
-      const API = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
-      const res = await fetch(`${API}/news/${source.feedKey}`);
+      const API = "https://projo-group-backend.onrender.com/api";
+      const url = `${API}/news/${source.feedKey}`;
+      console.log("[PROJO News] Fetching:", url);
+      const res = await fetch(url);
       const data = await res.json();
+      console.log("[PROJO News] Got:", data.count, "items");
       if (data.items?.length > 0) {
         setNewsHeadlines(prev => ({ ...prev, [source.name]: data.items }));
       }
     } catch (e) {
-      console.log("News fetch failed:", e.message);
+      console.log("[PROJO News] Error:", e.message);
     }
     setNewsLoading(false);
   }
