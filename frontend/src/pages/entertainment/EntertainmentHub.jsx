@@ -1728,7 +1728,7 @@ export default function EntertainmentHub() {
           <div>
             {/* Category filter pills */}
             <div style={{ display: "flex", gap: "8px", marginBottom: "1rem", overflowX: "auto" }}>
-              {[{ label: "🇿🇦 SA News", idx: 0 }, { label: "🌍 World", idx: 1 }, { label: "💼 Business", idx: 2 }, { label: "⚽ Sports", idx: 3 }].map(f => (
+              {[{ label: "📰 All", idx: 0 }, { label: "🇿🇦 SA", idx: 1 }, { label: "🌍 World", idx: 2 }, { label: "💼 Business", idx: 3 }, { label: "⚽ Sports", idx: 4 }].map(f => (
                 <button key={f.idx} onClick={() => setNewsCategory(f.idx)} style={{
                   background: newsCategory === f.idx ? "rgba(232,184,75,0.15)" : BG2,
                   border: `1px solid ${newsCategory === f.idx ? G : BORDER}`,
@@ -1777,14 +1777,16 @@ export default function EntertainmentHub() {
             ) : (
               <div>
                 {[
-                  { name: "News24",         feedKey: "news24",        url: "https://www.news24.com",          desc: "SA's biggest news site",   cat: [0,1] },
-                  { name: "TimesLive",      feedKey: "timeslive",     url: "https://www.timeslive.co.za",     desc: "Breaking SA news",         cat: [0,1] },
-                  { name: "Daily Maverick", feedKey: "dailymaverick", url: "https://www.dailymaverick.co.za", desc: "Investigative journalism", cat: [0,1,2] },
-                  { name: "EWN",            feedKey: "ewn",           url: "https://ewn.co.za",              desc: "eNCA news portal",         cat: [0,1,3] },
-                  { name: "BBC World",      feedKey: "bbcworld",      url: "https://www.bbc.com/news/world",  desc: "International headlines",  cat: [0,2] },
-                  { name: "BBC Sport",      feedKey: "bbcsport",      url: "https://www.bbc.com/sport",      desc: "World sport news",         cat: [0,3] },
-                  { name: "IOL",            feedKey: "iol",           url: "https://www.iol.co.za",          desc: "Independent Online",       cat: [0,1,2] },
-                  { name: "Netwerk24",      feedKey: "netwerk24",     url: "https://www.netwerk24.com",      desc: "Afrikaans nuus",           cat: [0,1] },
+                  { name: "SA News",        feedKey: "safrica",    url: "https://allafrica.com/southafrica/", desc: "South Africa headlines — AllAfrica",  cat: [0,1] },
+                  { name: "SA Business",    feedKey: "safricabiz", url: "https://allafrica.com/economy/",     desc: "SA economy & business news",          cat: [0,1,2] },
+                  { name: "Sport24",        feedKey: "sport24",    url: "https://www.sport24.co.za",          desc: "South African sport news",            cat: [0,3] },
+                  { name: "BBC World",      feedKey: "bbcworld",   url: "https://www.bbc.com/news/world",     desc: "International headlines",             cat: [0,2] },
+                  { name: "BBC Sport",      feedKey: "bbcsport",   url: "https://www.bbc.com/sport",          desc: "World sport news",                    cat: [0,3] },
+                  { name: "BBC Business",   feedKey: "bbcbusiness",url: "https://www.bbc.com/news/business",  desc: "Business & economy news",             cat: [0,2] },
+                  { name: "BBC Technology", feedKey: "bbctech",    url: "https://www.bbc.com/news/technology","desc": "Tech news from BBC",                cat: [0,2] },
+                  { name: "Reuters",        feedKey: "reuters",    url: "https://www.reuters.com",            desc: "Global news from Reuters",            cat: [0,2] },
+                  { name: "Al Jazeera",     feedKey: "aljazeera",  url: "https://www.aljazeera.com",          desc: "Middle East & world news",            cat: [0,2] },
+                  { name: "Sky News",       feedKey: "skynews",    url: "https://news.sky.com",               desc: "UK & world news",                     cat: [0,2] },
                 ].filter(s => s.cat.includes(newsCategory)).map(source => (
                   <div key={source.name} onClick={() => setActiveNews(source)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px", background: BG2, borderRadius: "12px", marginBottom: "8px", cursor: "pointer", border: `1px solid ${BORDER}` }}>
                     <div>

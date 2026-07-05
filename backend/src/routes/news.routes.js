@@ -68,14 +68,23 @@ function parseRSS(xml) {
 
 // Whitelisted RSS feeds with direct URLs
 const FEEDS = {
-  "news24":        "https://feeds.news24.com/articles/news24/TopStories/rss",
-  "timeslive":     "https://www.timeslive.co.za/rss/",
-  "dailymaverick": "https://www.dailymaverick.co.za/feed/",
-  "ewn":           "https://ewn.co.za/Feed/News",
+  // BBC — confirmed working
   "bbcworld":      "https://feeds.bbci.co.uk/news/world/rss.xml",
   "bbcsport":      "https://feeds.bbci.co.uk/sport/rss.xml",
-  "iol":           "https://www.iol.co.za/rss",
-  "netwerk24":     "https://www.netwerk24.com/rss",
+  "bbcbusiness":   "https://feeds.bbci.co.uk/news/business/rss.xml",
+  "bbctech":       "https://feeds.bbci.co.uk/news/technology/rss.xml",
+  // Reuters
+  "reuters":       "https://feeds.reuters.com/reuters/topNews",
+  "reutersbiz":    "https://feeds.reuters.com/reuters/businessNews",
+  // Al Jazeera
+  "aljazeera":     "https://www.aljazeera.com/xml/rss/all.xml",
+  // Sky News
+  "skynews":       "https://feeds.skynews.com/feeds/rss/world.xml",
+  // SA — use AllAfrica which aggregates SA news with open RSS
+  "safrica":       "https://allafrica.com/tools/headlines/rdf/southafrica/headlines.rdf",
+  "safricabiz":    "https://allafrica.com/tools/headlines/rdf/economy/headlines.rdf",
+  // Sport
+  "sport24":       "https://feeds.24.com/articles/sport24/TopStories/rss",
 };
 
 // GET /api/news/:feed
