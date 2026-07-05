@@ -47,6 +47,37 @@ const CONTENT = {
     { id: "p2", title: "AI for Beginners — Tech Talk", videoId: "ad79nYk2keg", category: "Podcast", thumb: "https://img.youtube.com/vi/ad79nYk2keg/maxresdefault.jpg" },
     { id: "p3", title: "Personal Finance Masterclass", videoId: "HQzoZfc3GwQ", category: "Podcast", thumb: "https://img.youtube.com/vi/HQzoZfc3GwQ/maxresdefault.jpg" },
   ],
+    comedy: [
+    { id: "c1", title: "2024 Savanna Comics Choice Awards — Full Show", videoId: "JavCA0w5omc", category: "Comedy", thumb: "https://img.youtube.com/vi/JavCA0w5omc/maxresdefault.jpg" },
+    { id: "c2", title: "Prins Comedian — SA Stand-Up Special 2025", videoId: "nWCZzL9KyhQ", category: "Comedy", thumb: "https://img.youtube.com/vi/nWCZzL9KyhQ/maxresdefault.jpg" },
+    { id: "c3", title: "Savanna Newcomer Showcase 2025", videoId: "Fu8GK_BulR8", category: "Comedy", thumb: "https://img.youtube.com/vi/Fu8GK_BulR8/maxresdefault.jpg" },
+    { id: "c4", title: "Loyiso Madinga — Comedians of the World", videoId: "sytJFA8ES6o", category: "Comedy", thumb: "https://img.youtube.com/vi/sytJFA8ES6o/maxresdefault.jpg" },
+    { id: "c5", title: "Sgudi 'Snaysi 2025 — Full Episode", videoId: "Ppw0S2-5-ro", category: "Comedy", thumb: "https://img.youtube.com/vi/Ppw0S2-5-ro/maxresdefault.jpg" },
+    { id: "c6", title: "SA Comedy at the Comedy Store London", videoId: "IGsqGa9cngs", category: "Comedy", thumb: "https://img.youtube.com/vi/IGsqGa9cngs/maxresdefault.jpg" },
+  ],
+  fitness: [
+    { id: "fi1", title: "20 Min Full Body Beginner Workout — No Equipment", videoId: "ZeJLIdQenTo", category: "Fitness", thumb: "https://img.youtube.com/vi/ZeJLIdQenTo/maxresdefault.jpg" },
+    { id: "fi2", title: "25 Min HIIT Full Body — No Equipment", videoId: "cbKkB3POqaY", category: "Fitness", thumb: "https://img.youtube.com/vi/cbKkB3POqaY/maxresdefault.jpg" },
+    { id: "fi3", title: "30 Min Full Body — All Standing, Low Impact", videoId: "3rdsdh5fVeY", category: "Fitness", thumb: "https://img.youtube.com/vi/3rdsdh5fVeY/maxresdefault.jpg" },
+    { id: "fi4", title: "25 Min Beginner HIIT — No Jumping", videoId: "lH0p5oQvTDY", category: "Fitness", thumb: "https://img.youtube.com/vi/lH0p5oQvTDY/maxresdefault.jpg" },
+    { id: "fi5", title: "Full Body Beginner Workout at Home", videoId: "WBaLczkURjQ", category: "Fitness", thumb: "https://img.youtube.com/vi/WBaLczkURjQ/maxresdefault.jpg" },
+  ],
+  cooking: [
+    { id: "co1", title: "🔥 SA Heritage Day Braai 2025 — Ultimate Platter", videoId: "kGtZ6nfYUNI", category: "Cooking", thumb: "https://img.youtube.com/vi/kGtZ6nfYUNI/maxresdefault.jpg" },
+    { id: "co2", title: "🔥 Shisanyama Fire Cooking — SA Braai Feast", videoId: "oCssyYnsAzE", category: "Cooking", thumb: "https://img.youtube.com/vi/oCssyYnsAzE/maxresdefault.jpg" },
+    { id: "co3", title: "🥩 Bush Braai — Braaivleis, Pap and Relish", videoId: "19N6KRZ-NVg", category: "Cooking", thumb: "https://img.youtube.com/vi/19N6KRZ-NVg/maxresdefault.jpg" },
+    { id: "co4", title: "🍖 Oxtail & Mac Cheese Potjie on the Braai", videoId: "603SFpYUdp0", category: "Cooking", thumb: "https://img.youtube.com/vi/603SFpYUdp0/maxresdefault.jpg" },
+    { id: "co5", title: "🌶️ Homemade SA Chakalaka Recipe", videoId: "U4driexsnt4", category: "Cooking", thumb: "https://img.youtube.com/vi/U4driexsnt4/maxresdefault.jpg" },
+    { id: "co6", title: "🥩 Boerekos on the Braai — Biltong Spiced Beef", videoId: "dKYffJYf52Q", category: "Cooking", thumb: "https://img.youtube.com/vi/dKYffJYf52Q/maxresdefault.jpg" },
+  ],
+  wellness: [
+    { id: "w1", title: "10 Min Guided Meditation — Clear Your Mind", videoId: "uTN29kj7e-w", category: "Wellness", thumb: "https://img.youtube.com/vi/uTN29kj7e-w/maxresdefault.jpg" },
+    { id: "w2", title: "Daily Calm — 10 Min Mindfulness: Be Present", videoId: "ZToicYcHIOU", category: "Wellness", thumb: "https://img.youtube.com/vi/ZToicYcHIOU/maxresdefault.jpg" },
+    { id: "w3", title: "10 Min Meditation — Release Stress & Anxiety", videoId: "z6X5oEIg6Ak", category: "Wellness", thumb: "https://img.youtube.com/vi/z6X5oEIg6Ak/maxresdefault.jpg" },
+    { id: "w4", title: "10 Min Meditation — Positive Energy & Peace", videoId: "cyMxWXlX9sU", category: "Wellness", thumb: "https://img.youtube.com/vi/cyMxWXlX9sU/maxresdefault.jpg" },
+    { id: "w5", title: "20 Min Guided Meditation — Reduce Anxiety", videoId: "MIr3RsUWrdo", category: "Wellness", thumb: "https://img.youtube.com/vi/MIr3RsUWrdo/maxresdefault.jpg" },
+    { id: "w6", title: "Daily Calm — Letting Go Meditation", videoId: "syx3a1_LeFo", category: "Wellness", thumb: "https://img.youtube.com/vi/syx3a1_LeFo/maxresdefault.jpg" },
+  ],
 };
 
 // ── RADIO STATIONS ───────────────────────────────────────────
@@ -105,7 +136,12 @@ const TABS = [
   { key: "podcasts",  label: "🎙️ Podcasts" },
   { key: "news",      label: "📰 News" },
   { key: "games",     label: "🎮 Games" },
-  { key: "ads",       label: "🏪 Local Deals" },
+  { key: "comedy",   label: "😂 Comedy" },
+  { key: "fitness",  label: "💪 Fitness" },
+  { key: "cooking",  label: "🍳 Cooking" },
+  { key: "wellness", label: "🧘 Wellness" },
+  { key: "stream",   label: "📺 Stream" },
+  { key: "ads",      label: "🏪 Local Deals" },
 ];
 
 // ── MINI GAMES ────────────────────────────────────────────────
@@ -1084,7 +1120,11 @@ export default function EntertainmentHub() {
             <VideoRow title="🔥 Trending Now" items={CONTENT.trending} onPlay={playVideo} />
             <VideoRow title="🎵 Music" items={CONTENT.music} onPlay={playVideo} />
             <VideoRow title="📚 Learning" items={CONTENT.learning} onPlay={playVideo} />
-            <VideoRow title="👶 Kids" items={CONTENT.kids} onPlay={playVideo} />
+            <VideoRow title="👶 Kids" items={CONTENT.kids.slice(0,5)} onPlay={playVideo} />
+            <VideoRow title="😂 SA Comedy" items={CONTENT.comedy.slice(0,4)} onPlay={playVideo} />
+            <VideoRow title="💪 Fitness" items={CONTENT.fitness.slice(0,3)} onPlay={playVideo} />
+            <VideoRow title="🍳 SA Cooking & Braai" items={CONTENT.cooking.slice(0,4)} onPlay={playVideo} />
+            <VideoRow title="🧘 Wellness & Meditation" items={CONTENT.wellness.slice(0,3)} onPlay={playVideo} />
 
             {/* Games promo */}
             <div onClick={() => setTab("games")} style={{ background: "linear-gradient(135deg, #1a0a2e, #0a1a2e)", border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "1.25rem", marginBottom: "1.5rem", cursor: "pointer" }}>
@@ -1300,6 +1340,80 @@ export default function EntertainmentHub() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── COMEDY ── */}
+        {tab === "comedy" && (
+          <div>
+            <VideoRow title="😂 SA Stand-Up Comedy" items={CONTENT.comedy.slice(0,3)} onPlay={playVideo} />
+            <VideoRow title="🎭 Comedy Shows & Specials" items={CONTENT.comedy.slice(3)} onPlay={playVideo} />
+          </div>
+        )}
+
+        {/* ── FITNESS ── */}
+        {tab === "fitness" && (
+          <div>
+            <div style={{ background: "rgba(74,222,128,0.05)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "1.25rem" }}>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "15px", fontWeight: "800", color: "#4ade80", marginBottom: "4px" }}>💪 Home Workouts</div>
+              <div style={{ fontSize: "12px", color: "#6b6760" }}>No equipment needed · Do it anywhere · All fitness levels</div>
+            </div>
+            <VideoRow title="🔥 Full Body Workouts" items={CONTENT.fitness.slice(0,3)} onPlay={playVideo} />
+            <VideoRow title="⚡ HIIT Training" items={CONTENT.fitness.slice(3)} onPlay={playVideo} />
+          </div>
+        )}
+
+        {/* ── COOKING ── */}
+        {tab === "cooking" && (
+          <div>
+            <div style={{ background: "rgba(232,184,75,0.05)", border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "1rem", marginBottom: "1.25rem" }}>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "15px", fontWeight: "800", color: G, marginBottom: "4px" }}>🍳 SA Recipes & Cooking</div>
+              <div style={{ fontSize: "12px", color: "#6b6760" }}>Braai, Potjie, Pap & traditional South African cuisine</div>
+            </div>
+            <VideoRow title="🔥 Braai & Fire Cooking" items={CONTENT.cooking.slice(0,3)} onPlay={playVideo} />
+            <VideoRow title="🍖 SA Traditional Recipes" items={CONTENT.cooking.slice(3)} onPlay={playVideo} />
+          </div>
+        )}
+
+        {/* ── WELLNESS ── */}
+        {tab === "wellness" && (
+          <div>
+            <div style={{ background: "rgba(167,139,250,0.05)", border: "1px solid rgba(167,139,250,0.2)", borderRadius: "14px", padding: "1rem", marginBottom: "1.25rem" }}>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "15px", fontWeight: "800", color: "#a78bfa", marginBottom: "4px" }}>🧘 Mindfulness & Wellness</div>
+              <div style={{ fontSize: "12px", color: "#6b6760" }}>Guided meditation · Stress relief · Mental wellbeing</div>
+            </div>
+            <VideoRow title="🧘 Guided Meditation" items={CONTENT.wellness.slice(0,3)} onPlay={playVideo} />
+            <VideoRow title="☮️ Mindfulness & Calm" items={CONTENT.wellness.slice(3)} onPlay={playVideo} />
+          </div>
+        )}
+
+        {/* ── STREAMING LINKS ── */}
+        {tab === "stream" && (
+          <div>
+            <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "16px", fontWeight: "800", color: "#f0ede8", marginBottom: "12px" }}>📺 Stream Movies & Series</div>
+            <div style={{ fontSize: "12px", color: "#6b6760", marginBottom: "1rem" }}>These services open in your browser. Subscription may be required.</div>
+            {[
+              { name: "Netflix", url: "https://www.netflix.com", desc: "Movies, series, documentaries", icon: "🔴", color: "#E50914", free: false },
+              { name: "Disney+", url: "https://www.disneyplus.com", desc: "Disney, Marvel, Star Wars, Pixar", icon: "✨", color: "#113CCF", free: false },
+              { name: "Amazon Prime Video", url: "https://www.primevideo.com", desc: "Movies, series & Amazon originals", icon: "🔵", color: "#00A8E0", free: false },
+              { name: "SABC+", url: "https://sabc-plus.com", desc: "Free SA content — news, sport, local shows", icon: "📺", color: "#e31837", free: true },
+              { name: "DStv Now", url: "https://now.dstv.com", desc: "SuperSport, M-Net, kykNET & more", icon: "📡", color: "#003087", free: false },
+              { name: "Apple TV+", url: "https://tv.apple.com", desc: "Apple originals — Ted Lasso & more", icon: "🍎", color: "#555555", free: false },
+              { name: "YouTube Movies", url: "https://www.youtube.com/movies", desc: "Free & rental movies on YouTube", icon: "▶️", color: "#FF0000", free: true },
+              { name: "Pluto TV", url: "https://pluto.tv", desc: "Free streaming — movies & live TV", icon: "🪐", color: "#6B2FC9", free: true },
+            ].map(s => (
+              <a key={s.name} href={s.url} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: "14px", background: BG2, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "1rem", marginBottom: "10px", textDecoration: "none" }}>
+                <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: `${s.color}20`, border: `1px solid ${s.color}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", flexShrink: 0 }}>{s.icon}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "14px" }}>{s.name}</div>
+                  <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "2px" }}>{s.desc}</div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                  {s.free && <span style={{ fontSize: "10px", background: "rgba(74,222,128,0.15)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.3)", borderRadius: "4px", padding: "2px 6px", fontWeight: "700" }}>FREE</span>}
+                  <span style={{ color: G, fontSize: "14px" }}>↗</span>
+                </div>
+              </a>
+            ))}
           </div>
         )}
 
