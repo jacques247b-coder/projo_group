@@ -1,6 +1,6 @@
 {
   "short_name": "PROJO",
-  "name": "PROJO GROUP — Rustenburg's Own",
+  "name": "PROJO GROUP \u2014 Rustenburg's Own",
   "description": "Rustenburg's Own. Ride. Shop. Deliver & Services.",
   "icons": [
     {
@@ -18,10 +18,14 @@
   ],
   "start_url": "/?source=pwa",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "theme_color": "#8B1A1A",
   "background_color": "#0d0505",
-  "categories": ["transport", "shopping", "lifestyle"],
+  "categories": [
+    "transport",
+    "shopping",
+    "lifestyle"
+  ],
   "lang": "en-ZA",
   "scope": "/"
 }
