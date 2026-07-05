@@ -1400,20 +1400,35 @@ export default function EntertainmentHub() {
   const [newsHeadlines, setNewsHeadlines] = useState({});
   const [newsLoading, setNewsLoading] = useState(false);
 
-  // Fetch headlines when news source selected - inline to avoid closure issues
+  // Fetch headlines when news source selected
   useEffect(() => {
-    if (!activeNews?.feedKey) return;
+    if (!activeNews || !activeNews.feedKey) return;
+    const key = activeNews.feedKey;
+    const name = activeNews.name;
     setNewsLoading(true);
-    fetch(`https://projo-group-backend.onrender.com/api/news/${activeNews.feedKey}`)
-      .then(r => r.json())
+    setNewsHeadlines(prev => ({ ...prev })); // force re-render
+    const controller = new AbortController();
+    fetch(`https://projo-group-backend.onrender.com/api/news/${key}`, { signal: controller.signal })
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then(data => {
-        if (data.items?.length > 0) {
-          setNewsHeadlines(prev => ({ ...prev, [activeNews.name]: data.items }));
+        if (data && Array.isArray(data.items) && data.items.length > 0) {
+          setNewsHeadlines(prev => ({ ...prev, [name]: data.items }));
+        } else {
+          setNewsHeadlines(prev => ({ ...prev, [name]: [] }));
         }
         setNewsLoading(false);
       })
-      .catch(() => setNewsLoading(false));
-  }, [activeNews?.feedKey]);
+      .catch(e => {
+        if (e.name !== 'AbortError') {
+          setNewsHeadlines(prev => ({ ...prev, [name]: [] }));
+          setNewsLoading(false);
+        }
+      });
+    return () => controller.abort();
+  }, [activeNews]);
 
   function rateContent(id, stars) {
     const nr = { ...ratings, [id]: stars };
