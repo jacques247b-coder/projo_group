@@ -192,3 +192,19 @@ model ServiceOrder {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }
+
+model LocalAd {
+  id            String   @id @default(uuid())
+  businessName  String
+  category      String   @default("Other")
+  offer         String
+  description   String   @default("")
+  phone         String   @default("")
+  website       String   @default("")
+  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  submittedById String
+  submittedBy   User     @relation(fields: [submittedById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  @@map("local_ads")
+}

@@ -81,6 +81,7 @@ export default function Navbar() {
             <Link to="/shop"    style={linkStyle("/shop")}>Services</Link>
             <Link to="/products" style={linkStyle("/products")}>Products</Link>
             <Link to="/sports" style={linkStyle("/sports")}>🏆 Sports</Link>
+            <Link to="/entertainment" style={linkStyle("/entertainment")}>🎬 Entertainment</Link>
             <Link to="/travel" style={linkStyle("/travel")}>✈️ Travel</Link>
             {user?.role === "DRIVER" && <Link to="/driver" style={linkStyle("/driver")}>Driver</Link>}
             {user?.role === "ADMIN"  && <Link to="/admin"  style={linkStyle("/admin")}>Admin</Link>}

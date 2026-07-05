@@ -34,6 +34,7 @@ app.use("/api/drivers",    require("./routes/driver.routes"));
 app.use("/api/push",       require("./routes/push.routes"));
 app.use("/api/promo",      require("./routes/promo.routes"));
 app.use("/api/services",   require("./routes/service.routes")); // ← NEW
+app.use("/api/entertainment", require("./routes/entertainment.routes"));
 
 app.use((req, res) => res.status(404).json({ error: "Route not found", app: "PROJO GROUP" }));
 app.use((err, req, res, next) => {

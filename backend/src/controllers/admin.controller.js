@@ -707,3 +707,39 @@ exports.markServicePaid = async (req, res) => {
     res.status(500).json({ error: "Could not mark as paid: " + err.message });
   }
 };
+
+// ── ENTERTAINMENT / LOCAL ADS ────────────────────────────────
+exports.adminGetAds = async (req, res) => {
+  try {
+    const ads = await prisma.localAd.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { submittedBy: { select: { name: true, phone: true } } },
+    });
+    res.json({ ads });
+  } catch { res.status(500).json({ error: "Could not load ads" }); }
+};
+
+exports.adminUpdateAd = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const ad = await prisma.localAd.update({ where: { id: req.params.id }, data: { status } });
+    res.json({ message: `Ad ${status.toLowerCase()}`, ad });
+  } catch { res.status(500).json({ error: "Could not update ad" }); }
+};
+
+exports.adminCreateAd = async (req, res) => {
+  try {
+    const { businessName, category, offer, description, phone, website } = req.body;
+    const ad = await prisma.localAd.create({
+      data: { businessName, category: category || "Other", offer, description: description || "", phone: phone || "", website: website || "", submittedById: req.user.id, status: "APPROVED" },
+    });
+    res.json({ message: "Ad created", ad });
+  } catch { res.status(500).json({ error: "Could not create ad" }); }
+};
+
+exports.adminDeleteAd = async (req, res) => {
+  try {
+    await prisma.localAd.delete({ where: { id: req.params.id } });
+    res.json({ message: "Ad deleted" });
+  } catch { res.status(500).json({ error: "Could not delete ad" }); }
+};
