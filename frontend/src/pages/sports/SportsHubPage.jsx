@@ -89,6 +89,20 @@ const YOUTUBE_CHANNELS = [
     url: "https://www.youtube.com/@worldrugby",
     fallbackVideoId: null,
   },
+  {
+    id: "boktube",
+    title: "🏉 BOKTube — SA Rugby Fan Channel",
+    channelId: "UCRc617Z9MT-tXpVMxmdy1hw",
+    url: "https://www.youtube.com/channel/UCRc617Z9MT-tXpVMxmdy1hw",
+    fallbackVideoId: null,
+  },
+  {
+    id: "foreversports",
+    title: "🎯 Forever Sports — Rugby, Soccer, F1 & Cricket",
+    channelId: "UC59rc_knTtHbf5315NrYbVw",
+    url: "https://www.youtube.com/channel/UC59rc_knTtHbf5315NrYbVw",
+    fallbackVideoId: null,
+  },
 ];
 
 const TABS = [
