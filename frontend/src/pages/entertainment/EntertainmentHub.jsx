@@ -135,19 +135,18 @@ const GAMES = [
 ];
 
 const TABS = [
-  { key: "home",      label: "🏠 Home" },
-  { key: "kids",      label: "👶 Kids" },
-  { key: "music",     label: "🎵 Music" },
-  { key: "learning",  label: "📚 Learn" },
-  { key: "podcasts",  label: "🎙️ Podcasts" },
-  { key: "news",      label: "📰 News" },
-  { key: "games",     label: "🎮 Games" },
-  { key: "comedy",   label: "😂 Comedy" },
-  { key: "fitness",  label: "💪 Fitness" },
-  { key: "cooking",  label: "🍳 Cooking" },
-  { key: "wellness", label: "🧘 Wellness" },
-  { key: "stream",   label: "📺 Stream" },
-  { key: "ads",      label: "🏪 Local Deals" },
+  { key: "home",     label: "🏠",  full: "Home" },
+  { key: "kids",     label: "👶",  full: "Kids" },
+  { key: "music",    label: "🎵",  full: "Music" },
+  { key: "comedy",   label: "😂",  full: "Comedy" },
+  { key: "fitness",  label: "💪",  full: "Fitness" },
+  { key: "cooking",  label: "🍳",  full: "Cooking" },
+  { key: "wellness", label: "🧘",  full: "Wellness" },
+  { key: "learning", label: "📚",  full: "Learn" },
+  { key: "news",     label: "📰",  full: "News" },
+  { key: "games",    label: "🎮",  full: "Games" },
+  { key: "stream",   label: "📺",  full: "Stream" },
+  { key: "ads",      label: "🏪",  full: "Deals" },
 ];
 
 // ── MINI GAMES ────────────────────────────────────────────────
@@ -868,29 +867,53 @@ function TriviaGame() {
 
 // ── VIDEO CARD ────────────────────────────────────────────────
 function VideoCard({ item, onClick, size = "normal" }) {
-  const w = size === "large" ? "260px" : size === "small" ? "160px" : "200px";
-  const h = size === "large" ? "146px" : size === "small" ? "90px" : "112px";
   return (
-    <div onClick={() => onClick(item)} style={{ flexShrink: 0, width: w, cursor: "pointer" }}>
-      <div style={{ position: "relative", width: w, height: h, borderRadius: "12px", overflow: "hidden", background: BG3, marginBottom: "8px" }}>
+    <div onClick={() => onClick(item)} style={{ cursor: "pointer" }}>
+      <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", borderRadius: "10px", overflow: "hidden", background: BG3, marginBottom: "6px" }}>
         <img src={item.thumb} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.style.display="none"} />
-        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.2s" }}
-          onMouseEnter={e => e.currentTarget.style.opacity=1} onMouseLeave={e => e.currentTarget.style.opacity=0}>
-          <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px" }}>▶</div>
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px" }}>▶</div>
         </div>
-        <div style={{ position: "absolute", top: "6px", right: "6px", background: "rgba(0,0,0,0.7)", borderRadius: "4px", padding: "2px 6px", fontSize: "9px", color: "#fff" }}>{item.category}</div>
+        <div style={{ position: "absolute", bottom: "4px", left: "4px", background: "rgba(0,0,0,0.7)", borderRadius: "4px", padding: "1px 5px", fontSize: "9px", color: "#fff" }}>{item.category}</div>
       </div>
-      <div style={{ fontSize: "12px", color: "#f0ede8", fontWeight: "600", lineHeight: 1.3 }}>{item.title}</div>
+      <div style={{ fontSize: "11px", color: "#f0ede8", fontWeight: "600", lineHeight: 1.3 }}>{item.title}</div>
     </div>
   );
 }
 
-function VideoRow({ title, items, onPlay }) {
+function VideoRow({ title, items, onPlay, rowKey, ratings, rateContent, showMore, toggleShowMore }) {
+  const sorted = [...items].sort((a, b) => (ratings?.[b.id] || 3) - (ratings?.[a.id] || 3));
+  const displayed = showMore?.[rowKey] ? sorted : sorted.slice(0, 10);
   return (
     <div style={{ marginBottom: "1.5rem" }}>
-      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "16px", fontWeight: "800", color: "#f0ede8", marginBottom: "12px" }}>{title}</div>
-      <div style={{ display: "flex", gap: "12px", overflowX: "auto", paddingBottom: "8px" }}>
-        {items.map(item => <VideoCard key={item.id} item={item} onClick={onPlay} />)}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+        <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "15px", fontWeight: "800", color: "#f0ede8" }}>{title}</div>
+        {items.length > 10 && (
+          <button onClick={() => toggleShowMore?.(rowKey)} style={{ background: "none", border: "none", color: "#e8b84b", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}>
+            {showMore?.[rowKey] ? "Show Less ↑" : `Show All (${items.length}) →`}
+          </button>
+        )}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "10px" }}>
+        {displayed.map(item => (
+          <div key={item.id} style={{ cursor: "pointer" }} onClick={() => onPlay(item)}>
+            <div style={{ position: "relative", width: "100%", aspectRatio: "16/9", borderRadius: "8px", overflow: "hidden", background: "#1a1a1a", marginBottom: "5px" }}>
+              <img src={item.thumb} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.style.display="none"} />
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.2)" }}>
+                <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px" }}>▶</div>
+              </div>
+              {ratings?.[item.id] && (
+                <div style={{ position: "absolute", top: "4px", right: "4px", background: "rgba(0,0,0,0.7)", borderRadius: "4px", padding: "1px 5px", fontSize: "9px", color: "#e8b84b" }}>
+                  {"★".repeat(ratings[item.id])}
+                </div>
+              )}
+              <div style={{ position: "absolute", bottom: "4px", left: "4px", background: "rgba(0,0,0,0.7)", borderRadius: "4px", padding: "1px 5px", fontSize: "9px", color: "#6b6760" }}>
+                {item.category}
+              </div>
+            </div>
+            <div style={{ fontSize: "11px", color: "#f0ede8", fontWeight: "600", lineHeight: 1.3 }}>{item.title}</div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -1016,6 +1039,24 @@ export default function EntertainmentHub() {
   const [playing, setPlaying] = useState(null);
   const [activeGame, setActiveGame] = useState(null);
   const [featuredIdx, setFeaturedIdx] = useState(0);
+  const [ratings, setRatings] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("projo_content_ratings") || "{}"); } catch { return {}; }
+  });
+  const [showMore, setShowMore] = useState({});
+
+  function rateContent(id, stars) {
+    const nr = { ...ratings, [id]: stars };
+    setRatings(nr);
+    localStorage.setItem("projo_content_ratings", JSON.stringify(nr));
+  }
+
+  function getTop10(items) {
+    return [...items].sort((a, b) => (ratings[b.id] || 3) - (ratings[a.id] || 3)).slice(0, 10);
+  }
+
+  function toggleShowMore(key) {
+    setShowMore(prev => ({ ...prev, [key]: !prev[key] }));
+  }
   const [radioPlaying, setRadioPlaying] = useState(null);
   const [radioFilter, setRadioFilter] = useState("All");
   const audioRef = React.useRef(null);
@@ -1071,6 +1112,12 @@ export default function EntertainmentHub() {
               <button onClick={() => setPlaying(null)} style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", borderRadius: "50%", width: "36px", height: "36px", cursor: "pointer", fontSize: "16px" }}>✕</button>
             </div>
             <iframe src={`https://www.youtube.com/embed/${playing.videoId}?autoplay=1`} title={playing.title} style={{ width: "100%", aspectRatio: "16/9", border: "none", borderRadius: "12px" }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+          <div style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "8px", justifyContent: "center" }}>
+            <span style={{ fontSize: "12px", color: "#6b6760" }}>Rate:</span>
+            {[1,2,3,4,5].map(s => (
+              <button key={s} onClick={() => rateContent(playing.id, s)} style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", filter: (ratings[playing.id] || 0) >= s ? "none" : "grayscale(100%)" }}>⭐</button>
+            ))}
+          </div>
           </div>
         </div>
       )}
@@ -1230,12 +1277,16 @@ export default function EntertainmentHub() {
             {/* Free Music */}
             <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "16px", fontWeight: "800", color: "#f0ede8", marginBottom: "12px" }}>🎵 Free Music</div>
             <div style={{ fontSize: "12px", color: "#6b6760", marginBottom: "10px" }}>SA Amapiano · International Hits · Gospel · Relaxation</div>
-            <div style={{ display: "flex", gap: "12px", overflowX: "auto", paddingBottom: "8px", marginBottom: "1.5rem" }}>
+            {/* Grid layout — all visible, no scrolling needed */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "12px", marginBottom: "1.5rem" }}>
               {FREE_MUSIC.map(track => (
-                <div key={track.id} onClick={() => playVideo({ ...track, title: track.title })} style={{ flexShrink: 0, width: "160px", cursor: "pointer" }}>
-                  <div style={{ position: "relative", width: "160px", height: "160px", borderRadius: "12px", overflow: "hidden", background: BG3, marginBottom: "8px" }}>
+                <div key={track.id} onClick={() => playVideo({ ...track, title: track.title })} style={{ cursor: "pointer" }}>
+                  <div style={{ position: "relative", width: "100%", aspectRatio: "1", borderRadius: "12px", overflow: "hidden", background: BG3, marginBottom: "8px" }}>
                     <img src={track.thumb} alt={track.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.style.display="none"} />
-                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(0,0,0,0.7)", padding: "6px 8px" }}>
+                    <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px" }}>▶</div>
+                    </div>
+                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent, rgba(0,0,0,0.8))", padding: "6px 8px" }}>
                       <div style={{ fontSize: "9px", color: G, fontWeight: "700" }}>{track.genre}</div>
                     </div>
                   </div>
