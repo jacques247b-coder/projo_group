@@ -192,7 +192,7 @@ const CONTENT = {
     { id:"p3",  title:"Personal Finance Masterclass", videoId:"HQzoZfc3GwQ", category:"Podcast", thumb:"https://img.youtube.com/vi/HQzoZfc3GwQ/maxresdefault.jpg" },
   ],
 };
- PROJO GROUP — Entertainment Hub
+// PROJO GROUP — Entertainment Hub
 // Netflix-style entertainment page with YouTube embeds, games, news, local ads
 // Free, legal, no ongoing costs
 
