@@ -28,13 +28,7 @@ const CONTENT = {
     { id: "t4", title: "AI for Beginners 2025", videoId: "ad79nYk2keg", category: "Learning", thumb: "https://img.youtube.com/vi/ad79nYk2keg/maxresdefault.jpg" },
     { id: "t5", title: "Personal Finance Basics", videoId: "HQzoZfc3GwQ", category: "Learning", thumb: "https://img.youtube.com/vi/HQzoZfc3GwQ/maxresdefault.jpg" },
   ],
-  kids: [
-    { id: "k1", title: "ABC Song for Kids", videoId: "75p-N9YKqNo", category: "Kids", thumb: "https://img.youtube.com/vi/75p-N9YKqNo/maxresdefault.jpg" },
-    { id: "k2", title: "Count 1 to 20 with Songs", videoId: "DR-cfDsHCGA", category: "Kids", thumb: "https://img.youtube.com/vi/DR-cfDsHCGA/maxresdefault.jpg" },
-    { id: "k3", title: "African Safari — Animals for Kids", videoId: "14LDUtA7G84", category: "Kids", thumb: "https://img.youtube.com/vi/pPpxPNBflpI/maxresdefault.jpg" },
-    { id: "k4", title: "Solar System for Kids", videoId: "libKVRa01L8", category: "Kids", thumb: "https://img.youtube.com/vi/libKVRa01L8/maxresdefault.jpg" },
-    { id: "k5", title: "Animal Sounds — Learn & Play", videoId: "wlpMmEI6Eaw", category: "Kids", thumb: "https://img.youtube.com/vi/5aLPE9e5K6E/maxresdefault.jpg" },
-  ],
+  kids: [    { id: "k1", title: "🐷 Peppa Pig Tales 2025 — Full Episodes", videoId: "oWayeixv8f0", category: "Kids", thumb: "https://img.youtube.com/vi/oWayeixv8f0/maxresdefault.jpg" },    { id: "k2", title: "🍉 CoComelon — Animal Sounds Song", videoId: "75ENi5QC-vM", category: "Kids", thumb: "https://img.youtube.com/vi/75ENi5QC-vM/maxresdefault.jpg" },    { id: "k3", title: "🍉 CoComelon — ABC Alphabet Song", videoId: "6oihoZjsV7I", category: "Kids", thumb: "https://img.youtube.com/vi/6oihoZjsV7I/maxresdefault.jpg" },    { id: "k4", title: "🐷 Peppa Pig 2025 Live Episodes", videoId: "XfLCC1xaYf0", category: "Kids", thumb: "https://img.youtube.com/vi/XfLCC1xaYf0/maxresdefault.jpg" },    { id: "k5", title: "🎈 ABC Song with Balloons — CoComelon", videoId: "om_1599v70c", category: "Kids", thumb: "https://img.youtube.com/vi/om_1599v70c/maxresdefault.jpg" },    { id: "k6", title: "🌍 20 Wild Animals — Kids Learning", videoId: "14LDUtA7G84", category: "Kids", thumb: "https://img.youtube.com/vi/14LDUtA7G84/maxresdefault.jpg" },    { id: "k7", title: "🔢 Count 1-20 — Kids Learning", videoId: "DR-cfDsHCGA", category: "Kids", thumb: "https://img.youtube.com/vi/DR-cfDsHCGA/maxresdefault.jpg" },    { id: "k8", title: "🪐 Solar System for Kids", videoId: "libKVRa01L8", category: "Kids", thumb: "https://img.youtube.com/vi/libKVRa01L8/maxresdefault.jpg" },  ],
   music: [
     { id: "m1", title: "Best of Amapiano Mix 2025 — OSOCITY", videoId: "XZhu91HwUR0", category: "Music", thumb: "https://img.youtube.com/vi/XZhu91HwUR0/maxresdefault.jpg" },
     { id: "m2", title: "Amapiano Mix April 2025 — DJ ClassCom", videoId: "DlqOIMal8FQ", category: "Music", thumb: "https://img.youtube.com/vi/DlqOIMal8FQ/maxresdefault.jpg" },
