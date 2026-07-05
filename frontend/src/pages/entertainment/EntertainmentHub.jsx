@@ -1397,6 +1397,24 @@ export default function EntertainmentHub() {
   const [showMore, setShowMore] = useState({});
   const [musicFilter, setMusicFilter] = useState('All');
   const [activeNews, setActiveNews] = useState(null);
+  const [newsHeadlines, setNewsHeadlines] = useState({});
+  const [newsLoading, setNewsLoading] = useState(false);
+
+  // Fetch RSS headlines via free proxy
+  async function fetchHeadlines(source) {
+    if (newsHeadlines[source.name]) return; // already loaded
+    setNewsLoading(true);
+    try {
+      // Use rss2json free API to parse RSS feeds
+      const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(source.rss)}&api_key=FREE&count=8`;
+      const res = await fetch(apiUrl);
+      const data = await res.json();
+      if (data.items?.length > 0) {
+        setNewsHeadlines(prev => ({ ...prev, [source.name]: data.items }));
+      }
+    } catch {}
+    setNewsLoading(false);
+  }
 
   function rateContent(id, stars) {
     const nr = { ...ratings, [id]: stars };
@@ -1710,36 +1728,68 @@ export default function EntertainmentHub() {
               </div>
               {(() => {
                 const NEWS_SOURCES = [
-                  { name: "News24", url: "https://www.news24.com", desc: "SA's biggest news site", cat: [0,1] },
-                  { name: "TimesLive", url: "https://www.timeslive.co.za", desc: "Breaking SA news", cat: [0,1] },
-                  { name: "Daily Maverick", url: "https://www.dailymaverick.co.za", desc: "Investigative journalism", cat: [0,1,2] },
-                  { name: "EWN", url: "https://ewn.co.za", desc: "eNCA news portal", cat: [0,1,3] },
-                  { name: "BBC World News", url: "https://www.bbc.com/news/world", desc: "International news", cat: [0,2] },
-                  { name: "Netwerk24", url: "https://www.netwerk24.com", desc: "Afrikaans news", cat: [0,1] },
-                  { name: "Sowetan Live", url: "https://www.sowetanlive.co.za", desc: "Community news", cat: [0,1] },
-                  { name: "IOL", url: "https://www.iol.co.za", desc: "Independent Online", cat: [0,1,2] },
+                  { name: "News24", url: "https://www.news24.com", desc: "SA's biggest news site", cat: [0,1], rss: "https://feeds.news24.com/articles/news24/TopStories/rss" },
+                  { name: "TimesLive", url: "https://www.timeslive.co.za", desc: "Breaking SA news", cat: [0,1], rss: "https://www.timeslive.co.za/rss/" },
+                  { name: "Daily Maverick", url: "https://www.dailymaverick.co.za", desc: "Investigative journalism", cat: [0,1,2], rss: "https://www.dailymaverick.co.za/feed/" },
+                  { name: "EWN", url: "https://ewn.co.za", desc: "eNCA news portal", cat: [0,1,3], rss: "https://ewn.co.za/Feed/News" },
+                  { name: "BBC World", url: "https://www.bbc.com/news/world", desc: "International headlines", cat: [0,2], rss: "http://feeds.bbci.co.uk/news/world/rss.xml" },
+                  { name: "BBC Sport", url: "https://www.bbc.com/sport", desc: "World sport news", cat: [0,3], rss: "http://feeds.bbci.co.uk/sport/rss.xml" },
+                  { name: "IOL", url: "https://www.iol.co.za", desc: "Independent Online", cat: [0,1,2], rss: "https://www.iol.co.za/rss" },
+                  { name: "Netwerk24", url: "https://www.netwerk24.com", desc: "Afrikaans nuus", cat: [0,1], rss: "https://www.netwerk24.com/rss" },
                 ];
                 const filteredNews = NEWS_SOURCES.filter(s => s.cat.includes(newsCategory));
+                // Fetch headlines when source selected
+                React.useEffect(() => {
+                  if (activeNews) fetchHeadlines(activeNews);
+                }, [activeNews]);
+
+                const headlines = activeNews ? (newsHeadlines[activeNews.name] || []) : [];
+
                 return activeNews ? (
                   <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-                      <button onClick={() => setActiveNews(null)} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "8px 14px", color: "#a8a49e", cursor: "pointer", fontSize: "12px" }}>← Back</button>
-                      <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "13px" }}>{activeNews.name}</div>
+                    {/* Header */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
+                      <button onClick={() => setActiveNews(null)} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "8px 12px", color: "#a8a49e", cursor: "pointer", fontSize: "12px", flexShrink: 0 }}>← Back</button>
+                      <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "800", color: "#f0ede8", fontSize: "15px" }}>{activeNews.name}</div>
+                      <a href={activeNews.url} target="_blank" rel="noreferrer" style={{ marginLeft: "auto", background: G, color: "#0a0a0a", textDecoration: "none", borderRadius: "8px", padding: "6px 12px", fontSize: "11px", fontWeight: "800", flexShrink: 0 }}>Full Site ↗</a>
                     </div>
-                    <div style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "2rem", textAlign: "center" }}>
-                      <div style={{ fontSize: "36px", marginBottom: "12px" }}>📰</div>
-                      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "16px", fontWeight: "800", color: "#f0ede8", marginBottom: "8px" }}>{activeNews.name}</div>
-                      <div style={{ fontSize: "12px", color: "#6b6760", marginBottom: "20px", lineHeight: 1.6 }}>
-                        {activeNews.desc}<br/>
-                        <span style={{ fontSize: "11px", color: "#4a3030" }}>News sites block in-app loading for security reasons.</span>
+
+                    {/* Loading */}
+                    {newsLoading && headlines.length === 0 && (
+                      <div style={{ textAlign: "center", padding: "2rem", color: "#6b6760" }}>Loading headlines...</div>
+                    )}
+
+                    {/* Headlines */}
+                    {headlines.length > 0 ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                        {headlines.map((item, i) => (
+                          <a key={i} href={item.link} target="_blank" rel="noreferrer" style={{ textDecoration: "none", display: "block", background: BG2, border: `1px solid ${BORDER}`, borderRadius: "14px", overflow: "hidden" }}>
+                            {item.thumbnail && (
+                              <img src={item.thumbnail} alt={item.title} style={{ width: "100%", height: "160px", objectFit: "cover", display: "block" }} onError={e => e.target.style.display="none"} />
+                            )}
+                            <div style={{ padding: "12px" }}>
+                              <div style={{ fontSize: "13px", fontWeight: "700", color: "#f0ede8", lineHeight: 1.4, marginBottom: "6px" }}>{item.title}</div>
+                              {item.description && (
+                                <div style={{ fontSize: "11px", color: "#6b6760", lineHeight: 1.5, marginBottom: "8px" }}
+                                  dangerouslySetInnerHTML={{ __html: item.description?.replace(/<[^>]*>/g,"").slice(0,120) + "..." }} />
+                              )}
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <div style={{ fontSize: "10px", color: "#4a3030" }}>
+                                  {item.pubDate ? new Date(item.pubDate).toLocaleDateString("en-ZA", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" }) : ""}
+                                </div>
+                                <span style={{ fontSize: "11px", color: G, fontWeight: "700" }}>Read more ↗</span>
+                              </div>
+                            </div>
+                          </a>
+                        ))}
                       </div>
-                      <a href={activeNews.url} target="_blank" rel="noreferrer" style={{
-                        display: "block", background: G, color: "#0a0a0a",
-                        textDecoration: "none", borderRadius: "12px", padding: "14px",
-                        fontWeight: "800", fontSize: "15px", marginBottom: "10px",
-                      }}>📖 Read {activeNews.name} ↗</a>
-                      <div style={{ fontSize: "10px", color: "#4a3030" }}>Opens in your browser · Free to read</div>
-                    </div>
+                    ) : !newsLoading ? (
+                      <div style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "2rem", textAlign: "center" }}>
+                        <div style={{ fontSize: "32px", marginBottom: "10px" }}>📰</div>
+                        <div style={{ fontSize: "13px", color: "#6b6760", marginBottom: "16px" }}>Could not load headlines. Read full site instead.</div>
+                        <a href={activeNews.url} target="_blank" rel="noreferrer" style={{ display: "block", background: G, color: "#0a0a0a", textDecoration: "none", borderRadius: "10px", padding: "12px", fontWeight: "800" }}>Read {activeNews.name} ↗</a>
+                      </div>
+                    ) : null}
                   </div>
                 ) : (
                   <div>
