@@ -80,7 +80,7 @@ export default function AdminDashboard() {
   async function loadAll() {
     setLoading(true);
     try {
-      const [s, u, r, d, p, dr, so, ps] = await Promise.all([
+      const [s, u, r, d, p, dr, so, ps, la] = await Promise.all([
         api.get("/admin/stats"),
         api.get("/admin/users"),
         api.get("/admin/rides"),
