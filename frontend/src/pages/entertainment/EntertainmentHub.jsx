@@ -1405,13 +1405,13 @@ export default function EntertainmentHub() {
   const [newsHeadlines, setNewsHeadlines] = useState({});
   const [newsLoading, setNewsLoading] = useState(false);
 
-  // Fetch RSS headlines via our own backend proxy
+  // Fetch RSS headlines via our backend proxy
   async function fetchHeadlines(source) {
-    if (newsHeadlines[source.name]) return; // already loaded
+    if (newsHeadlines[source.name]) return;
     setNewsLoading(true);
     try {
       const API = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
-      const res = await fetch(`${API}/news?url=${encodeURIComponent(source.rss)}`);
+      const res = await fetch(`${API}/news/${source.feedKey}`);
       const data = await res.json();
       if (data.items?.length > 0) {
         setNewsHeadlines(prev => ({ ...prev, [source.name]: data.items }));
@@ -1734,14 +1734,14 @@ export default function EntertainmentHub() {
               </div>
               {(() => {
                 const NEWS_SOURCES = [
-                  { name: "News24", url: "https://www.news24.com", desc: "SA's biggest news site", cat: [0,1], rss: "https://feeds.news24.com/articles/news24/TopStories/rss" },
-                  { name: "TimesLive", url: "https://www.timeslive.co.za", desc: "Breaking SA news", cat: [0,1], rss: "https://www.timeslive.co.za/rss/" },
-                  { name: "Daily Maverick", url: "https://www.dailymaverick.co.za", desc: "Investigative journalism", cat: [0,1,2], rss: "https://www.dailymaverick.co.za/feed/" },
-                  { name: "EWN", url: "https://ewn.co.za", desc: "eNCA news portal", cat: [0,1,3], rss: "https://ewn.co.za/Feed/News" },
-                  { name: "BBC World", url: "https://www.bbc.com/news/world", desc: "International headlines", cat: [0,2], rss: "http://feeds.bbci.co.uk/news/world/rss.xml" },
-                  { name: "BBC Sport", url: "https://www.bbc.com/sport", desc: "World sport news", cat: [0,3], rss: "http://feeds.bbci.co.uk/sport/rss.xml" },
-                  { name: "IOL", url: "https://www.iol.co.za", desc: "Independent Online", cat: [0,1,2], rss: "https://www.iol.co.za/rss" },
-                  { name: "Netwerk24", url: "https://www.netwerk24.com", desc: "Afrikaans nuus", cat: [0,1], rss: "https://www.netwerk24.com/rss" },
+                  { name: "News24",        feedKey: "news24",        url: "https://www.news24.com",           desc: "SA's biggest news site",      cat: [0,1] },
+                  { name: "TimesLive",     feedKey: "timeslive",     url: "https://www.timeslive.co.za",      desc: "Breaking SA news",            cat: [0,1] },
+                  { name: "Daily Maverick",feedKey: "dailymaverick", url: "https://www.dailymaverick.co.za", desc: "Investigative journalism",    cat: [0,1,2] },
+                  { name: "EWN",           feedKey: "ewn",           url: "https://ewn.co.za",               desc: "eNCA news portal",            cat: [0,1,3] },
+                  { name: "BBC World",     feedKey: "bbcworld",      url: "https://www.bbc.com/news/world",  desc: "International headlines",     cat: [0,2] },
+                  { name: "BBC Sport",     feedKey: "bbcsport",      url: "https://www.bbc.com/sport",       desc: "World sport news",            cat: [0,3] },
+                  { name: "IOL",           feedKey: "iol",           url: "https://www.iol.co.za",           desc: "Independent Online",          cat: [0,1,2] },
+                  { name: "Netwerk24",     feedKey: "netwerk24",     url: "https://www.netwerk24.com",       desc: "Afrikaans nuus",              cat: [0,1] },
                 ];
                 const filteredNews = NEWS_SOURCES.filter(s => s.cat.includes(newsCategory));
                 const headlines = activeNews ? (newsHeadlines[activeNews.name] || []) : [];
