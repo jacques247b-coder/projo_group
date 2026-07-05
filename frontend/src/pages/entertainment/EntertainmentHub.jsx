@@ -164,14 +164,6 @@ const FREE_MUSIC = [
   { id: "re10", title: "🧘 8 Hours Relaxing Music — Sleep & Study", videoId: "l3RQZ4mcr1Y", artist: "Relaxing Africa", genre: "Relaxation", thumb: "https://img.youtube.com/vi/l3RQZ4mcr1Y/maxresdefault.jpg" },
 ];
 
-// PROJO GROUP — Entertainment Hub
-// Netflix-style entertainment page with YouTube embeds, games, news, local ads
-// Free, legal, no ongoing costs
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import Navbar from "../../components/ui/Navbar";
-import { useAuth } from "../../context/AuthContext";
-import toast from "react-hot-toast";
 
 const G = "#e8b84b";
 const BG = "#0a0a0a";
