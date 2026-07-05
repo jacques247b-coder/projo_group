@@ -80,6 +80,9 @@ const FEEDS = {
   "aljazeera":     "https://www.aljazeera.com/xml/rss/all.xml",
   // Sky News
   "skynews":       "https://feeds.skynews.com/feeds/rss/world.xml",
+  "skyrugby":      "https://feeds.skynews.com/feeds/rss/sports.xml",
+  "espnrugby":     "https://www.espn.com/espn/rss/rugby/news",
+  "springboks":    "https://feeds.bbci.co.uk/sport/rugby-union/rss.xml",
   // SA — use AllAfrica which aggregates SA news with open RSS
   "safrica":       "https://allafrica.com/tools/headlines/rdf/southafrica/headlines.rdf",
   "safricabiz":    "https://feeds.bbci.co.uk/news/business/rss.xml",

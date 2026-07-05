@@ -184,6 +184,43 @@ function ScoreCard({ fixture, sport = "soccer" }) {
   );
 }
 
+function RugbyNewsFeed() {
+  const G = "#e8b84b";
+  const BG2 = "#111111";
+  const BG3 = "#1a1a1a";
+  const BORDER = "rgba(232,184,75,0.15)";
+  const [articles, setArticles] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const API = "https://projo-group-backend.onrender.com/api";
+    fetch(`${API}/news/springboks`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.items?.length > 0) setArticles(data.items);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div style={{ color: "#6b6760", fontSize: "12px", padding: "8px" }}>Loading rugby news...</div>;
+  if (!articles.length) return null;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      {articles.slice(0, 5).map((item, i) => (
+        <a key={i} href={item.link} target="_blank" rel="noreferrer" style={{ textDecoration: "none", background: BG2, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: "10px 12px", display: "flex", gap: "10px", alignItems: "flex-start" }}>
+          {item.thumbnail && <img src={item.thumbnail} alt="" style={{ width: "60px", height: "45px", objectFit: "cover", borderRadius: "6px", flexShrink: 0 }} onError={e => e.target.style.display="none"} />}
+          <div>
+            <div style={{ fontSize: "12px", fontWeight: "700", color: "#f0ede8", lineHeight: 1.4, marginBottom: "3px" }}>{item.title}</div>
+            <div style={{ fontSize: "10px", color: "#6b6760" }}>{item.pubDate ? new Date(item.pubDate).toLocaleDateString("en-ZA", { day: "2-digit", month: "short" }) : ""} · BBC Sport Rugby</div>
+          </div>
+        </a>
+      ))}
+    </div>
+  );
+}
+
 export default function SportsHubPage() {
   const { user } = useAuth();
   const [tab, setTab] = useState("scores");
@@ -420,9 +457,15 @@ export default function SportsHubPage() {
               </>
             )}
 
+            {/* Rugby News Feed */}
+            <div style={{ marginTop: "1.5rem" }}>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "14px", fontWeight: "800", color: "#f0ede8", marginBottom: "10px" }}>📰 Latest Rugby News</div>
+              <RugbyNewsFeed />
+            </div>
+
             {!API_FOOTBALL_KEY && (
               <div style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "10px", padding: "10px 14px", marginTop: "1rem", fontSize: "11px", color: "#f59e0b" }}>
-                ⚙️ Add <strong>REACT_APP_API_FOOTBALL_KEY</strong> to Render frontend env to enable live scores from API-Football (free at dashboard.api-football.com)
+                ⚙️ Add <strong>REACT_APP_API_FOOTBALL_KEY</strong> to Render frontend env to enable live auto-updating scores (free at dashboard.api-football.com)
               </div>
             )}
 
