@@ -103,7 +103,7 @@ function AppRoutes() {
       {showPushModal && (
         <PushPermissionModal onClose={() => setShowPushModal(false)} />
       )}
-    <Routes>
+      <Routes>
       {/* Public landing page */}
       <Route path="/shop" element={
         <Protected><ShopPage /></Protected>
@@ -195,7 +195,7 @@ function AppRoutes() {
 
       {/* 404 */}
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
     </>
   );
 }
