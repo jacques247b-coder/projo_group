@@ -112,6 +112,14 @@ const FREE_MUSIC = [
   { id: "fm12", title: "Top Hits 2025 — Best Viral Songs Mix", videoId: "4V_qMmAdCCA", artist: "Various Artists", genre: "Viral Hits", thumb: "https://img.youtube.com/vi/4V_qMmAdCCA/maxresdefault.jpg" },
   { id: "fm13", title: "Top Hits 2025 — Summer Playlist", videoId: "vp2ZoXIFJfw", artist: "Various Artists", genre: "Pop/Summer", thumb: "https://img.youtube.com/vi/vp2ZoXIFJfw/maxresdefault.jpg" },
   { id: "fm14", title: "Top Hits 2025 — Summer Vibes Spotify Mix", videoId: "DjXDJ8ZD5BA", artist: "Various Artists", genre: "Pop/Vibes", thumb: "https://img.youtube.com/vi/DjXDJ8ZD5BA/maxresdefault.jpg" },
+  { id: "fm15", title: "🔥 Top Hits 2026 — Viral TikTok & Spotify Mix", videoId: "sZ69g4xwKyE", artist: "Various Artists", genre: "2026 Hits", thumb: "https://img.youtube.com/vi/sZ69g4xwKyE/maxresdefault.jpg" },
+  { id: "fm16", title: "🎧 Spotify 2026 — Pop Music & TikTok Hits", videoId: "wGo-zo43giA", artist: "Various Artists", genre: "2026 Pop", thumb: "https://img.youtube.com/vi/wGo-zo43giA/maxresdefault.jpg" },
+  { id: "fm17", title: "☀️ Top Hits 2026 — Afro House Summer Mix", videoId: "8KkIw5CjwqA", artist: "Various Artists", genre: "2026/Afro House", thumb: "https://img.youtube.com/vi/8KkIw5CjwqA/maxresdefault.jpg" },
+  { id: "fm18", title: "🎵 Top Music 2026 — Best Pop & TikTok Hits", videoId: "p5Q2bfe-iZI", artist: "Various Artists", genre: "2026 Chart", thumb: "https://img.youtube.com/vi/p5Q2bfe-iZI/maxresdefault.jpg" },
+  { id: "af1", title: "🇿🇦 Afrikaans Treffers Mix 2025 — Dis Doring Tyd", videoId: "rv60h6q6ers", artist: "DJ Dal S.A", genre: "Afrikaans", thumb: "https://img.youtube.com/vi/rv60h6q6ers/maxresdefault.jpg" },
+  { id: "af2", title: "🇿🇦 Sondag Mix Vol.10 — Sing Along Afrikaans 2025", videoId: "HVpO8-rBg4o", artist: "DJ KMA CPT", genre: "Afrikaans", thumb: "https://img.youtube.com/vi/HVpO8-rBg4o/maxresdefault.jpg" },
+  { id: "af3", title: "🇿🇦 Afrikaans Is Asemrowend Mix 2025 — Naweek", videoId: "yvLVjAPhvwg", artist: "DJ KMA CPT", genre: "Afrikaans", thumb: "https://img.youtube.com/vi/yvLVjAPhvwg/maxresdefault.jpg" },
+  { id: "af4", title: "🇿🇦 Afrikaans Is Tip Top Mix Vol.3 — Plaas Treffers", videoId: "x4Sxa9zFzLA", artist: "DJ KMA CPT", genre: "Afrikaans", thumb: "https://img.youtube.com/vi/x4Sxa9zFzLA/maxresdefault.jpg" },
 ];
 
 // ── NEWS SOURCES (RSS via proxy) ─────────────────────────────
@@ -1275,26 +1283,44 @@ export default function EntertainmentHub() {
             )}
 
             {/* Free Music */}
-            <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "16px", fontWeight: "800", color: "#f0ede8", marginBottom: "12px" }}>🎵 Free Music</div>
-            <div style={{ fontSize: "12px", color: "#6b6760", marginBottom: "10px" }}>SA Amapiano · International Hits · Gospel · Relaxation</div>
-            {/* Grid layout — all visible, no scrolling needed */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "12px", marginBottom: "1.5rem" }}>
-              {FREE_MUSIC.map(track => (
-                <div key={track.id} onClick={() => playVideo({ ...track, title: track.title })} style={{ cursor: "pointer" }}>
-                  <div style={{ position: "relative", width: "100%", aspectRatio: "1", borderRadius: "12px", overflow: "hidden", background: BG3, marginBottom: "8px" }}>
-                    <img src={track.thumb} alt={track.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.style.display="none"} />
-                    <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px" }}>▶</div>
-                    </div>
-                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent, rgba(0,0,0,0.8))", padding: "6px 8px" }}>
-                      <div style={{ fontSize: "9px", color: G, fontWeight: "700" }}>{track.genre}</div>
-                    </div>
+            <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "16px", fontWeight: "800", color: "#f0ede8", marginBottom: "8px" }}>🎵 Free Music</div>
+            {(() => {
+              const [musicFilter, setMusicFilter] = React.useState("All");
+              const genres = ["All", "Amapiano", "Afrikaans", "2026 Hits", "International", "Gospel", "Relaxation"];
+              const filtered = musicFilter === "All" ? FREE_MUSIC : FREE_MUSIC.filter(t => t.genre.includes(musicFilter));
+              return (
+                <>
+                  <div style={{ display: "flex", gap: "6px", overflowX: "auto", marginBottom: "12px", paddingBottom: "4px" }}>
+                    {genres.map(g => (
+                      <button key={g} onClick={() => setMusicFilter(g)} style={{
+                        background: musicFilter === g ? "rgba(232,184,75,0.15)" : BG2,
+                        border: `1px solid ${musicFilter === g ? G : BORDER}`,
+                        borderRadius: "20px", padding: "4px 12px", color: musicFilter === g ? G : "#6b6760",
+                        fontSize: "11px", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+                      }}>{g}</button>
+                    ))}
                   </div>
-                  <div style={{ fontSize: "11px", color: "#f0ede8", fontWeight: "600", lineHeight: 1.3 }}>{track.title}</div>
-                  <div style={{ fontSize: "10px", color: "#6b6760", marginTop: "2px" }}>{track.artist}</div>
-                </div>
-              ))}
-            </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "10px", marginBottom: "1.5rem" }}>
+                    {filtered.map(track => (
+                      <div key={track.id} onClick={() => playVideo({ ...track, title: track.title })} style={{ cursor: "pointer" }}>
+                        <div style={{ position: "relative", width: "100%", aspectRatio: "1", borderRadius: "10px", overflow: "hidden", background: BG3, marginBottom: "6px" }}>
+                          <img src={track.thumb} alt={track.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.style.display="none"} />
+                          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px" }}>▶</div>
+                          </div>
+                          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent,rgba(0,0,0,0.8))", padding: "4px 6px" }}>
+                            <div style={{ fontSize: "9px", color: G, fontWeight: "700" }}>{track.genre}</div>
+                          </div>
+                        </div>
+                        <div style={{ fontSize: "10px", color: "#f0ede8", fontWeight: "600", lineHeight: 1.3 }}>{track.title}</div>
+                        <div style={{ fontSize: "9px", color: "#6b6760", marginTop: "1px" }}>{track.artist}</div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
+
 
             <VideoRow title="🎙️ Podcasts" items={CONTENT.podcasts} onPlay={playVideo} />
           </div>
