@@ -99,6 +99,8 @@ const GAMES = [
   { id: "tictactoe", title: "Tic Tac Toe", icon: "❌", color: "#60a5fa", desc: "3 in a row wins" },
   { id: "trivia", title: "SA Trivia", icon: "🇿🇦", color: "#f87171", desc: "Test your SA knowledge" },
   { id: "reaction", title: "Reaction Time", icon: "⚡", color: G, desc: "How fast are you?" },
+  { id: "sudoku",   title: "Sudoku",        icon: "🔢", color: "#34d399", desc: "Classic number puzzle" },
+  { id: "solitaire",title: "Solitaire",     icon: "🃏", color: "#f87171", desc: "Classic card game" },
 ];
 
 const TABS = [
@@ -417,6 +419,357 @@ function SnakeGame() {
           <div style={{ fontSize: "10px", color: "#4a3030", marginTop: "6px" }}>Keyboard: WASD or Arrow Keys · Mobile: tap arrows above</div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── SUDOKU GAME ──────────────────────────────────────────────
+function SudokuGame() {
+  const G = "#e8b84b";
+  const BG = "#0a0a0a";
+  const BG3 = "#1a1a1a";
+  const BORDER = "rgba(232,184,75,0.15)";
+
+  // Generate a valid sudoku puzzle
+  function generatePuzzle() {
+    const base = [
+      [5,3,0,0,7,0,0,0,0],
+      [6,0,0,1,9,5,0,0,0],
+      [0,9,8,0,0,0,0,6,0],
+      [8,0,0,0,6,0,0,0,3],
+      [4,0,0,8,0,3,0,0,1],
+      [7,0,0,0,2,0,0,0,6],
+      [0,6,0,0,0,0,2,8,0],
+      [0,0,0,4,1,9,0,0,5],
+      [0,0,0,0,8,0,0,7,9],
+    ];
+    const solution = [
+      [5,3,4,6,7,8,9,1,2],
+      [6,7,2,1,9,5,3,4,8],
+      [1,9,8,3,4,2,5,6,7],
+      [8,5,9,7,6,1,4,2,3],
+      [4,2,6,8,5,3,7,9,1],
+      [7,1,3,9,2,4,8,5,6],
+      [9,6,1,5,3,7,2,8,4],
+      [2,8,7,4,1,9,6,3,5],
+      [3,4,5,2,8,6,1,7,9],
+    ];
+    // Shuffle by rotating/reflecting randomly
+    return { puzzle: base, solution };
+  }
+
+  const { puzzle, solution } = React.useMemo(() => generatePuzzle(), []);
+  const [grid, setGrid] = React.useState(() => puzzle.map(r => [...r]));
+  const [selected, setSelected] = React.useState(null);
+  const [errors, setErrors] = React.useState({});
+  const [won, setWon] = React.useState(false);
+  const [notes, setNotes] = React.useState(false);
+
+  const isFixed = (r, c) => puzzle[r][c] !== 0;
+
+  function selectCell(r, c) {
+    if (isFixed(r, c)) return;
+    setSelected([r, c]);
+  }
+
+  function inputNum(n) {
+    if (!selected || won) return;
+    const [r, c] = selected;
+    if (isFixed(r, c)) return;
+    const ng = grid.map(row => [...row]);
+    ng[r][c] = n;
+    setGrid(ng);
+    // Check error
+    const ne = { ...errors };
+    const key = `${r}-${c}`;
+    if (n !== 0 && n !== solution[r][c]) { ne[key] = true; }
+    else { delete ne[key]; }
+    setErrors(ne);
+    // Check win
+    if (ng.every((row, ri) => row.every((v, ci) => v === solution[ri][ci]))) setWon(true);
+  }
+
+  function getCellBg(r, c) {
+    if (selected && selected[0] === r && selected[1] === c) return "rgba(232,184,75,0.3)";
+    if (selected) {
+      const [sr, sc] = selected;
+      const sBox = Math.floor(sr/3)*3 + Math.floor(sc/3);
+      const cBox = Math.floor(r/3)*3 + Math.floor(c/3);
+      if (sr === r || sc === c || sBox === cBox) return "rgba(232,184,75,0.06)";
+    }
+    return Math.floor(r/3)*3 + Math.floor(c/3) % 2 === 0 ? "#111" : "#151515";
+  }
+
+  const cellSize = "30px";
+
+  return (
+    <div style={{ textAlign: "center" }}>
+      <div style={{ display: "flex", justifyContent: "center", gap: "16px", marginBottom: "10px" }}>
+        <div style={{ fontSize: "12px", color: "#6b6760" }}>Tap a cell, then tap a number</div>
+        {won && <div style={{ fontSize: "13px", color: "#4ade80", fontWeight: "700" }}>🎉 Solved!</div>}
+      </div>
+
+      {/* Grid */}
+      <div style={{ display: "inline-block", border: "2px solid rgba(232,184,75,0.5)", borderRadius: "4px" }}>
+        {grid.map((row, r) => (
+          <div key={r} style={{ display: "flex", borderBottom: r === 2 || r === 5 ? "2px solid rgba(232,184,75,0.4)" : "1px solid rgba(232,184,75,0.1)" }}>
+            {row.map((val, c) => (
+              <div key={c} onClick={() => selectCell(r, c)} style={{
+                width: cellSize, height: cellSize, display: "flex", alignItems: "center", justifyContent: "center",
+                background: getCellBg(r, c),
+                borderRight: c === 2 || c === 5 ? "2px solid rgba(232,184,75,0.4)" : "1px solid rgba(232,184,75,0.1)",
+                cursor: isFixed(r,c) ? "default" : "pointer",
+                fontSize: "14px",
+                fontWeight: isFixed(r,c) ? "800" : "500",
+                color: errors[`${r}-${c}`] ? "#ef4444" : isFixed(r,c) ? "#f0ede8" : "#e8b84b",
+                transition: "background 0.1s",
+              }}>
+                {val !== 0 ? val : ""}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {/* Number pad */}
+      <div style={{ display: "flex", gap: "6px", justifyContent: "center", marginTop: "12px", flexWrap: "wrap" }}>
+        {[1,2,3,4,5,6,7,8,9].map(n => (
+          <button key={n} onClick={() => inputNum(n)} style={{
+            width: "36px", height: "36px", background: BG3,
+            border: `1px solid ${BORDER}`, borderRadius: "8px",
+            color: "#f0ede8", fontSize: "16px", fontWeight: "700", cursor: "pointer",
+          }}>{n}</button>
+        ))}
+        <button onClick={() => inputNum(0)} style={{
+          width: "36px", height: "36px", background: "#7f1d1d",
+          border: "1px solid #ef4444", borderRadius: "8px",
+          color: "#f87171", fontSize: "12px", fontWeight: "700", cursor: "pointer",
+        }}>✕</button>
+      </div>
+
+      <button onClick={() => { setGrid(puzzle.map(r=>[...r])); setErrors({}); setWon(false); setSelected(null); }}
+        style={{ marginTop: "12px", background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "8px 20px", color: "#6b6760", cursor: "pointer", fontSize: "12px" }}>
+        Reset Puzzle
+      </button>
+    </div>
+  );
+}
+
+// ── SOLITAIRE (Klondike) ──────────────────────────────────────
+function SolitaireGame() {
+  const G = "#e8b84b";
+  const BG2 = "#111111";
+  const BG3 = "#1a1a1a";
+  const BORDER = "rgba(232,184,75,0.15)";
+
+  const SUITS = ["♠","♥","♦","♣"];
+  const RANKS = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+  const RED = ["♥","♦"];
+
+  function newDeck() {
+    const deck = [];
+    for (const s of SUITS) for (const r of RANKS) deck.push({ suit: s, rank: r, faceUp: false });
+    for (let i = deck.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [deck[i],deck[j]]=[deck[j],deck[i]]; }
+    return deck;
+  }
+
+  function initGame() {
+    const deck = newDeck();
+    const tableau = Array(7).fill(null).map(() => []);
+    let idx = 0;
+    for (let col = 0; col < 7; col++) {
+      for (let row = 0; row <= col; row++) {
+        const card = deck[idx++];
+        card.faceUp = row === col;
+        tableau[col].push(card);
+      }
+    }
+    return {
+      tableau,
+      stock: deck.slice(idx).map(c => ({ ...c, faceUp: false })),
+      waste: [],
+      foundations: [[], [], [], []],
+    };
+  }
+
+  const [game, setGame] = React.useState(() => initGame());
+  const [selected, setSelected] = React.useState(null); // { source, colIdx, cardIdx }
+  const [moves, setMoves] = React.useState(0);
+  const [won, setWon] = React.useState(false);
+
+  function rankVal(r) { return RANKS.indexOf(r); }
+  function isRed(s) { return RED.includes(s); }
+
+  function canPlace(card, onto) {
+    if (!onto) return card.rank === "K";
+    const top = onto[onto.length-1];
+    if (!top) return card.rank === "K";
+    return rankVal(card.rank) === rankVal(top.rank)-1 && isRed(card.suit) !== isRed(top.suit);
+  }
+
+  function canFoundation(card, found) {
+    if (found.length === 0) return card.rank === "A";
+    const top = found[found.length-1];
+    return card.suit === top.suit && rankVal(card.rank) === rankVal(top.rank)+1;
+  }
+
+  function drawCard() {
+    setGame(prev => {
+      const g = JSON.parse(JSON.stringify(prev));
+      if (g.stock.length === 0) {
+        g.stock = g.waste.reverse().map(c => ({ ...c, faceUp: false }));
+        g.waste = [];
+      } else {
+        const card = g.stock.pop();
+        card.faceUp = true;
+        g.waste.push(card);
+      }
+      return g;
+    });
+    setMoves(m => m+1);
+  }
+
+  function selectCard(source, colIdx, cardIdx) {
+    if (selected) {
+      // Try to move
+      moveCard(source, colIdx, cardIdx);
+      return;
+    }
+    setSelected({ source, colIdx, cardIdx });
+  }
+
+  function moveCard(destSource, destColIdx, destCardIdx) {
+    setGame(prev => {
+      const g = JSON.parse(JSON.stringify(prev));
+      let cards = [];
+      // Get cards to move
+      if (selected.source === "waste") {
+        cards = [g.waste[g.waste.length-1]];
+      } else if (selected.source === "tableau") {
+        cards = g.tableau[selected.colIdx].slice(selected.cardIdx);
+      }
+      if (!cards.length) { setSelected(null); return prev; }
+
+      // Try foundation
+      if (destSource === "foundation") {
+        const found = g.foundations[destColIdx];
+        if (cards.length === 1 && canFoundation(cards[0], found)) {
+          found.push(cards[0]);
+          if (selected.source === "waste") g.waste.pop();
+          else g.tableau[selected.colIdx].splice(selected.cardIdx);
+          // Flip top of source column
+          if (selected.source === "tableau" && g.tableau[selected.colIdx].length > 0) {
+            g.tableau[selected.colIdx][g.tableau[selected.colIdx].length-1].faceUp = true;
+          }
+          setSelected(null);
+          setMoves(m => m+1);
+          // Check win
+          if (g.foundations.every(f => f.length === 13)) setWon(true);
+          return g;
+        }
+        setSelected(null); return prev;
+      }
+
+      // Try tableau
+      if (destSource === "tableau") {
+        const col = g.tableau[destColIdx];
+        const topCard = col.length > 0 ? col[col.length-1] : null;
+        if (canPlace(cards[0], col)) {
+          col.push(...cards);
+          if (selected.source === "waste") g.waste.pop();
+          else g.tableau[selected.colIdx].splice(selected.cardIdx);
+          if (selected.source === "tableau" && g.tableau[selected.colIdx].length > 0) {
+            g.tableau[selected.colIdx][g.tableau[selected.colIdx].length-1].faceUp = true;
+          }
+          setSelected(null);
+          setMoves(m => m+1);
+          return g;
+        }
+        setSelected(null); return prev;
+      }
+
+      setSelected(null); return prev;
+    });
+  }
+
+  function CardView({ card, isSelected, onClick, style = {} }) {
+    if (!card) return <div style={{ width: "48px", height: "68px", border: "1px dashed rgba(232,184,75,0.2)", borderRadius: "6px", ...style }} onClick={onClick} />;
+    if (!card.faceUp) return (
+      <div onClick={onClick} style={{ width: "48px", height: "68px", background: "#1a2a4a", border: "1px solid #2a3a5a", borderRadius: "6px", cursor: "pointer",
+        backgroundImage: "repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 8px)", ...style }} />
+    );
+    return (
+      <div onClick={onClick} style={{
+        width: "48px", height: "68px", background: isSelected ? "rgba(232,184,75,0.2)" : "#f8f8f8",
+        border: `2px solid ${isSelected ? G : "transparent"}`, borderRadius: "6px", cursor: "pointer",
+        display: "flex", flexDirection: "column", padding: "3px 4px", boxSizing: "border-box",
+        boxShadow: isSelected ? `0 0 8px ${G}` : "none", ...style,
+      }}>
+        <div style={{ fontSize: "11px", fontWeight: "800", color: isRed(card.suit) ? "#dc2626" : "#111", lineHeight: 1 }}>{card.rank}</div>
+        <div style={{ fontSize: "14px", color: isRed(card.suit) ? "#dc2626" : "#111", textAlign: "center", flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>{card.suit}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <div style={{ minWidth: "360px" }}>
+        {won && <div style={{ textAlign: "center", color: "#4ade80", fontWeight: "800", fontSize: "18px", marginBottom: "12px" }}>🎉 You Won in {moves} moves!</div>}
+
+        {/* Top row: stock, waste, foundations */}
+        <div style={{ display: "flex", gap: "6px", marginBottom: "12px", alignItems: "flex-start" }}>
+          {/* Stock */}
+          <div onClick={drawCard} style={{ cursor: "pointer" }}>
+            {game.stock.length > 0
+              ? <div style={{ width: "48px", height: "68px", background: "#1a2a4a", border: "1px solid #2a3a5a", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>🂠</div>
+              : <div style={{ width: "48px", height: "68px", border: "1px dashed rgba(232,184,75,0.3)", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", color: "#6b6760" }}>↺</div>
+            }
+          </div>
+          {/* Waste */}
+          <CardView card={game.waste[game.waste.length-1] || null}
+            isSelected={selected?.source === "waste"}
+            onClick={() => game.waste.length > 0 && selectCard("waste", 0, game.waste.length-1)} />
+          <div style={{ flex: 1 }} />
+          {/* Foundations */}
+          {game.foundations.map((f, i) => (
+            <div key={i} onClick={() => moveCard("foundation", i, f.length)} style={{ cursor: "pointer" }}>
+              {f.length > 0
+                ? <CardView card={f[f.length-1]} isSelected={false} onClick={() => moveCard("foundation", i, f.length)} />
+                : <div style={{ width: "48px", height: "68px", border: "1px dashed rgba(232,184,75,0.3)", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", color: "rgba(232,184,75,0.3)" }}>{SUITS[i]}</div>
+              }
+            </div>
+          ))}
+        </div>
+
+        {/* Tableau */}
+        <div style={{ display: "flex", gap: "6px", alignItems: "flex-start" }}>
+          {game.tableau.map((col, colIdx) => (
+            <div key={colIdx} style={{ position: "relative", minHeight: "80px", flex: 1 }}
+              onClick={() => col.length === 0 && moveCard("tableau", colIdx, 0)}>
+              {col.length === 0 && (
+                <div style={{ width: "48px", height: "68px", border: "1px dashed rgba(232,184,75,0.2)", borderRadius: "6px" }} />
+              )}
+              {col.map((card, cardIdx) => (
+                <div key={cardIdx} style={{ position: cardIdx === 0 ? "relative" : "absolute", top: cardIdx === 0 ? 0 : cardIdx * (card.faceUp ? 20 : 12), left: 0 }}>
+                  <CardView card={card}
+                    isSelected={selected?.source==="tableau" && selected?.colIdx===colIdx && selected?.cardIdx===cardIdx}
+                    onClick={() => card.faceUp && selectCard("tableau", colIdx, cardIdx)}
+                  />
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: `${Math.max(...game.tableau.map(c=>c.length)) * 20 + 80}px` }}>
+          <div style={{ fontSize: "12px", color: "#6b6760" }}>Moves: {moves}</div>
+          <button onClick={() => { setGame(initGame()); setSelected(null); setMoves(0); setWon(false); }}
+            style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "6px 14px", color: G, fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>
+            New Game
+          </button>
+        </div>
+        <div style={{ fontSize: "10px", color: "#4a3030", marginTop: "6px" }}>Tap a card to select, tap destination to move · Tap deck to draw</div>
+      </div>
     </div>
   );
 }
@@ -947,7 +1300,9 @@ export default function EntertainmentHub() {
                   {activeGame === "tictactoe"&& <TicTacToe />}
                   {activeGame === "memory"   && <MemoryGame />}
                   {activeGame === "trivia"   && <TriviaGame />}
-                  {activeGame === "snake" && <SnakeGame />}
+                  {activeGame === "snake"    && <SnakeGame />}
+                  {activeGame === "sudoku"   && <SudokuGame />}
+                  {activeGame === "solitaire"&& <SolitaireGame />}
                 </div>
               </div>
             )}
