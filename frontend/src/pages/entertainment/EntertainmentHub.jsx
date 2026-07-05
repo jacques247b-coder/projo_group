@@ -1478,18 +1478,22 @@ export default function EntertainmentHub() {
 
       {/* Tabs */}
       <div style={{ background: BG2, borderBottom: `1px solid ${BORDER}`, paddingTop: "72px" }}>
-        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-          <div style={{ display: "flex", overflowX: "auto", padding: "0 1rem" }}>
+        <div style={{ maxWidth: "900px", margin: "0 auto", padding: "12px 1rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(70px, 1fr))", gap: "6px" }}>
             {TABS.map(t => (
               <button key={t.key} onClick={() => { setTab(t.key); setActiveGame(null); }} style={{
-                background: "none", border: "none",
-                borderBottom: tab === t.key ? `3px solid ${G}` : "3px solid transparent",
-                color: tab === t.key ? G : "#6b6760",
-                padding: "12px 16px", fontSize: "12px", fontWeight: "700",
-                cursor: "pointer", whiteSpace: "nowrap", fontFamily: "'DM Sans',sans-serif",
-              }}>{t.label}</button>
+                background: tab === t.key ? "rgba(232,184,75,0.15)" : BG3,
+                border: `1px solid ${tab === t.key ? G : BORDER}`,
+                borderRadius: "12px", padding: "10px 6px",
+                display: "flex", flexDirection: "column", alignItems: "center", gap: "4px",
+                cursor: "pointer", fontFamily: "'DM Sans',sans-serif",
+              }}>
+                <span style={{ fontSize: "22px", lineHeight: 1 }}>{t.label}</span>
+                <span style={{ fontSize: "10px", fontWeight: "700", color: tab === t.key ? G : "#a8a49e", whiteSpace: "nowrap" }}>{t.full}</span>
+              </button>
             ))}
           </div>
+
         </div>
       </div>
 
