@@ -272,14 +272,23 @@ export default function SportsHubPage() {
   }, [fetchFixtures]);
 
   function getMockFixtures(sport) {
+    const now = Date.now();
     if (sport === "soccer") return [
-      { fixture: { id: 1, date: new Date(Date.now() + 3600000).toISOString(), status: { short: "NS", elapsed: null } }, teams: { home: { name: "Mamelodi Sundowns" }, away: { name: "Kaizer Chiefs" } }, goals: { home: null, away: null }, league: { name: "Betway Premiership" } },
-      { fixture: { id: 2, date: new Date(Date.now() - 1800000).toISOString(), status: { short: "1H", elapsed: 34 } }, teams: { home: { name: "Orlando Pirates" }, away: { name: "SuperSport United" } }, goals: { home: 1, away: 0 }, league: { name: "Betway Premiership" } },
-      { fixture: { id: 3, date: new Date(Date.now() + 7200000).toISOString(), status: { short: "NS", elapsed: null } }, teams: { home: { name: "Bafana Bafana" }, away: { name: "Nigeria" } }, goals: { home: null, away: null }, league: { name: "AFCON Qualifier" } },
+      // PSL off-season (ended May 2026) — FIFA World Cup 2026 is current
+      { fixture: { id: 1, date: new Date(now - 86400000 * 2).toISOString(), status: { short: "FT", elapsed: 90 } }, teams: { home: { name: "South Africa" }, away: { name: "Nigeria" } }, goals: { home: 1, away: 0 }, league: { name: "AFCON Qualifier" } },
+      { fixture: { id: 2, date: new Date(now - 86400000).toISOString(), status: { short: "FT", elapsed: 90 } }, teams: { home: { name: "Cape Verde" }, away: { name: "Morocco" } }, goals: { home: 2, away: 1 }, league: { name: "FIFA World Cup 2026" } },
+      { fixture: { id: 3, date: new Date(now + 86400000 * 2).toISOString(), status: { short: "NS", elapsed: null } }, teams: { home: { name: "Bafana Bafana" }, away: { name: "Ghana" } }, goals: { home: null, away: null }, league: { name: "AFCON Qualifier" } },
+      { fixture: { id: 4, date: new Date(now + 86400000 * 5).toISOString(), status: { short: "NS", elapsed: null } }, teams: { home: { name: "Mamelodi Sundowns" }, away: { name: "Al Ahly" } }, goals: { home: null, away: null }, league: { name: "CAF Champions League" } },
     ];
+    // Rugby — Nations Championship 2026 (current tournament)
     return [
-      { fixture: { id: 4, date: new Date(Date.now() + 3600000).toISOString(), status: { short: "NS", elapsed: null } }, teams: { home: { name: "Springboks" }, away: { name: "All Blacks" } }, goals: { home: null, away: null }, league: { name: "Rugby Championship" } },
-      { fixture: { id: 5, date: new Date(Date.now() - 900000).toISOString(), status: { short: "1H", elapsed: 22 } }, teams: { home: { name: "Bulls" }, away: { name: "Lions" } }, goals: { home: 14, away: 7 }, league: { name: "United Rugby Championship" } },
+      { fixture: { id: 10, date: new Date(now - 86400000).toISOString(), status: { short: "FT", elapsed: 80 } }, teams: { home: { name: "🇿🇦 Springboks" }, away: { name: "🏴󠁧󠁢󠁥󠁮󠁧󠁿 England" } }, goals: { home: 45, away: 21 }, league: { name: "Nations Championship 2026 — Ellis Park, Johannesburg" } },
+      { fixture: { id: 11, date: new Date(now - 86400000).toISOString(), status: { short: "FT", elapsed: 80 } }, teams: { home: { name: "🇦🇺 Australia" }, away: { name: "🇮🇪 Ireland" } }, goals: { home: 31, away: 33 }, league: { name: "Nations Championship 2026" } },
+      { fixture: { id: 12, date: new Date(now - 86400000).toISOString(), status: { short: "FT", elapsed: 80 } }, teams: { home: { name: "🇫🇯 Fiji" }, away: { name: "🏴󠁧󠁢󠁷󠁬󠁳󠁿 Wales" } }, goals: { home: 24, away: 39 }, league: { name: "Nations Championship 2026" } },
+      { fixture: { id: 13, date: new Date(now - 86400000).toISOString(), status: { short: "FT", elapsed: 80 } }, teams: { home: { name: "🇳🇿 New Zealand" }, away: { name: "🇫🇷 France" } }, goals: { home: 34, away: 32 }, league: { name: "Nations Championship 2026" } },
+      { fixture: { id: 14, date: new Date(now + 86400000 * 7).toISOString(), status: { short: "NS", elapsed: null } }, teams: { home: { name: "🏴󠁧󠁢󠁥󠁮󠁧󠁿 England" }, away: { name: "🇦🇺 Australia" } }, goals: { home: null, away: null }, league: { name: "Nations Championship 2026 — Round 2" } },
+      { fixture: { id: 15, date: new Date(now + 86400000 * 7).toISOString(), status: { short: "NS", elapsed: null } }, teams: { home: { name: "🇿🇦 Springboks" }, away: { name: "🇦🇷 Argentina" } }, goals: { home: null, away: null }, league: { name: "Nations Championship 2026 — Round 2" } },
+      { fixture: { id: 16, date: new Date(now + 86400000 * 14).toISOString(), status: { short: "NS", elapsed: null } }, teams: { home: { name: "🐂 Bulls" }, away: { name: "🦁 Lions" } }, goals: { home: null, away: null }, league: { name: "United Rugby Championship — SA Derby" } },
     ];
   }
 
