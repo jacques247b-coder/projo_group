@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/ui/Navbar";
+import ReadingHub from "./ReadingHub";
 import { useAuth } from "../../context/AuthContext";
 import toast from "react-hot-toast";
 
@@ -241,6 +242,7 @@ const TABS = [
   { key: "news",     label: "📰",  full: "News" },
   { key: "games",    label: "🎮",  full: "Games" },
   { key: "stream",   label: "📺",  full: "Stream" },
+  { key: "reading",  label: "📚",  full: "Reading" },
   { key: "casino",   label: "🎰",  full: "18+ Casino" },
   { key: "ads",      label: "🏪",  full: "Deals" },
 ];
@@ -1203,7 +1205,7 @@ function CasinoOffersTab({ user }) {
 function LocalAdsTab({ user }) {
   const [ads, setAds] = useState([]);
   const [showSubmit, setShowSubmit] = useState(false);
-  const [form, setForm] = useState({ businessName: "", category: "Restaurant", offer: "", description: "", phone: "", website: "", mediaData: null, mediaType: null, mediaName: null, isPaid: false });
+  const [form, setForm] = useState({ businessName: "", category: "Restaurant", offer: "", price: "", description: "", phone: "", website: "", mediaData: null, mediaType: null, mediaName: null, isPaid: false });
   const [submitting, setSubmitting] = useState(false);
 
   const CATEGORIES = ["Restaurant","Retail","Service","Health","Beauty","Auto","Property","Events","Other"];
@@ -1221,7 +1223,7 @@ function LocalAdsTab({ user }) {
   useEffect(() => { loadAds(); }, []);
 
   async function submitAd() {
-    if (!form.businessName || !form.offer) return toast.error("Business name and offer required");
+    if (!form.businessName) return toast.error("Business name required");
     setSubmitting(true);
     try {
       await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:5000/api"}/entertainment/ads`, {
@@ -1325,7 +1327,8 @@ function LocalAdsTab({ user }) {
             <select style={inp} value={form.category} onChange={e => setForm(f => ({...f, category: e.target.value}))}>
               {CATEGORIES.map(c => <option key={c}>{c}</option>)}
             </select>
-            <input style={inp} placeholder="Special Offer (e.g. 20% off all meals) *" value={form.offer} onChange={e => setForm(f => ({...f, offer: e.target.value}))} />
+            <input style={inp} placeholder="Special Offer (e.g. 20% off all meals) — optional" value={form.offer} onChange={e => setForm(f => ({...f, offer: e.target.value}))} />
+            <input style={inp} placeholder="Price / Pricing info — optional (e.g. From R99)" value={form.price} onChange={e => setForm(f => ({...f, price: e.target.value}))} />
             <textarea style={{...inp, minHeight: "80px", resize: "vertical"}} placeholder="Description (optional)" value={form.description} onChange={e => setForm(f => ({...f, description: e.target.value}))} />
             <input style={inp} placeholder="Phone Number" value={form.phone} onChange={e => setForm(f => ({...f, phone: e.target.value}))} />
             <input style={inp} placeholder="Website (optional)" value={form.website} onChange={e => setForm(f => ({...f, website: e.target.value}))} />
@@ -1350,7 +1353,7 @@ function LocalAdsTab({ user }) {
                   )}
                 </div>
               )}
-              <div style={{ fontSize: "10px", color: "#4a3030", marginTop: "4px" }}>Supported: PNG, JPEG, MP4, MPEG · Max 10MB</div>
+              <div style={{ fontSize: "10px", color: "#4a3030", marginTop: "4px" }}>Supported: PNG, JPEG, MP4, MPEG · Max 10MB · Instagram size (1080×1080) recommended for best display</div>
             </div>
 
             {/* Paid promotion option */}
@@ -1897,8 +1900,8 @@ export default function EntertainmentHub() {
               { name: "SABC+", url: "https://sabc-plus.com", desc: "Free SA content — news, sport, local shows", icon: "📺", color: "#e31837", free: true },
               { name: "DStv Now", url: "https://now.dstv.com", desc: "SuperSport, M-Net, kykNET & more", icon: "📡", color: "#003087", free: false },
               { name: "Apple TV+", url: "https://tv.apple.com", desc: "Apple originals — Ted Lasso & more", icon: "🍎", color: "#555555", free: false },
-              { name: "YouTube Movies", url: "https://www.youtube.com/movies", desc: "Free & rental movies on YouTube", icon: "▶️", color: "#FF0000", free: true },
-              { name: "Pluto TV", url: "https://pluto.tv", desc: "Free streaming — movies & live TV", icon: "🪐", color: "#6B2FC9", free: true },
+              { name: "Tubi TV", url: "https://tubitv.com", desc: "100% free movies & TV shows — no subscription", icon: "🟠", color: "#FA5000", free: true },
+              { name: "Plex", url: "https://www.plex.tv/watch-free", desc: "Free movies & live TV — available in SA", icon: "🟡", color: "#E5A00D", free: true },
             ].map(s => (
               <a key={s.name} href={s.url} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: "14px", background: BG2, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "1rem", marginBottom: "10px", textDecoration: "none" }}>
                 <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: `${s.color}20`, border: `1px solid ${s.color}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px", flexShrink: 0 }}>{s.icon}</div>
@@ -1914,6 +1917,9 @@ export default function EntertainmentHub() {
             ))}
           </div>
         )}
+
+        {/* ── READING HUB TAB ── */}
+        {tab === "reading" && <ReadingHub />}
 
         {/* ── CASINO OFFERS TAB ── */}
         {tab === "casino" && <CasinoOffersTab user={user} />}

@@ -35,6 +35,7 @@ const TABS = [
   { key: "push",       label: "📣 Broadcast" },
   { key: "ads",        label: "🏪 Local Ads" },
   { key: "casino",     label: "🎰 Casino Offers" },
+  { key: "reading",    label: "📚 Reading Hub" },
 ];
 
 const SERVICE_CATEGORIES = [
@@ -878,6 +879,42 @@ export default function AdminDashboard() {
                   <div style={{ fontSize: "10px", color: "#4a3030" }}>Add to Render: {item.env}</div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── READING HUB ADMIN ── */}
+        {!loading && tab === "reading" && (
+          <div>
+            <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "15px", fontWeight: "800", color: G, marginBottom: "4px" }}>📚 Reading Hub Management</div>
+            <div style={{ fontSize: "12px", color: "#6b6760", marginBottom: "1.25rem" }}>Manage the book store and free library content</div>
+
+            <div style={{ ...card, marginBottom: "1rem" }}>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "13px", fontWeight: "800", color: G, marginBottom: "10px" }}>🛒 Book Store</div>
+              <div style={{ fontSize: "12px", color: "#6b6760", marginBottom: "10px" }}>Affiliate books link to Takealot.com. PROJO earns referral commission on each purchase.</div>
+              {["Atomic Habits","Rich Dad Poor Dad","Think and Grow Rich","The 48 Laws of Power","Long Walk to Freedom","Start With Why","The Psychology of Money","Ikigai","Ubuntu: I Am Because We Are","Zero to One"].map((title, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${BORDER}` }}>
+                  <div style={{ fontSize: "12px", color: "#f0ede8" }}>{title}</div>
+                  <div style={{ fontSize: "11px", color: "#4ade80" }}>● Active</div>
+                </div>
+              ))}
+              <div style={{ fontSize: "10px", color: "#4a3030", marginTop: "8px" }}>To add/edit books, update AFFILIATE_BOOKS in ReadingHub.jsx</div>
+            </div>
+
+            <div style={{ ...card, marginBottom: "1rem" }}>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "13px", fontWeight: "800", color: G, marginBottom: "10px" }}>📖 Free Library</div>
+              <div style={{ fontSize: "12px", color: "#6b6760", marginBottom: "8px" }}>Public domain books from Project Gutenberg API — auto-loaded, no maintenance needed.</div>
+              <div style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: "8px", padding: "10px", fontSize: "11px", color: "#4ade80" }}>
+                ✓ Automatically fetches thousands of free books<br/>
+                ✓ Users can search by title or author<br/>
+                ✓ Reading progress saved per user device<br/>
+                ✓ No cost, no licensing issues — all public domain
+              </div>
+            </div>
+
+            <div style={{ ...card }}>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "13px", fontWeight: "800", color: G, marginBottom: "10px" }}>📊 Reading Analytics</div>
+              <div style={{ fontSize: "12px", color: "#6b6760" }}>Reading stats are stored on user devices. Server-side reading analytics can be added in a future update when user tracking is implemented.</div>
             </div>
           </div>
         )}
