@@ -142,6 +142,82 @@ const NEWS_FEEDS = [
 ];
 
 // ── HTML5 GAMES ──────────────────────────────────────────────
+// ── CASINO AFFILIATE PARTNERS ────────────────────────────────
+// Managed via admin dashboard — add/edit/remove without code changes
+// All partners are licensed SA gambling operators
+const CASINO_PARTNERS = [
+  {
+    id: "betway",
+    name: "Betway",
+    logo: "🎰",
+    color: "#00a651",
+    bonus: "R25 Free Bet on Signup",
+    description: "PSL title sponsor. Sports betting, live casino, slots & more.",
+    rating: 5,
+    categories: ["Sports Betting", "Live Casino", "Slots"],
+    url: `https://www.betway.co.za${process.env.REACT_APP_BETWAY_BTAG ? "?btag=" + process.env.REACT_APP_BETWAY_BTAG : ""}`,
+    terms: "T&Cs apply. 18+ only. New customers only.",
+    featured: true,
+    isNew: false,
+  },
+  {
+    id: "hollywoodbets",
+    name: "Hollywood Bets",
+    logo: "🎬",
+    color: "#e31837",
+    bonus: "R50 Free Bet Welcome Bonus",
+    description: "SA's most trusted betting platform. Horse racing, soccer, casino.",
+    rating: 5,
+    categories: ["Sports Betting", "Casino", "Horse Racing"],
+    url: `https://www.hollywoodbets.net${process.env.REACT_APP_HB_REF ? "?ref=" + process.env.REACT_APP_HB_REF : ""}`,
+    terms: "T&Cs apply. 18+ only. New customers only.",
+    featured: true,
+    isNew: false,
+  },
+  {
+    id: "supabets",
+    name: "Supabets",
+    logo: "🃏",
+    color: "#ff6600",
+    bonus: "R50 Signup Bonus",
+    description: "2 million+ SA players. Soccer, rugby, cricket & casino games.",
+    rating: 4,
+    categories: ["Sports Betting", "Casino", "Slots"],
+    url: `https://www.supabets.co.za${process.env.REACT_APP_SUPABETS_REF ? "?ref=" + process.env.REACT_APP_SUPABETS_REF : ""}`,
+    terms: "T&Cs apply. 18+ only.",
+    featured: false,
+    isNew: false,
+  },
+  {
+    id: "sunbet",
+    name: "Sunbet",
+    logo: "☀️",
+    color: "#f59e0b",
+    bonus: "100% Match Bonus up to R1000",
+    description: "Sun International casino brand. Roulette, blackjack, live casino.",
+    rating: 4,
+    categories: ["Live Casino", "Slots", "Table Games"],
+    url: "https://www.sunbet.co.za",
+    terms: "T&Cs apply. 18+ only. New customers only.",
+    featured: false,
+    isNew: true,
+  },
+  {
+    id: "zarbet",
+    name: "ZARbet",
+    logo: "💎",
+    color: "#a78bfa",
+    bonus: "200% Welcome Bonus up to R2000",
+    description: "SA Rand casino. Slots, live dealer, jackpots in ZAR.",
+    rating: 4,
+    categories: ["Casino", "Slots", "Jackpots"],
+    url: "https://www.zarbet.co.za",
+    terms: "T&Cs apply. 18+ only. Wagering requirements apply.",
+    featured: false,
+    isNew: true,
+  },
+];
+
 const GAMES = [
   { id: "2048", title: "2048", icon: "🎯", color: "#f59e0b", desc: "Merge tiles to reach 2048" },
   { id: "snake", title: "Snake", icon: "🐍", color: "#4ade80", desc: "Classic snake game" },
@@ -165,6 +241,7 @@ const TABS = [
   { key: "news",     label: "📰",  full: "News" },
   { key: "games",    label: "🎮",  full: "Games" },
   { key: "stream",   label: "📺",  full: "Stream" },
+  { key: "casino",   label: "🎰",  full: "18+ Casino" },
   { key: "ads",      label: "🏪",  full: "Deals" },
 ];
 
@@ -938,6 +1015,190 @@ function VideoRow({ title, items, onPlay, rowKey, ratings, rateContent, showMore
   );
 }
 
+// ── CASINO OFFERS TAB ───────────────────────────────────────
+function CasinoOffersTab({ user }) {
+  const G = "#e8b84b";
+  const BG2 = "#111111";
+  const BG3 = "#1a1a1a";
+  const BORDER = "rgba(232,184,75,0.15)";
+  const [ageConfirmed, setAgeConfirmed] = React.useState(() =>
+    localStorage.getItem("projo_casino_18plus") === "true"
+  );
+  const [filter, setFilter] = React.useState("All");
+  const [clickLog, setClickLog] = React.useState(() => {
+    try { return JSON.parse(localStorage.getItem("projo_casino_clicks") || "{}"); }
+    catch { return {}; }
+  });
+
+  function trackClick(partner) {
+    const log = { ...clickLog, [partner.id]: (clickLog[partner.id] || 0) + 1 };
+    setClickLog(log);
+    localStorage.setItem("projo_casino_clicks", JSON.stringify(log));
+  }
+
+  const categories = ["All", "Sports Betting", "Live Casino", "Slots", "Casino", "Horse Racing"];
+  const filtered = filter === "All"
+    ? CASINO_PARTNERS
+    : CASINO_PARTNERS.filter(p => p.categories.includes(filter));
+
+  const featured = CASINO_PARTNERS.filter(p => p.featured);
+  const newOffers = CASINO_PARTNERS.filter(p => p.isNew);
+
+  // Age gate
+  if (!ageConfirmed) {
+    return (
+      <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+        <div style={{ background: BG2, border: "1px solid rgba(239,68,68,0.3)", borderRadius: "20px", padding: "2rem", maxWidth: "380px", width: "100%", textAlign: "center" }}>
+          <div style={{ fontSize: "48px", marginBottom: "12px" }}>🎰</div>
+          <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "20px", fontWeight: "800", color: G, marginBottom: "8px" }}>18+ Casino Offers</div>
+          <div style={{ fontSize: "13px", color: "#b8a09a", lineHeight: 1.7, marginBottom: "1.5rem" }}>
+            This section contains gambling content and is strictly for users aged <strong style={{ color: "#f0ede8" }}>18 years and older</strong>.
+          </div>
+          <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "12px", padding: "1rem", marginBottom: "1.5rem", textAlign: "left" }}>
+            <div style={{ fontSize: "12px", color: "#f87171", fontWeight: "700", marginBottom: "8px" }}>⚠️ Please read before continuing:</div>
+            {[
+              "Gambling can be addictive. Please play responsibly.",
+              "Only licensed SA gambling operators are promoted.",
+              "You must be 18 years or older to continue.",
+              "If you need help: 0800 006 008 (NRGP — free, 24/7)",
+            ].map((item, i) => (
+              <div key={i} style={{ fontSize: "11px", color: "#a8a49e", marginBottom: "4px", display: "flex", gap: "6px" }}>
+                <span>•</span><span>{item}</span>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => { localStorage.setItem("projo_casino_18plus", "true"); setAgeConfirmed(true); }}
+            style={{ width: "100%", background: G, color: "#0a0a0a", border: "none", borderRadius: "12px", padding: "14px", fontWeight: "800", fontSize: "15px", cursor: "pointer", marginBottom: "10px" }}>
+            I confirm I am 18+ — Enter
+          </button>
+          <div style={{ fontSize: "10px", color: "#4a3030" }}>By entering you confirm you are at least 18 years old and agree to gamble responsibly.</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ background: "linear-gradient(135deg, rgba(232,184,75,0.1), rgba(167,139,250,0.05))", border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "1.25rem", marginBottom: "1.25rem" }}>
+        <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "18px", fontWeight: "800", color: G, marginBottom: "4px" }}>🎰 Casino & Betting Offers</div>
+        <div style={{ fontSize: "12px", color: "#6b6760" }}>Licensed SA operators · Compare bonuses · Play responsibly</div>
+      </div>
+
+      {/* Responsible gambling reminder */}
+      <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: "10px", padding: "8px 12px", marginBottom: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ fontSize: "11px", color: "#f87171" }}>⚠️ 18+ only · Gamble responsibly · Help: 0800 006 008</div>
+        <button onClick={() => { localStorage.removeItem("projo_casino_18plus"); setAgeConfirmed(false); }}
+          style={{ background: "none", border: "none", color: "#4a3030", fontSize: "10px", cursor: "pointer" }}>Exit</button>
+      </div>
+
+      {/* Featured Offers */}
+      {featured.length > 0 && (
+        <div style={{ marginBottom: "1.5rem" }}>
+          <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "14px", fontWeight: "800", color: "#f0ede8", marginBottom: "10px" }}>⭐ Featured Offers</div>
+          {featured.map(partner => (
+            <div key={partner.id} style={{ background: BG2, border: `2px solid ${partner.color}40`, borderRadius: "16px", padding: "1.25rem", marginBottom: "10px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: `${partner.color}20`, border: `1px solid ${partner.color}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "22px" }}>{partner.logo}</div>
+                  <div>
+                    <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "16px", fontWeight: "800", color: "#f0ede8" }}>{partner.name}</div>
+                    <div style={{ display: "flex", gap: "2px" }}>{"★".repeat(partner.rating).split("").map((s,i) => <span key={i} style={{ color: G, fontSize: "10px" }}>★</span>)}</div>
+                  </div>
+                </div>
+                <div style={{ background: `${partner.color}20`, border: `1px solid ${partner.color}40`, borderRadius: "8px", padding: "4px 10px", fontSize: "11px", color: partner.color, fontWeight: "700", flexShrink: 0, marginLeft: "8px" }}>
+                  FEATURED
+                </div>
+              </div>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "15px", fontWeight: "800", color: G, marginBottom: "4px" }}>{partner.bonus}</div>
+              <div style={{ fontSize: "12px", color: "#6b6760", marginBottom: "12px" }}>{partner.description}</div>
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "12px" }}>
+                {partner.categories.map(cat => (
+                  <span key={cat} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "6px", padding: "3px 8px", fontSize: "10px", color: "#a8a49e" }}>{cat}</span>
+                ))}
+              </div>
+              <a href={partner.url} target="_blank" rel="noreferrer" onClick={() => trackClick(partner)} style={{
+                display: "block", textAlign: "center", background: partner.color,
+                color: "#fff", textDecoration: "none", borderRadius: "10px",
+                padding: "12px", fontWeight: "800", fontSize: "14px",
+              }}>Play Now at {partner.name} ↗</a>
+              <div style={{ fontSize: "9px", color: "#4a3030", marginTop: "6px", textAlign: "center" }}>{partner.terms}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* New Offers */}
+      {newOffers.length > 0 && (
+        <div style={{ marginBottom: "1.5rem" }}>
+          <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "14px", fontWeight: "800", color: "#f0ede8", marginBottom: "10px" }}>🆕 New Offers</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+            {newOffers.map(partner => (
+              <div key={partner.id} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: "1rem" }}>
+                <div style={{ fontSize: "24px", marginBottom: "6px" }}>{partner.logo}</div>
+                <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "13px", marginBottom: "4px" }}>{partner.name}</div>
+                <div style={{ fontSize: "11px", color: G, fontWeight: "700", marginBottom: "8px" }}>{partner.bonus}</div>
+                <a href={partner.url} target="_blank" rel="noreferrer" onClick={() => trackClick(partner)} style={{
+                  display: "block", textAlign: "center", background: partner.color,
+                  color: "#fff", textDecoration: "none", borderRadius: "8px",
+                  padding: "8px", fontWeight: "700", fontSize: "12px",
+                }}>Play Now ↗</a>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Category filter */}
+      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "14px", fontWeight: "800", color: "#f0ede8", marginBottom: "10px" }}>🔍 All Offers</div>
+      <div style={{ display: "flex", gap: "6px", overflowX: "auto", marginBottom: "12px", paddingBottom: "4px" }}>
+        {categories.map(cat => (
+          <button key={cat} onClick={() => setFilter(cat)} style={{
+            background: filter === cat ? "rgba(232,184,75,0.15)" : BG2,
+            border: `1px solid ${filter === cat ? G : BORDER}`,
+            borderRadius: "20px", padding: "5px 12px", color: filter === cat ? G : "#6b6760",
+            fontSize: "11px", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+          }}>{cat}</button>
+        ))}
+      </div>
+
+      {/* All partners grid */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        {filtered.map(partner => (
+          <div key={partner.id} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "1rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+              <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: `${partner.color}20`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", flexShrink: 0 }}>{partner.logo}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "13px" }}>{partner.name}</div>
+                <div style={{ display: "flex", gap: "1px" }}>{"★".repeat(partner.rating).split("").map((s,i) => <span key={i} style={{ color: G, fontSize: "9px" }}>★</span>)}</div>
+              </div>
+              {partner.isNew && <span style={{ background: "rgba(74,222,128,0.15)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.3)", borderRadius: "4px", padding: "2px 6px", fontSize: "9px", fontWeight: "700" }}>NEW</span>}
+            </div>
+            <div style={{ fontSize: "13px", color: G, fontWeight: "700", marginBottom: "4px" }}>{partner.bonus}</div>
+            <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "10px" }}>{partner.description}</div>
+            <a href={partner.url} target="_blank" rel="noreferrer" onClick={() => trackClick(partner)} style={{
+              display: "block", textAlign: "center", background: partner.color,
+              color: "#fff", textDecoration: "none", borderRadius: "8px",
+              padding: "10px", fontWeight: "800", fontSize: "13px",
+            }}>Play Now at {partner.name} ↗</a>
+            <div style={{ fontSize: "9px", color: "#4a3030", marginTop: "4px", textAlign: "center" }}>{partner.terms}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Responsible gambling footer */}
+      <div style={{ marginTop: "1.5rem", background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: "12px", padding: "1rem", textAlign: "center" }}>
+        <div style={{ fontSize: "12px", color: "#f87171", fontWeight: "700", marginBottom: "6px" }}>🛡️ Gamble Responsibly</div>
+        <div style={{ fontSize: "11px", color: "#6b6760", lineHeight: 1.6 }}>
+          All operators are licensed by South African Provincial Gambling Boards.<br />
+          PROJO GROUP earns a commission when you register via these links.<br />
+          <strong style={{ color: "#f87171" }}>National Responsible Gambling Programme: 0800 006 008 (Free · 24/7)</strong>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── LOCAL ADS ─────────────────────────────────────────────────
 function LocalAdsTab({ user }) {
   const [ads, setAds] = useState([]);
@@ -1511,6 +1772,9 @@ export default function EntertainmentHub() {
             ))}
           </div>
         )}
+
+        {/* ── CASINO OFFERS TAB ── */}
+        {tab === "casino" && <CasinoOffersTab user={user} />}
 
         {/* ── LOCAL ADS TAB ── */}
         {tab === "ads" && <LocalAdsTab user={user} />}

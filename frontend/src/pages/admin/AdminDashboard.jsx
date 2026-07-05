@@ -34,6 +34,7 @@ const TABS = [
   { key: "drivers",    label: "🚘 Drivers" },
   { key: "push",       label: "📣 Broadcast" },
   { key: "ads",        label: "🏪 Local Ads" },
+  { key: "casino",     label: "🎰 Casino Offers" },
 ];
 
 const SERVICE_CATEGORIES = [
@@ -72,6 +73,9 @@ export default function AdminDashboard() {
   const [pushSending, setPushSending] = useState(false);
   const [pushResult, setPushResult] = useState(null);
   const [localAds, setLocalAds] = useState([]);
+  const [casinoPartners, setCasinoPartners] = useState([]);
+  const [casinoForm, setCasinoForm] = useState({ name: "", logo: "🎰", color: "#00a651", bonus: "", description: "", url: "", terms: "", categories: "", featured: false, isNew: false });
+  const [showCasinoForm, setShowCasinoForm] = useState(false);
   const [adForm, setAdForm] = useState({ businessName: "", category: "Restaurant", offer: "", description: "", phone: "", website: "" });
   const [showAdForm, setShowAdForm] = useState(false);
 
@@ -820,6 +824,61 @@ export default function AdminDashboard() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── CASINO OFFERS ADMIN ── */}
+        {!loading && tab === "casino" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <div>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "15px", fontWeight: "800", color: G }}>🎰 Casino & Betting Partners</div>
+                <div style={{ fontSize: "12px", color: "#6b6760" }}>Manage affiliate casino and betting offers</div>
+              </div>
+              <button onClick={() => setShowCasinoForm(true)} style={{ background: G, color: "#0a0a0a", border: "none", borderRadius: "8px", padding: "8px 14px", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>+ Add Partner</button>
+            </div>
+
+            {/* Current partners from CASINO_PARTNERS constant */}
+            <div style={{ background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "12px", padding: "1rem", marginBottom: "1rem" }}>
+              <div style={{ fontSize: "12px", color: "#f59e0b", fontWeight: "700", marginBottom: "8px" }}>ℹ️ Active Partners (from App Code)</div>
+              {["Betway", "Hollywood Bets", "Supabets", "Sunbet", "ZARbet"].map(name => (
+                <div key={name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: `1px solid ${BORDER}` }}>
+                  <div style={{ fontSize: "13px", color: "#f0ede8", fontWeight: "600" }}>{name}</div>
+                  <div style={{ fontSize: "11px", color: "#4ade80" }}>● Active</div>
+                </div>
+              ))}
+              <div style={{ fontSize: "10px", color: "#4a3030", marginTop: "8px" }}>To edit partner details, update CASINO_PARTNERS in EntertainmentHub.jsx</div>
+            </div>
+
+            {/* Click stats */}
+            <div style={{ ...card, marginBottom: "1rem" }}>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "13px", fontWeight: "800", color: G, marginBottom: "10px" }}>📊 Click Tracking (User Device)</div>
+              <div style={{ fontSize: "11px", color: "#6b6760" }}>Click data is stored per user device. Server-side tracking requires affiliate dashboard from each partner.</div>
+              <div style={{ marginTop: "10px" }}>
+                {["Betway","Hollywood Bets","Supabets","Sunbet","ZARbet"].map(name => (
+                  <div key={name} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: `1px solid ${BORDER}` }}>
+                    <div style={{ fontSize: "12px", color: "#f0ede8" }}>{name}</div>
+                    <div style={{ fontSize: "12px", color: G, fontWeight: "700" }}>View in affiliate dashboard</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Affiliate links reminder */}
+            <div style={{ background: "rgba(74,222,128,0.05)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: "12px", padding: "1rem" }}>
+              <div style={{ fontSize: "12px", color: "#4ade80", fontWeight: "700", marginBottom: "8px" }}>💰 Pending Affiliate IDs</div>
+              {[
+                { name: "Betway", env: "REACT_APP_BETWAY_BTAG", site: "superpartnersafrica.com", status: "Registered (BPA118851) — get BTAG" },
+                { name: "Hollywood Bets", env: "REACT_APP_HB_REF", site: "affiliates.hollywoodbets.net", status: "Pending registration" },
+                { name: "Supabets", env: "REACT_APP_SUPABETS_REF", site: "affiliates.supabets.co.za", status: "Pending registration" },
+              ].map(item => (
+                <div key={item.name} style={{ padding: "8px 0", borderBottom: `1px solid ${BORDER}` }}>
+                  <div style={{ fontSize: "12px", color: "#f0ede8", fontWeight: "700" }}>{item.name}</div>
+                  <div style={{ fontSize: "10px", color: "#6b6760" }}>{item.status}</div>
+                  <div style={{ fontSize: "10px", color: "#4a3030" }}>Add to Render: {item.env}</div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
