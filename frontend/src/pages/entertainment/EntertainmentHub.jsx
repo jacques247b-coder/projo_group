@@ -1711,100 +1711,81 @@ export default function EntertainmentHub() {
         {/* ── NEWS TAB ── */}
         {tab === "news" && (
           <div>
+            {/* Category filter pills */}
             <div style={{ display: "flex", gap: "8px", marginBottom: "1rem", overflowX: "auto" }}>
-              {NEWS_FEEDS.map((f, i) => (
-                <button key={i} onClick={() => setNewsCategory(i)} style={{
-                  background: newsCategory === i ? "rgba(232,184,75,0.15)" : BG2,
-                  border: `1px solid ${newsCategory === i ? G : BORDER}`,
-                  borderRadius: "8px", padding: "6px 14px", color: newsCategory === i ? G : "#6b6760",
-                  fontSize: "12px", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap",
+              {[{ label: "🇿🇦 SA News", idx: 0 }, { label: "🌍 World", idx: 1 }, { label: "💼 Business", idx: 2 }, { label: "⚽ Sports", idx: 3 }].map(f => (
+                <button key={f.idx} onClick={() => setNewsCategory(f.idx)} style={{
+                  background: newsCategory === f.idx ? "rgba(232,184,75,0.15)" : BG2,
+                  border: `1px solid ${newsCategory === f.idx ? G : BORDER}`,
+                  borderRadius: "20px", padding: "6px 14px", color: newsCategory === f.idx ? G : "#6b6760",
+                  fontSize: "12px", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
                 }}>{f.label}</button>
               ))}
             </div>
-            <div style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "1.25rem" }}>
-              <div style={{ fontSize: "13px", color: "#6b6760", marginBottom: "1rem" }}>
-                Live news headlines from trusted sources
-              </div>
-              {(() => {
-                const NEWS_SOURCES = [
-                  { name: "News24",        feedKey: "news24",        url: "https://www.news24.com",           desc: "SA's biggest news site",      cat: [0,1] },
-                  { name: "TimesLive",     feedKey: "timeslive",     url: "https://www.timeslive.co.za",      desc: "Breaking SA news",            cat: [0,1] },
-                  { name: "Daily Maverick",feedKey: "dailymaverick", url: "https://www.dailymaverick.co.za", desc: "Investigative journalism",    cat: [0,1,2] },
-                  { name: "EWN",           feedKey: "ewn",           url: "https://ewn.co.za",               desc: "eNCA news portal",            cat: [0,1,3] },
-                  { name: "BBC World",     feedKey: "bbcworld",      url: "https://www.bbc.com/news/world",  desc: "International headlines",     cat: [0,2] },
-                  { name: "BBC Sport",     feedKey: "bbcsport",      url: "https://www.bbc.com/sport",       desc: "World sport news",            cat: [0,3] },
-                  { name: "IOL",           feedKey: "iol",           url: "https://www.iol.co.za",           desc: "Independent Online",          cat: [0,1,2] },
-                  { name: "Netwerk24",     feedKey: "netwerk24",     url: "https://www.netwerk24.com",       desc: "Afrikaans nuus",              cat: [0,1] },
-                ];
-                const filteredNews = NEWS_SOURCES.filter(s => s.cat.includes(newsCategory));
-                const headlines = activeNews ? (newsHeadlines[activeNews.name] || []) : [];
 
-                return activeNews ? (
-                  <div>
-                    {/* Header */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
-                      <button onClick={() => setActiveNews(null)} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "8px 12px", color: "#a8a49e", cursor: "pointer", fontSize: "12px", flexShrink: 0 }}>← Back</button>
-                      <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "800", color: "#f0ede8", fontSize: "15px" }}>{activeNews.name}</div>
-                      <a href={activeNews.url} target="_blank" rel="noreferrer" style={{ marginLeft: "auto", background: G, color: "#0a0a0a", textDecoration: "none", borderRadius: "8px", padding: "6px 12px", fontSize: "11px", fontWeight: "800", flexShrink: 0 }}>Full Site ↗</a>
-                    </div>
-
-                    {/* Loading */}
-                    {newsLoading && headlines.length === 0 && (
-                      <div style={{ textAlign: "center", padding: "2rem", color: "#6b6760" }}>Loading headlines...</div>
-                    )}
-
-                    {/* Headlines */}
-                    {headlines.length > 0 ? (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                        {headlines.map((item, i) => (
-                          <a key={i} href={item.link} target="_blank" rel="noreferrer" style={{ textDecoration: "none", display: "block", background: BG2, border: `1px solid ${BORDER}`, borderRadius: "14px", overflow: "hidden" }}>
-                            {item.thumbnail && (
-                              <img src={item.thumbnail} alt={item.title} style={{ width: "100%", height: "160px", objectFit: "cover", display: "block" }} onError={e => e.target.style.display="none"} />
-                            )}
-                            <div style={{ padding: "12px" }}>
-                              <div style={{ fontSize: "13px", fontWeight: "700", color: "#f0ede8", lineHeight: 1.4, marginBottom: "6px" }}>{item.title}</div>
-                              {item.description && (
-                                <div style={{ fontSize: "11px", color: "#6b6760", lineHeight: 1.5, marginBottom: "8px" }}
-                                  dangerouslySetInnerHTML={{ __html: item.description?.replace(/<[^>]*>/g,"").slice(0,120) + "..." }} />
-                              )}
-                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <div style={{ fontSize: "10px", color: "#4a3030" }}>
-                                  {item.pubDate ? new Date(item.pubDate).toLocaleDateString("en-ZA", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" }) : ""}
-                                </div>
-                                <span style={{ fontSize: "11px", color: G, fontWeight: "700" }}>Read more ↗</span>
-                              </div>
-                            </div>
-                          </a>
-                        ))}
-                      </div>
-                    ) : !newsLoading ? (
-                      <div style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "2rem", textAlign: "center" }}>
-                        <div style={{ fontSize: "32px", marginBottom: "10px" }}>📰</div>
-                        <div style={{ fontSize: "13px", color: "#6b6760", marginBottom: "16px" }}>Could not load headlines. Read full site instead.</div>
-                        <a href={activeNews.url} target="_blank" rel="noreferrer" style={{ display: "block", background: G, color: "#0a0a0a", textDecoration: "none", borderRadius: "10px", padding: "12px", fontWeight: "800" }}>Read {activeNews.name} ↗</a>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : (
-                  <div>
-                    {filteredNews.map(source => (
-                      <div key={source.name} onClick={() => setActiveNews(source)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px", background: BG2, borderRadius: "10px", marginBottom: "8px", cursor: "pointer", border: `1px solid ${BORDER}` }}>
-                        <div>
-                          <div style={{ fontSize: "13px", color: "#f0ede8", fontWeight: "600" }}>{source.name}</div>
-                          <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "2px" }}>{source.desc}</div>
+            {/* Source list or headlines */}
+            {activeNews ? (
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "14px" }}>
+                  <button onClick={() => setActiveNews(null)} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "8px 12px", color: "#a8a49e", cursor: "pointer", fontSize: "12px", flexShrink: 0 }}>← Back</button>
+                  <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "800", color: "#f0ede8", fontSize: "15px" }}>{activeNews.name}</div>
+                  <a href={activeNews.url} target="_blank" rel="noreferrer" style={{ marginLeft: "auto", background: G, color: "#0a0a0a", textDecoration: "none", borderRadius: "8px", padding: "6px 12px", fontSize: "11px", fontWeight: "800", flexShrink: 0 }}>Full Site ↗</a>
+                </div>
+                {newsLoading && (
+                  <div style={{ textAlign: "center", padding: "2rem", color: "#6b6760" }}>⏳ Loading headlines...</div>
+                )}
+                {!newsLoading && newsHeadlines[activeNews.name]?.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    {newsHeadlines[activeNews.name].map((item, i) => (
+                      <a key={i} href={item.link} target="_blank" rel="noreferrer" style={{ textDecoration: "none", display: "block", background: BG2, border: `1px solid ${BORDER}`, borderRadius: "14px", overflow: "hidden" }}>
+                        {item.thumbnail ? <img src={item.thumbnail} alt={item.title} style={{ width: "100%", height: "160px", objectFit: "cover", display: "block" }} onError={e => e.target.style.display="none"} /> : null}
+                        <div style={{ padding: "12px" }}>
+                          <div style={{ fontSize: "13px", fontWeight: "700", color: "#f0ede8", lineHeight: 1.4, marginBottom: "6px" }}>{item.title}</div>
+                          {item.description ? <div style={{ fontSize: "11px", color: "#6b6760", lineHeight: 1.5, marginBottom: "8px" }}>{item.description.slice(0, 120)}...</div> : null}
+                          <div style={{ display: "flex", justifyContent: "space-between" }}>
+                            <div style={{ fontSize: "10px", color: "#4a3030" }}>{item.pubDate ? new Date(item.pubDate).toLocaleDateString("en-ZA", { day: "2-digit", month: "short" }) : ""}</div>
+                            <span style={{ fontSize: "11px", color: G, fontWeight: "700" }}>Read more ↗</span>
+                          </div>
                         </div>
-                        <span style={{ color: G, fontSize: "18px" }}>→</span>
-                      </div>
+                      </a>
                     ))}
-                    <div style={{ fontSize: "10px", color: "#4a3030", textAlign: "center", marginTop: "4px" }}>Tap to read in-app</div>
                   </div>
-                );
-              })()}
-            </div>
+                )}
+                {!newsLoading && !newsHeadlines[activeNews.name]?.length && (
+                  <div style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "2rem", textAlign: "center" }}>
+                    <div style={{ fontSize: "32px", marginBottom: "10px" }}>📰</div>
+                    <div style={{ fontSize: "13px", color: "#6b6760", marginBottom: "16px" }}>Could not load headlines.</div>
+                    <a href={activeNews.url} target="_blank" rel="noreferrer" style={{ display: "block", background: G, color: "#0a0a0a", textDecoration: "none", borderRadius: "10px", padding: "12px", fontWeight: "800" }}>Read {activeNews.name} ↗</a>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div>
+                {[
+                  { name: "News24",         feedKey: "news24",        url: "https://www.news24.com",          desc: "SA's biggest news site",   cat: [0,1] },
+                  { name: "TimesLive",      feedKey: "timeslive",     url: "https://www.timeslive.co.za",     desc: "Breaking SA news",         cat: [0,1] },
+                  { name: "Daily Maverick", feedKey: "dailymaverick", url: "https://www.dailymaverick.co.za", desc: "Investigative journalism", cat: [0,1,2] },
+                  { name: "EWN",            feedKey: "ewn",           url: "https://ewn.co.za",              desc: "eNCA news portal",         cat: [0,1,3] },
+                  { name: "BBC World",      feedKey: "bbcworld",      url: "https://www.bbc.com/news/world",  desc: "International headlines",  cat: [0,2] },
+                  { name: "BBC Sport",      feedKey: "bbcsport",      url: "https://www.bbc.com/sport",      desc: "World sport news",         cat: [0,3] },
+                  { name: "IOL",            feedKey: "iol",           url: "https://www.iol.co.za",          desc: "Independent Online",       cat: [0,1,2] },
+                  { name: "Netwerk24",      feedKey: "netwerk24",     url: "https://www.netwerk24.com",      desc: "Afrikaans nuus",           cat: [0,1] },
+                ].filter(s => s.cat.includes(newsCategory)).map(source => (
+                  <div key={source.name} onClick={() => setActiveNews(source)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px", background: BG2, borderRadius: "12px", marginBottom: "8px", cursor: "pointer", border: `1px solid ${BORDER}` }}>
+                    <div>
+                      <div style={{ fontSize: "14px", color: "#f0ede8", fontWeight: "700" }}>{source.name}</div>
+                      <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "2px" }}>{source.desc}</div>
+                    </div>
+                    <span style={{ color: G, fontSize: "20px" }}>→</span>
+                  </div>
+                ))}
+                <div style={{ fontSize: "10px", color: "#4a3030", textAlign: "center", marginTop: "8px" }}>Tap to load headlines in-app</div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* ── GAMES TAB ── */}
+                {/* ── GAMES TAB ── */}
         {tab === "games" && (
           <div>
             {!activeGame ? (
