@@ -98,30 +98,41 @@ const RADIO_STATIONS = [
 // ── FREE MUSIC TRACKS ─────────────────────────────────────────
 // YouTube Music — free, embeddable tracks
 const FREE_MUSIC = [
-  { id: "fm1", title: "Amapiano Mix 2025 — Best of Year", videoId: "XZhu91HwUR0", artist: "OSOCITY", genre: "Amapiano", thumb: "https://img.youtube.com/vi/XZhu91HwUR0/maxresdefault.jpg" },
-  { id: "fm2", title: "Amapiano Mix December 2025", videoId: "Lgtz-8T3DIc", artist: "Romeo Makota", genre: "Amapiano", thumb: "https://img.youtube.com/vi/Lgtz-8T3DIc/maxresdefault.jpg" },
-  { id: "fm3", title: "Afrobeat & Amapiano Mix 2025", videoId: "3wDbin9ByAk", artist: "DJ Perez", genre: "Afrobeat", thumb: "https://img.youtube.com/vi/3wDbin9ByAk/maxresdefault.jpg" },
-  { id: "fm4", title: "Amapiano Vibes Vol.2 2025", videoId: "UsdxV4Ay3Jk", artist: "Various Artists", genre: "Amapiano", thumb: "https://img.youtube.com/vi/UsdxV4Ay3Jk/maxresdefault.jpg" },
-  { id: "fm5", title: "African Relaxation Music", videoId: "3wDbin9ByAk", artist: "Relaxing Africa", genre: "Relaxation", thumb: "https://img.youtube.com/vi/1ZYbU82GVz4/maxresdefault.jpg" },
-  { id: "fm6", title: "SA Gospel Praise Mix", videoId: "DlqOIMal8FQ", artist: "Gospel SA", genre: "Gospel", thumb: "https://img.youtube.com/vi/2P-6JpHN4RU/maxresdefault.jpg" },
-  { id: "fm7", title: "DJ Maphorisa & Xduppy — Ngomoya Album", videoId: "sc5-g-fmlyg", artist: "DJ Maphorisa", genre: "Amapiano", thumb: "https://img.youtube.com/vi/sc5-g-fmlyg/maxresdefault.jpg" },
-  { id: "fm8", title: "Best Amapiano Mix Vol.179", videoId: "0tMGChhzIRw", artist: "DJ Webaba", genre: "Amapiano", thumb: "https://img.youtube.com/vi/0tMGChhzIRw/maxresdefault.jpg" },
-  { id: "fm9",  title: "Top Hits 2025 — TikTok Viral Songs Mix", videoId: "UN5t2BxBUos", artist: "Various Artists", genre: "Pop/Hits", thumb: "https://img.youtube.com/vi/UN5t2BxBUos/maxresdefault.jpg" },
-  { id: "fm10", title: "Top 40 Global Songs 2025", videoId: "9vSdEHTVWGY", artist: "Global Hits", genre: "Pop/Dance", thumb: "https://img.youtube.com/vi/9vSdEHTVWGY/maxresdefault.jpg" },
-  { id: "fm11", title: "Mega Hit List 2025 — Top Songs Right Now", videoId: "1AzkGpeUQZI", artist: "Chart Toppers", genre: "International", thumb: "https://img.youtube.com/vi/1AzkGpeUQZI/maxresdefault.jpg" },
-  { id: "fm12", title: "Top Hits 2025 — Best Viral Songs Mix", videoId: "4V_qMmAdCCA", artist: "Various Artists", genre: "Viral Hits", thumb: "https://img.youtube.com/vi/4V_qMmAdCCA/maxresdefault.jpg" },
-  { id: "fm13", title: "Top Hits 2025 — Summer Playlist", videoId: "vp2ZoXIFJfw", artist: "Various Artists", genre: "Pop/Summer", thumb: "https://img.youtube.com/vi/vp2ZoXIFJfw/maxresdefault.jpg" },
-  { id: "fm14", title: "Top Hits 2025 — Summer Vibes Spotify Mix", videoId: "DjXDJ8ZD5BA", artist: "Various Artists", genre: "Pop/Vibes", thumb: "https://img.youtube.com/vi/DjXDJ8ZD5BA/maxresdefault.jpg" },
-  { id: "fm15", title: "🔥 Top Hits 2026 — Viral TikTok & Spotify Mix", videoId: "sZ69g4xwKyE", artist: "Various Artists", genre: "2026 Hits", thumb: "https://img.youtube.com/vi/sZ69g4xwKyE/maxresdefault.jpg" },
-  { id: "fm16", title: "🎧 Spotify 2026 — Pop Music & TikTok Hits", videoId: "wGo-zo43giA", artist: "Various Artists", genre: "2026 Pop", thumb: "https://img.youtube.com/vi/wGo-zo43giA/maxresdefault.jpg" },
-  { id: "fm17", title: "☀️ Top Hits 2026 — Afro House Summer Mix", videoId: "8KkIw5CjwqA", artist: "Various Artists", genre: "2026/Afro House", thumb: "https://img.youtube.com/vi/8KkIw5CjwqA/maxresdefault.jpg" },
-  { id: "fm18", title: "🎵 Top Music 2026 — Best Pop & TikTok Hits", videoId: "p5Q2bfe-iZI", artist: "Various Artists", genre: "2026 Chart", thumb: "https://img.youtube.com/vi/p5Q2bfe-iZI/maxresdefault.jpg" },
+  // ── AMAPIANO 2026 ────────────────────────────────────────────
+  { id: "am1", title: "Amapiano Mix 22 May 2026 — Romeo Makota Soulful Sunset", videoId: "5ZteaJFFTFY", artist: "Romeo Makota", genre: "Amapiano", thumb: "https://img.youtube.com/vi/5ZteaJFFTFY/maxresdefault.jpg" },
+  { id: "am2", title: "Amapiano 2026 Video Mix Vol.III — Shela", videoId: "1MjTlrkEDZs", artist: "Shela", genre: "Amapiano", thumb: "https://img.youtube.com/vi/1MjTlrkEDZs/maxresdefault.jpg" },
+  { id: "am3", title: "Amapiano Mix April 2026 — Trending Songs", videoId: "IRWLhgPkG7U", artist: "Musicbwoy", genre: "Amapiano", thumb: "https://img.youtube.com/vi/IRWLhgPkG7U/maxresdefault.jpg" },
+  { id: "am4", title: "Amapiano 2026 — New & Trending Afro Vibes", videoId: "Gqe6BfE1RvI", artist: "Various Artists", genre: "Amapiano", thumb: "https://img.youtube.com/vi/Gqe6BfE1RvI/maxresdefault.jpg" },
+  { id: "am5", title: "Amapiano 2026 — WE GLOBAL Vol.I (Fast Fast, AL Xapo)", videoId: "ZvjoyNOE39s", artist: "Various Artists", genre: "Amapiano", thumb: "https://img.youtube.com/vi/ZvjoyNOE39s/maxresdefault.jpg" },
+  { id: "am6", title: "Best of Amapiano Video Mix 2026 — DJ Pere", videoId: "o0WaIJDA4ug", artist: "DJ Pere", genre: "Amapiano", thumb: "https://img.youtube.com/vi/o0WaIJDA4ug/maxresdefault.jpg" },
+  { id: "am7", title: "Amapiano 2026 — Shela, Zep, Snokonoko Video Mix", videoId: "RztpgqHO3c4", artist: "Various Artists", genre: "Amapiano", thumb: "https://img.youtube.com/vi/RztpgqHO3c4/maxresdefault.jpg" },
+  { id: "am8", title: "Amapiano New Year Mix 2026", videoId: "4ngVPKwOJok", artist: "AmapianoGroove", genre: "Amapiano", thumb: "https://img.youtube.com/vi/4ngVPKwOJok/maxresdefault.jpg" },
+  { id: "am9", title: "Amapiano Mix 2025 — Best of Year", videoId: "XZhu91HwUR0", artist: "OSOCITY", genre: "Amapiano", thumb: "https://img.youtube.com/vi/XZhu91HwUR0/maxresdefault.jpg" },
+  { id: "am10", title: "Amapiano Mix December 2025 — Romeo Makota", videoId: "Lgtz-8T3DIc", artist: "Romeo Makota", genre: "Amapiano", thumb: "https://img.youtube.com/vi/Lgtz-8T3DIc/maxresdefault.jpg" },
+  // ── AFRIKAANS ────────────────────────────────────────────────
   { id: "af1", title: "🇿🇦 Afrikaans Treffers Mix 2025 — Dis Doring Tyd", videoId: "rv60h6q6ers", artist: "DJ Dal S.A", genre: "Afrikaans", thumb: "https://img.youtube.com/vi/rv60h6q6ers/maxresdefault.jpg" },
   { id: "af2", title: "🇿🇦 Sondag Mix Vol.10 — Sing Along Afrikaans 2025", videoId: "HVpO8-rBg4o", artist: "DJ KMA CPT", genre: "Afrikaans", thumb: "https://img.youtube.com/vi/HVpO8-rBg4o/maxresdefault.jpg" },
-  { id: "af3", title: "🇿🇦 Afrikaans Is Asemrowend Mix 2025 — Naweek", videoId: "yvLVjAPhvwg", artist: "DJ KMA CPT", genre: "Afrikaans", thumb: "https://img.youtube.com/vi/yvLVjAPhvwg/maxresdefault.jpg" },
+  { id: "af3", title: "🇿🇦 Afrikaans Is Asemrowend Mix 2025 — Naweek Treffers", videoId: "yvLVjAPhvwg", artist: "DJ KMA CPT", genre: "Afrikaans", thumb: "https://img.youtube.com/vi/yvLVjAPhvwg/maxresdefault.jpg" },
   { id: "af4", title: "🇿🇦 Afrikaans Is Tip Top Mix Vol.3 — Plaas Treffers", videoId: "x4Sxa9zFzLA", artist: "DJ KMA CPT", genre: "Afrikaans", thumb: "https://img.youtube.com/vi/x4Sxa9zFzLA/maxresdefault.jpg" },
+  // ── INTERNATIONAL 2026 ───────────────────────────────────────
+  { id: "in1", title: "☀️ Top Hits 2026 — Afro House Summer Mix", videoId: "8KkIw5CjwqA", artist: "Various Artists", genre: "2026 Hits", thumb: "https://img.youtube.com/vi/8KkIw5CjwqA/maxresdefault.jpg" },
+  { id: "in2", title: "🎧 Top Music 2026 — Best Pop & TikTok Hits", videoId: "p5Q2bfe-iZI", artist: "Various Artists", genre: "2026 Hits", thumb: "https://img.youtube.com/vi/p5Q2bfe-iZI/maxresdefault.jpg" },
+  { id: "in3", title: "🔥 Top 40 Global Songs 2025", videoId: "9vSdEHTVWGY", artist: "Global Hits", genre: "International", thumb: "https://img.youtube.com/vi/9vSdEHTVWGY/maxresdefault.jpg" },
+  { id: "in4", title: "🎵 Mega Hit List 2025 — Top Songs Right Now", videoId: "1AzkGpeUQZI", artist: "Chart Toppers", genre: "International", thumb: "https://img.youtube.com/vi/1AzkGpeUQZI/maxresdefault.jpg" },
+  { id: "in5", title: "🌍 Top Hits 2025 — Summer Playlist", videoId: "vp2ZoXIFJfw", artist: "Various Artists", genre: "International", thumb: "https://img.youtube.com/vi/vp2ZoXIFJfw/maxresdefault.jpg" },
+  { id: "in6", title: "🎵 Top Hits 2025 — TikTok Viral Songs Mix", videoId: "UN5t2BxBUos", artist: "Various Artists", genre: "International", thumb: "https://img.youtube.com/vi/UN5t2BxBUos/maxresdefault.jpg" },
+  // ── GOSPEL ───────────────────────────────────────────────────
+  { id: "go1", title: "✝️ SA Gospel Songs Mix 2026 — Powerful African Praise", videoId: "19fyz5lAIJs", artist: "Various Artists", genre: "Gospel", thumb: "https://img.youtube.com/vi/19fyz5lAIJs/maxresdefault.jpg" },
+  { id: "go2", title: "✝️ Best Zulu Gospel 2025 — 1 Hour Powerful Praise", videoId: "sVS1JEV1-i4", artist: "Various Artists", genre: "Gospel", thumb: "https://img.youtube.com/vi/sVS1JEV1-i4/maxresdefault.jpg" },
+  { id: "go3", title: "✝️ Zulu Worship Songs 2025 — Spirit Filled Praise", videoId: "ic-nHpZS0Co", artist: "Various Artists", genre: "Gospel", thumb: "https://img.youtube.com/vi/ic-nHpZS0Co/maxresdefault.jpg" },
+  { id: "go4", title: "✝️ The Best Afro Gospel Playlist 2026", videoId: "MXzPCqviiVI", artist: "Scripture Music", genre: "Gospel", thumb: "https://img.youtube.com/vi/MXzPCqviiVI/maxresdefault.jpg" },
+  { id: "go5", title: "✝️ SA Hymns Medley — Lebo Sekgobela & Ayanda Ntanzi", videoId: "RORRqTZtPkY", artist: "Lebo Sekgobela", genre: "Gospel", thumb: "https://img.youtube.com/vi/RORRqTZtPkY/maxresdefault.jpg" },
+  { id: "go6", title: "✝️ Worship Songs 2025 SA — Spirit-Filled Praise", videoId: "pFbQyZtTCMA", artist: "Various Artists", genre: "Gospel", thumb: "https://img.youtube.com/vi/pFbQyZtTCMA/maxresdefault.jpg" },
+  { id: "go7", title: "✝️ Old SA Gospel Songs Vol.1 2025 Mix", videoId: "xPeYcdTYEP4", artist: "Sibusiso Ketile", genre: "Gospel", thumb: "https://img.youtube.com/vi/xPeYcdTYEP4/maxresdefault.jpg" },
+  // ── RELAXATION ───────────────────────────────────────────────
+  { id: "re1", title: "🧘 African Relaxation Music — Calm & Peace", videoId: "1ZYbU82GVz4", artist: "Relaxing Africa", genre: "Relaxation", thumb: "https://img.youtube.com/vi/1ZYbU82GVz4/maxresdefault.jpg" },
+  { id: "re2", title: "🧘 8 Hours Relaxing Music — Sleep & Study", videoId: "l3RQZ4mcr1Y", artist: "Relaxing Africa", genre: "Relaxation", thumb: "https://img.youtube.com/vi/l3RQZ4mcr1Y/maxresdefault.jpg" },
 ];
-
 // ── NEWS SOURCES (RSS via proxy) ─────────────────────────────
 const NEWS_FEEDS = [
   { label: "🇿🇦 SA News", url: "https://www.news24.com/rss" },
@@ -1287,6 +1298,7 @@ export default function EntertainmentHub() {
             <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "16px", fontWeight: "800", color: "#f0ede8", marginBottom: "8px" }}>🎵 Free Music</div>
             {(() => {
               const genres = ["All", "Amapiano", "Afrikaans", "2026 Hits", "International", "Gospel", "Relaxation"];
+              // Reset filter if no tracks match
               const filtered = musicFilter === "All" ? FREE_MUSIC : FREE_MUSIC.filter(t => t.genre.includes(musicFilter));
               return (
                 <>
