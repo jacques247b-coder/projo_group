@@ -162,7 +162,9 @@ const FREE_MUSIC = [
   { id: "re8",  title: "🧘 Africa 4K — Nature Relaxation Film & Tribal Music", videoId: "u91U8oPJzL8", artist: "Nature Relaxation", genre: "Relaxation", thumb: "https://img.youtube.com/vi/u91U8oPJzL8/maxresdefault.jpg" },
   { id: "re9",  title: "🧘 Ambient African Meditation — Calm & Relaxing Background Music", videoId: "d-asjw9grxM", artist: "Culture Capital Music", genre: "Relaxation", thumb: "https://img.youtube.com/vi/d-asjw9grxM/maxresdefault.jpg" },
   { id: "re10", title: "🧘 8 Hours Relaxing Music — Sleep & Study", videoId: "l3RQZ4mcr1Y", artist: "Relaxing Africa", genre: "Relaxation", thumb: "https://img.youtube.com/vi/l3RQZ4mcr1Y/maxresdefault.jpg" },
-]; PROJO GROUP — Entertainment Hub
+];
+
+// PROJO GROUP — Entertainment Hub
 // Netflix-style entertainment page with YouTube embeds, games, news, local ads
 // Free, legal, no ongoing costs
 import React, { useState, useEffect, useRef } from "react";
