@@ -1397,6 +1397,11 @@ export default function EntertainmentHub() {
   const [showMore, setShowMore] = useState({});
   const [musicFilter, setMusicFilter] = useState('All');
   const [activeNews, setActiveNews] = useState(null);
+
+  // Fetch headlines when news source selected
+  useEffect(() => {
+    if (activeNews) fetchHeadlines(activeNews);
+  }, [activeNews]);
   const [newsHeadlines, setNewsHeadlines] = useState({});
   const [newsLoading, setNewsLoading] = useState(false);
 
@@ -1738,11 +1743,6 @@ export default function EntertainmentHub() {
                   { name: "Netwerk24", url: "https://www.netwerk24.com", desc: "Afrikaans nuus", cat: [0,1], rss: "https://www.netwerk24.com/rss" },
                 ];
                 const filteredNews = NEWS_SOURCES.filter(s => s.cat.includes(newsCategory));
-                // Fetch headlines when source selected
-                React.useEffect(() => {
-                  if (activeNews) fetchHeadlines(activeNews);
-                }, [activeNews]);
-
                 const headlines = activeNews ? (newsHeadlines[activeNews.name] || []) : [];
 
                 return activeNews ? (
