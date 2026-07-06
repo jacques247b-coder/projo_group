@@ -120,6 +120,14 @@ server.listen(PORT, () => {
   console.log(`║  Port: ${PORT}                              ║`);
   console.log("╚════════════════════════════════════════╝");
 
+// Classifieds expiry job — runs every 24 hours
+try {
+  const { runClassifiedsJob } = require("./services/classifiedsJob");
+  runClassifiedsJob(); // run once on startup
+  setInterval(runClassifiedsJob, 24 * 60 * 60 * 1000); // then every 24h
+  console.log("[PROJO Classifieds] Expiry job started");
+} catch (e) { console.log("[PROJO Classifieds] Job skipped:", e.message); }
+
 // Sports notifications — check every 15 minutes
 try {
   const { checkAndNotifyMatches } = require("./services/sportsNotifications");

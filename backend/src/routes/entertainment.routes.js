@@ -13,6 +13,7 @@ router.get("/classifieds",              authenticate, entertainment.getClassifie
 router.get("/classifieds/mine",         authenticate, entertainment.myClassifieds);
 router.post("/classifieds",             authenticate, entertainment.postClassified);
 router.put("/classifieds/:id/mark-sold",authenticate, entertainment.markSold);
-router.delete("/classifieds/:id",       authenticate, entertainment.deleteClassified);
+router.delete("/classifieds/:id",        authenticate, entertainment.deleteClassified);
+router.post("/classifieds/:id/renew",    authenticate, entertainment.renewClassified);
 
 module.exports = router;

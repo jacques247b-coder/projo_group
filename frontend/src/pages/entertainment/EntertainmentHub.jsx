@@ -1471,8 +1471,19 @@ function ClassifiedsTab({ user }) {
                 </div>
                 <span style={{ fontSize:"10px", fontWeight:"700", color:ad.status==="ACTIVE"?"#4ade80":ad.status==="SOLD"?"#f59e0b":"#ef4444", background:`rgba(${ad.status==="ACTIVE"?"74,222,128":ad.status==="SOLD"?"245,158,11":"239,68,68"},0.1)`, borderRadius:"4px", padding:"2px 6px" }}>{ad.status}</span>
               </div>
-              <div style={{ display:"flex", gap:"6px", marginTop:"8px" }}>
+              {ad.expiresAt && (
+                <div style={{ fontSize:"10px", color: new Date(ad.expiresAt) < new Date(Date.now() + 7*24*60*60*1000) ? "#f59e0b" : "#4a3030", marginTop:"4px" }}>
+                  {ad.status === "EXPIRED" ? "⚠️ Expired" : `⏳ Expires ${new Date(ad.expiresAt).toLocaleDateString("en-ZA", {day:"2-digit",month:"short",year:"numeric"})}`}
+                </div>
+              )}
+              <div style={{ display:"flex", gap:"6px", marginTop:"8px", flexWrap:"wrap" }}>
                 {ad.status === "ACTIVE" && <button onClick={() => markSold(ad.id)} style={{ background:"rgba(245,158,11,0.15)", border:"1px solid #f59e0b", borderRadius:"6px", padding:"5px 10px", color:"#f59e0b", fontSize:"11px", fontWeight:"700", cursor:"pointer" }}>Mark Sold</button>}
+                {(ad.status === "EXPIRED" || ad.status === "ACTIVE") && (
+                  <button onClick={async () => {
+                    const res = await fetch(`${API}/entertainment/classifieds/${ad.id}/renew`, { method:"POST", headers });
+                    if (res.ok) { toast.success("✅ Ad renewed for 2 months!"); loadMyAds(); }
+                  }} style={{ background:"rgba(74,222,128,0.15)", border:"1px solid #4ade80", borderRadius:"6px", padding:"5px 10px", color:"#4ade80", fontSize:"11px", fontWeight:"700", cursor:"pointer" }}>🔄 Renew</button>
+                )}
                 <button onClick={() => deleteAd(ad.id)} style={{ background:"rgba(239,68,68,0.1)", border:"1px solid #ef4444", borderRadius:"6px", padding:"5px 10px", color:"#f87171", fontSize:"11px", fontWeight:"700", cursor:"pointer" }}>Delete</button>
               </div>
             </div>

@@ -111,11 +111,27 @@ exports.adminDeleteAd = async (req, res) => {
 
 // ── CLASSIFIEDS ──────────────────────────────────────────────
 
+// POST /api/entertainment/classifieds/:id/renew
+exports.renewClassified = async (req, res) => {
+  try {
+    const classified = await prisma.classified.findUnique({ where: { id: req.params.id } });
+    if (!classified) return res.status(404).json({ error: "Ad not found" });
+    if (classified.userId !== req.user.id) return res.status(403).json({ error: "Not authorized" });
+    const newExpiry = new Date();
+    newExpiry.setMonth(newExpiry.getMonth() + 2);
+    await prisma.classified.update({
+      where: { id: req.params.id },
+      data: { status: "ACTIVE", expiresAt: newExpiry, renewedAt: new Date() },
+    });
+    res.json({ message: "Ad renewed for 2 months!" });
+  } catch (err) { res.status(500).json({ error: "Could not renew" }); }
+};
+
 // GET /api/entertainment/classifieds
 exports.getClassifieds = async (req, res) => {
   try {
     const { category, search } = req.query;
-    const where = { status: "ACTIVE" };
+    const where = { status: "ACTIVE", expiresAt: { gt: new Date() } };
     if (category && category !== "All") where.category = category;
     if (search) where.title = { contains: search, mode: "insensitive" };
     const classifieds = await prisma.classified.findMany({
@@ -132,8 +148,10 @@ exports.postClassified = async (req, res) => {
   try {
     const { title, description, category, price, location, phone, mediaData, mediaType } = req.body;
     if (!title || !description) return res.status(400).json({ error: "Title and description required" });
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + 2);
     const classified = await prisma.classified.create({
-      data: { title, description, category: category || "General", price: price || "", location: location || "", phone: phone || "", mediaData: mediaData || null, mediaType: mediaType || "", userId: req.user.id, status: "ACTIVE" },
+      data: { title, description, category: category || "General", price: price || "", location: location || "", phone: phone || "", mediaData: mediaData || null, mediaType: mediaType || "", userId: req.user.id, status: "ACTIVE", expiresAt },
     });
     res.json({ message: "Ad posted!", classified });
   } catch (err) { res.status(500).json({ error: "Could not post classified" }); }

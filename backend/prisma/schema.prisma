@@ -222,6 +222,8 @@ model Classified {
   mediaData   String?  @db.Text
   mediaType   String   @default("")
   status      String   @default("ACTIVE") // ACTIVE, SOLD, EXPIRED
+  expiresAt   DateTime @default(dbgenerated("NOW() + INTERVAL '2 months'"))
+  renewedAt   DateTime @default(now())
   userId      String
   user        User     @relation(fields: [userId], references: [id])
   createdAt   DateTime @default(now())
