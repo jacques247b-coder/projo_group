@@ -104,4 +104,31 @@ router.get("/:feed", async (req, res) => {
   }
 });
 
+// GET /api/news/book/:id — proxy Gutenberg book text
+router.get("/book/:id", async (req, res) => {
+  const id = parseInt(req.params.id);
+  if (!id || id < 1) return res.status(400).json({ error: "Invalid book ID" });
+
+  const urls = [
+    `https://www.gutenberg.org/cache/epub/${id}/pg${id}.txt`,
+    `https://gutenberg.org/files/${id}/${id}-0.txt`,
+    `https://gutenberg.org/files/${id}/${id}.txt`,
+  ];
+
+  for (const url of urls) {
+    try {
+      const text = await fetchUrl(url);
+      if (text && text.length > 100) {
+        // Clean Gutenberg header/footer
+        const start = text.indexOf("*** START OF");
+        const end = text.indexOf("*** END OF");
+        const cleaned = start > -1 ? text.slice(start + 50, end > -1 ? end : text.length) : text;
+        res.set("Content-Type", "text/plain; charset=utf-8");
+        return res.send(cleaned.slice(0, 100000));
+      }
+    } catch {}
+  }
+  res.status(404).json({ error: "Book not found" });
+});
+
 module.exports = router;
