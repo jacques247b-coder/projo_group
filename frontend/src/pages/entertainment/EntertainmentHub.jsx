@@ -1302,6 +1302,262 @@ function CasinoOffersTab({ user }) {
   );
 }
 
+// ── CLASSIFIEDS ──────────────────────────────────────────────
+function ClassifiedsTab({ user }) {
+  const G = "#e8b84b";
+  const BG2 = "#111111";
+  const BG3 = "#1a1a1a";
+  const BORDER = "rgba(232,184,75,0.15)";
+
+  const CATS = ["All","Vehicles","Property","Electronics","Furniture","Clothing","Jobs","Services","Animals","Food","Other"];
+  const API = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
+  const [ads, setAds] = React.useState([]);
+  const [myAds, setMyAds] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+  const [subTab, setSubTab] = React.useState("browse");
+  const [category, setCategory] = React.useState("All");
+  const [search, setSearch] = React.useState("");
+  const [showForm, setShowForm] = React.useState(false);
+  const [selectedAd, setSelectedAd] = React.useState(null);
+  const [form, setForm] = React.useState({ title:"", description:"", category:"General", price:"", location:"", phone:"", mediaData:null, mediaType:"", mediaName:"" });
+  const [posting, setPosting] = React.useState(false);
+
+  const token = localStorage.getItem("projo_token");
+  const headers = { Authorization: `Bearer ${token}` };
+
+  async function loadAds() {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (category !== "All") params.set("category", category);
+      if (search) params.set("search", search);
+      const res = await fetch(`${API}/entertainment/classifieds?${params}`, { headers });
+      const data = await res.json();
+      setAds(data.classifieds || []);
+    } catch {}
+    setLoading(false);
+  }
+
+  async function loadMyAds() {
+    try {
+      const res = await fetch(`${API}/entertainment/classifieds/mine`, { headers });
+      const data = await res.json();
+      setMyAds(data.classifieds || []);
+    } catch {}
+  }
+
+  React.useEffect(() => { loadAds(); }, [category, search]);
+  React.useEffect(() => { if (subTab === "mine") loadMyAds(); }, [subTab]);
+
+  async function postAd() {
+    if (!form.title || !form.description) return toast.error("Title and description required");
+    setPosting(true);
+    try {
+      const res = await fetch(`${API}/entertainment/classifieds`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (res.ok) {
+        toast.success("✅ Ad posted successfully!");
+        setShowForm(false);
+        setForm({ title:"", description:"", category:"General", price:"", location:"", phone:"", mediaData:null, mediaType:"", mediaName:"" });
+        loadAds();
+      }
+    } catch { toast.error("Could not post ad"); }
+    setPosting(false);
+  }
+
+  async function markSold(id) {
+    try {
+      await fetch(`${API}/entertainment/classifieds/${id}/mark-sold`, { method:"PUT", headers });
+      toast.success("Marked as sold");
+      loadMyAds();
+    } catch {}
+  }
+
+  async function deleteAd(id) {
+    if (!window.confirm("Delete this ad?")) return;
+    try {
+      await fetch(`${API}/entertainment/classifieds/${id}`, { method:"DELETE", headers });
+      toast.success("Ad deleted");
+      loadMyAds(); loadAds();
+    } catch {}
+  }
+
+  const inp = { width:"100%", background:BG3, border:`1px solid ${BORDER}`, borderRadius:"8px", color:"#f0ede8", padding:"10px 12px", fontSize:"13px", outline:"none", fontFamily:"'DM Sans',sans-serif", boxSizing:"border-box", marginBottom:"10px" };
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1rem" }}>
+        <div>
+          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:"16px", fontWeight:"800", color:"#f0ede8" }}>📋 Free Classifieds</div>
+          <div style={{ fontSize:"11px", color:"#6b6760" }}>Buy · Sell · Swap — 100% Free · Rustenburg & surrounds</div>
+        </div>
+        <button onClick={() => setShowForm(true)} style={{ background:G, color:"#0a0a0a", border:"none", borderRadius:"8px", padding:"8px 14px", fontSize:"12px", fontWeight:"700", cursor:"pointer" }}>+ Post Ad</button>
+      </div>
+
+      {/* Sub tabs */}
+      <div style={{ display:"flex", gap:"8px", marginBottom:"1rem" }}>
+        {[["browse","🔍 Browse"],["mine","📝 My Ads"]].map(([k,l]) => (
+          <button key={k} onClick={() => setSubTab(k)} style={{ flex:1, background:subTab===k?"rgba(232,184,75,0.15)":BG2, border:`1px solid ${subTab===k?G:BORDER}`, borderRadius:"10px", padding:"10px", color:subTab===k?G:"#6b6760", fontSize:"13px", fontWeight:"700", cursor:"pointer" }}>{l}</button>
+        ))}
+      </div>
+
+      {subTab === "browse" && (
+        <>
+          {/* Search */}
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Search classifieds..."
+            style={{ ...inp, marginBottom:"10px" }} />
+
+          {/* Category pills */}
+          <div style={{ display:"flex", gap:"6px", overflowX:"auto", marginBottom:"1rem", paddingBottom:"4px" }}>
+            {CATS.map(cat => (
+              <button key={cat} onClick={() => setCategory(cat)} style={{
+                background:category===cat?"rgba(232,184,75,0.15)":BG2,
+                border:`1px solid ${category===cat?G:BORDER}`,
+                borderRadius:"20px", padding:"5px 12px", color:category===cat?G:"#6b6760",
+                fontSize:"11px", fontWeight:"700", cursor:"pointer", whiteSpace:"nowrap", flexShrink:0,
+              }}>{cat}</button>
+            ))}
+          </div>
+
+          {loading ? <div style={{ textAlign:"center", padding:"2rem", color:"#6b6760" }}>Loading ads...</div> : (
+            ads.length === 0 ? (
+              <div style={{ textAlign:"center", padding:"3rem", color:"#6b6760" }}>
+                <div style={{ fontSize:"48px", marginBottom:"12px" }}>📋</div>
+                <div style={{ fontWeight:"700", marginBottom:"8px" }}>No ads yet</div>
+                <div style={{ fontSize:"12px", marginBottom:"16px" }}>Be the first to post a classified in Rustenburg!</div>
+                <button onClick={() => setShowForm(true)} style={{ background:G, color:"#0a0a0a", border:"none", borderRadius:"10px", padding:"12px 24px", fontWeight:"700", cursor:"pointer" }}>Post Free Ad</button>
+              </div>
+            ) : (
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"10px" }}>
+                {ads.map(ad => (
+                  <div key={ad.id} onClick={() => setSelectedAd(ad)} style={{ background:BG2, border:`1px solid ${BORDER}`, borderRadius:"14px", overflow:"hidden", cursor:"pointer" }}>
+                    {ad.mediaData && ad.mediaType?.startsWith("image") && (
+                      <img src={ad.mediaData} alt={ad.title} style={{ width:"100%", height:"130px", objectFit:"cover" }} />
+                    )}
+                    <div style={{ padding:"10px" }}>
+                      <div style={{ fontSize:"10px", color:G, fontWeight:"700", marginBottom:"3px" }}>{ad.category}</div>
+                      <div style={{ fontSize:"13px", fontWeight:"700", color:"#f0ede8", lineHeight:1.3, marginBottom:"4px" }}>{ad.title}</div>
+                      {ad.price && <div style={{ fontSize:"14px", fontWeight:"800", color:G }}>{ad.price.startsWith("R") ? ad.price : `R${ad.price}`}</div>}
+                      <div style={{ fontSize:"10px", color:"#6b6760", marginTop:"4px" }}>📍 {ad.location || "Rustenburg"}</div>
+                      <div style={{ fontSize:"10px", color:"#4a3030", marginTop:"2px" }}>{new Date(ad.createdAt).toLocaleDateString("en-ZA")}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          )}
+        </>
+      )}
+
+      {subTab === "mine" && (
+        <div>
+          {myAds.length === 0 ? (
+            <div style={{ textAlign:"center", padding:"2rem", color:"#6b6760" }}>
+              <div style={{ fontSize:"32px", marginBottom:"8px" }}>📋</div>
+              <div>You haven't posted any ads yet</div>
+              <button onClick={() => { setSubTab("browse"); setShowForm(true); }} style={{ background:G, color:"#0a0a0a", border:"none", borderRadius:"8px", padding:"10px 20px", fontWeight:"700", cursor:"pointer", marginTop:"12px" }}>Post Your First Ad</button>
+            </div>
+          ) : myAds.map(ad => (
+            <div key={ad.id} style={{ background:BG2, border:`1px solid ${BORDER}`, borderRadius:"14px", padding:"1rem", marginBottom:"10px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"6px" }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:"13px", fontWeight:"700", color:"#f0ede8" }}>{ad.title}</div>
+                  <div style={{ fontSize:"11px", color:"#6b6760" }}>{ad.category} {ad.price ? `· ${ad.price.startsWith("R")?ad.price:"R"+ad.price}` : ""}</div>
+                </div>
+                <span style={{ fontSize:"10px", fontWeight:"700", color:ad.status==="ACTIVE"?"#4ade80":ad.status==="SOLD"?"#f59e0b":"#ef4444", background:`rgba(${ad.status==="ACTIVE"?"74,222,128":ad.status==="SOLD"?"245,158,11":"239,68,68"},0.1)`, borderRadius:"4px", padding:"2px 6px" }}>{ad.status}</span>
+              </div>
+              <div style={{ display:"flex", gap:"6px", marginTop:"8px" }}>
+                {ad.status === "ACTIVE" && <button onClick={() => markSold(ad.id)} style={{ background:"rgba(245,158,11,0.15)", border:"1px solid #f59e0b", borderRadius:"6px", padding:"5px 10px", color:"#f59e0b", fontSize:"11px", fontWeight:"700", cursor:"pointer" }}>Mark Sold</button>}
+                <button onClick={() => deleteAd(ad.id)} style={{ background:"rgba(239,68,68,0.1)", border:"1px solid #ef4444", borderRadius:"6px", padding:"5px 10px", color:"#f87171", fontSize:"11px", fontWeight:"700", cursor:"pointer" }}>Delete</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Ad Detail Modal */}
+      {selectedAd && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:1000, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
+          <div style={{ background:BG2, borderRadius:"20px 20px 0 0", padding:"1.5rem", width:"100%", maxWidth:"500px", maxHeight:"85vh", overflowY:"auto" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"1rem" }}>
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:"16px", fontWeight:"800", color:"#f0ede8" }}>{selectedAd.title}</div>
+              <button onClick={() => setSelectedAd(null)} style={{ background:"none", border:"none", color:"#6b6760", fontSize:"20px", cursor:"pointer" }}>✕</button>
+            </div>
+            {selectedAd.mediaData && selectedAd.mediaType?.startsWith("image") && (
+              <img src={selectedAd.mediaData} alt={selectedAd.title} style={{ width:"100%", borderRadius:"12px", marginBottom:"12px", maxHeight:"250px", objectFit:"cover" }} />
+            )}
+            {selectedAd.price && <div style={{ fontFamily:"'Syne',sans-serif", fontSize:"22px", fontWeight:"800", color:G, marginBottom:"8px" }}>{selectedAd.price.startsWith("R")?selectedAd.price:"R"+selectedAd.price}</div>}
+            <div style={{ display:"flex", gap:"8px", marginBottom:"12px", flexWrap:"wrap" }}>
+              <span style={{ background:"rgba(232,184,75,0.1)", color:G, borderRadius:"6px", padding:"3px 8px", fontSize:"11px", fontWeight:"700" }}>{selectedAd.category}</span>
+              <span style={{ background:BG3, color:"#6b6760", borderRadius:"6px", padding:"3px 8px", fontSize:"11px" }}>📍 {selectedAd.location || "Rustenburg"}</span>
+              <span style={{ background:BG3, color:"#6b6760", borderRadius:"6px", padding:"3px 8px", fontSize:"11px" }}>👤 {selectedAd.user?.name}</span>
+            </div>
+            <div style={{ fontSize:"13px", color:"#b8a09a", lineHeight:1.6, marginBottom:"1.25rem" }}>{selectedAd.description}</div>
+            {selectedAd.phone && (
+              <a href={`tel:${selectedAd.phone}`} style={{ display:"block", textAlign:"center", background:"#166534", border:"1px solid #4ade80", borderRadius:"12px", padding:"14px", color:"#4ade80", textDecoration:"none", fontWeight:"800", fontSize:"15px", marginBottom:"8px" }}>
+                📞 Call Seller — {selectedAd.phone}
+              </a>
+            )}
+            <a href={`https://wa.me/${selectedAd.phone?.replace(/\D/g,"")}`} target="_blank" rel="noreferrer" style={{ display:"block", textAlign:"center", background:"#166534", border:"1px solid #25d366", borderRadius:"12px", padding:"12px", color:"#25d366", textDecoration:"none", fontWeight:"800", fontSize:"14px" }}>
+              💬 WhatsApp Seller
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* Post Ad Form */}
+      {showForm && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:1000, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
+          <div style={{ background:BG2, borderRadius:"20px 20px 0 0", padding:"1.5rem", width:"100%", maxWidth:"500px", maxHeight:"90vh", overflowY:"auto" }}>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:"18px", fontWeight:"800", color:G, marginBottom:"4px" }}>📋 Post Free Ad</div>
+            <div style={{ fontSize:"12px", color:"#6b6760", marginBottom:"1.25rem" }}>100% free · Reaches all PROJO app users in Rustenburg</div>
+
+            <input style={inp} placeholder="Ad Title *" value={form.title} onChange={e => setForm(f=>({...f,title:e.target.value}))} />
+            <textarea style={{...inp, minHeight:"80px", resize:"vertical"}} placeholder="Description *" value={form.description} onChange={e => setForm(f=>({...f,description:e.target.value}))} />
+            <select style={inp} value={form.category} onChange={e => setForm(f=>({...f,category:e.target.value}))}>
+              {["General","Vehicles","Property","Electronics","Furniture","Clothing","Jobs","Services","Animals","Food","Other"].map(c => <option key={c}>{c}</option>)}
+            </select>
+            <input style={inp} placeholder="Price (e.g. R500 or Free or Swap)" value={form.price} onChange={e => setForm(f=>({...f,price:e.target.value}))} />
+            <input style={inp} placeholder="Location (e.g. Rustenburg, Phokeng)" value={form.location} onChange={e => setForm(f=>({...f,location:e.target.value}))} />
+            <input style={inp} placeholder="Phone Number *" value={form.phone} onChange={e => setForm(f=>({...f,phone:e.target.value}))} />
+
+            {/* Photo upload */}
+            <div style={{ marginBottom:"10px" }}>
+              <div style={{ fontSize:"11px", color:"#6b6760", marginBottom:"6px" }}>Photo / Video (optional)</div>
+              <input type="file" accept="image/png,image/jpeg,video/mp4" onChange={e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (file.size > 10*1024*1024) return toast.error("Max 10MB");
+                const reader = new FileReader();
+                reader.onload = ev => setForm(f=>({...f,mediaData:ev.target.result,mediaType:file.type,mediaName:file.name}));
+                reader.readAsDataURL(file);
+              }} style={{...inp, padding:"8px"}} />
+              {form.mediaData && form.mediaType?.startsWith("image") && (
+                <img src={form.mediaData} alt="preview" style={{ width:"100%", borderRadius:"8px", marginTop:"8px", maxHeight:"150px", objectFit:"cover" }} />
+              )}
+            </div>
+
+            <div style={{ fontSize:"11px", color:"#6b6760", marginBottom:"12px", lineHeight:1.5 }}>
+              ✓ 100% Free to post · ✓ Visible to all app users · ✓ Contact via phone or WhatsApp
+            </div>
+            <div style={{ display:"flex", gap:"8px" }}>
+              <button onClick={postAd} disabled={posting} style={{ flex:1, background:G, color:"#0a0a0a", border:"none", borderRadius:"10px", padding:"14px", fontWeight:"800", fontSize:"14px", cursor:"pointer" }}>
+                {posting ? "Posting..." : "Post Ad Free 📋"}
+              </button>
+              <button onClick={() => setShowForm(false)} style={{ background:BG3, border:`1px solid ${BORDER}`, borderRadius:"10px", padding:"14px 20px", color:"#6b6760", cursor:"pointer" }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── LOCAL ADS ─────────────────────────────────────────────────
 function LocalAdsTab({ user }) {
   const [ads, setAds] = useState([]);
@@ -2024,6 +2280,9 @@ export default function EntertainmentHub() {
 
         {/* ── CASINO OFFERS TAB ── */}
         {tab === "casino" && <CasinoOffersTab user={user} />}
+
+        {/* ── CLASSIFIEDS TAB ── */}
+        {tab === "classifieds" && <ClassifiedsTab user={user} />}
 
         {/* ── LOCAL ADS TAB ── */}
         {tab === "ads" && <LocalAdsTab user={user} />}

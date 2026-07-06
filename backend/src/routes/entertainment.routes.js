@@ -8,4 +8,11 @@ const entertainment = require("../controllers/entertainment.controller");
 router.get("/ads",  authenticate, entertainment.getAds);
 router.post("/ads", authenticate, entertainment.submitAd);
 
+// Classifieds
+router.get("/classifieds",              authenticate, entertainment.getClassifieds);
+router.get("/classifieds/mine",         authenticate, entertainment.myClassifieds);
+router.post("/classifieds",             authenticate, entertainment.postClassified);
+router.put("/classifieds/:id/mark-sold",authenticate, entertainment.markSold);
+router.delete("/classifieds/:id",       authenticate, entertainment.deleteClassified);
+
 module.exports = router;

@@ -108,3 +108,66 @@ exports.adminDeleteAd = async (req, res) => {
     res.status(500).json({ error: "Could not delete ad" });
   }
 };
+
+// ── CLASSIFIEDS ──────────────────────────────────────────────
+
+// GET /api/entertainment/classifieds
+exports.getClassifieds = async (req, res) => {
+  try {
+    const { category, search } = req.query;
+    const where = { status: "ACTIVE" };
+    if (category && category !== "All") where.category = category;
+    if (search) where.title = { contains: search, mode: "insensitive" };
+    const classifieds = await prisma.classified.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      include: { user: { select: { name: true } } },
+    });
+    res.json({ classifieds });
+  } catch (err) { res.status(500).json({ error: "Could not load classifieds" }); }
+};
+
+// POST /api/entertainment/classifieds
+exports.postClassified = async (req, res) => {
+  try {
+    const { title, description, category, price, location, phone, mediaData, mediaType } = req.body;
+    if (!title || !description) return res.status(400).json({ error: "Title and description required" });
+    const classified = await prisma.classified.create({
+      data: { title, description, category: category || "General", price: price || "", location: location || "", phone: phone || "", mediaData: mediaData || null, mediaType: mediaType || "", userId: req.user.id, status: "ACTIVE" },
+    });
+    res.json({ message: "Ad posted!", classified });
+  } catch (err) { res.status(500).json({ error: "Could not post classified" }); }
+};
+
+// PUT /api/entertainment/classifieds/:id/mark-sold
+exports.markSold = async (req, res) => {
+  try {
+    const classified = await prisma.classified.findUnique({ where: { id: req.params.id } });
+    if (!classified) return res.status(404).json({ error: "Ad not found" });
+    if (classified.userId !== req.user.id && req.user.role !== "ADMIN") return res.status(403).json({ error: "Not authorized" });
+    await prisma.classified.update({ where: { id: req.params.id }, data: { status: "SOLD" } });
+    res.json({ message: "Marked as sold" });
+  } catch (err) { res.status(500).json({ error: "Could not update" }); }
+};
+
+// DELETE /api/entertainment/classifieds/:id
+exports.deleteClassified = async (req, res) => {
+  try {
+    const classified = await prisma.classified.findUnique({ where: { id: req.params.id } });
+    if (!classified) return res.status(404).json({ error: "Ad not found" });
+    if (classified.userId !== req.user.id && req.user.role !== "ADMIN") return res.status(403).json({ error: "Not authorized" });
+    await prisma.classified.delete({ where: { id: req.params.id } });
+    res.json({ message: "Ad deleted" });
+  } catch (err) { res.status(500).json({ error: "Could not delete" }); }
+};
+
+// GET /api/entertainment/classifieds/mine
+exports.myClassifieds = async (req, res) => {
+  try {
+    const classifieds = await prisma.classified.findMany({
+      where: { userId: req.user.id },
+      orderBy: { createdAt: "desc" },
+    });
+    res.json({ classifieds });
+  } catch (err) { res.status(500).json({ error: "Could not load your ads" }); }
+};

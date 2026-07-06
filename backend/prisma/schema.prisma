@@ -26,6 +26,7 @@ model User {
   wallet       Wallet?
   notifications Notification[]
   localAds      LocalAd[]
+  classifieds   Classified[]
   @@map("users")
 }
 model Wallet {
@@ -208,4 +209,22 @@ model LocalAd {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   @@map("local_ads")
+}
+
+model Classified {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  category    String   @default("General")
+  price       String   @default("")
+  location    String   @default("")
+  phone       String   @default("")
+  mediaData   String?  @db.Text
+  mediaType   String   @default("")
+  status      String   @default("ACTIVE") // ACTIVE, SOLD, EXPIRED
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@map("classifieds")
 }
