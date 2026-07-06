@@ -344,8 +344,9 @@ const TABS = [
   { key: "games",    label: "🎮",  full: "Games" },
   { key: "stream",   label: "📺",  full: "Stream" },
   { key: "reading",  label: "📚",  full: "Reading" },
-  { key: "casino",   label: "🎰",  full: "18+ Casino" },
-  { key: "ads",      label: "🏪",  full: "Deals" },
+  { key: "casino",      label: "🎰",  full: "18+ Casino" },
+  { key: "classifieds", label: "📋",  full: "Classifieds" },
+  { key: "ads",         label: "🏪",  full: "Deals" },
 ];
 
 // ── MINI GAMES ────────────────────────────────────────────────
