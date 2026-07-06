@@ -37,6 +37,7 @@ import PromoCodesPage from "./pages/admin/PromoCodesPage";
 import LandingPage from "./pages/LandingPage";
 import EntertainmentHub from "./pages/entertainment/EntertainmentHub";
 import TravelPage from "./pages/travel/TravelPage";
+import ProjoDating from "./pages/dating/ProjoDating";
 import SportsHubPage from "./pages/sports/SportsHubPage";
 import PushPermissionModal from "./components/ui/PushPermissionModal";
 import DriverSignupPage from "./pages/driver/DriverSignupPage";
@@ -120,6 +121,9 @@ function AppRoutes() {
       } />
       <Route path="/sports" element={
         <Protected><SportsHubPage /></Protected>
+      } />
+      <Route path="/dating" element={
+        <Protected><ProjoDating /></Protected>
       } />
       <Route path="/" element={<Navigate to={homeRoute} replace />} />
 

@@ -81,6 +81,7 @@ export default function Navbar() {
             <Link to="/shop"    style={linkStyle("/shop")}>Services</Link>
             <Link to="/products" style={linkStyle("/products")}>Products</Link>
             <Link to="/sports" style={linkStyle("/sports")}>🏆 Sports & Betting</Link>
+            <Link to="/dating" style={linkStyle("/dating")}>💕 Dating</Link>
             <Link to="/entertainment" style={linkStyle("/entertainment")}>🎬 Entertainment</Link>
             <Link to="/travel" style={linkStyle("/travel")}>✈️ Travel</Link>
             {user?.role === "DRIVER" && <Link to="/driver" style={linkStyle("/driver")}>Driver</Link>}
@@ -147,6 +148,7 @@ export default function Navbar() {
               {drawerLink("/products", "🛍️ Products Shop")}
               {drawerLink("/entertainment", "🎬 Entertainment")}
               {drawerLink("/sports", "🏆 Sports Hub")}
+              {drawerLink("/dating", "💕 PROJO Dating")}
               {drawerLink("/travel", "✈️ Travel")}
               {drawerLink("/bills", "💰 Airtime & Bills")}
               {user && drawerLink("/wallet", "👛 Wallet")}

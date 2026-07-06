@@ -27,6 +27,7 @@ model User {
   notifications Notification[]
   localAds      LocalAd[]
   classifieds   Classified[]
+  datingProfile  DatingProfile?
   @@map("users")
 }
 model Wallet {
@@ -229,4 +230,150 @@ model Classified {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   @@map("classifieds")
+}
+
+// ── PROJO DATING MODELS ──────────────────────────────────────
+
+model DatingProfile {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id])
+  
+  // Basic info
+  displayName       String
+  age               Int
+  gender            String
+  interestedIn      String[] // ["Men","Women","Everyone"]
+  relationshipGoals String[] // ["Serious","Marriage","Casual","Friendship" etc]
+  bio               String   @default("") @db.Text
+  occupation        String   @default("")
+  education         String   @default("")
+  
+  // Location
+  city              String   @default("Rustenburg")
+  suburb            String   @default("")
+  showExactLocation Boolean  @default(false)
+  latitude          Float?
+  longitude         Float?
+  
+  // Lifestyle
+  height            Int?     // cm
+  bodyType          String   @default("")
+  ethnicity         String   @default("")
+  religion          String   @default("")
+  languages         String[] @default(["English"])
+  smoking           String   @default("Non-smoker")
+  drinking          String   @default("Social drinker")
+  children          String   @default("No children")
+  pets              String   @default("")
+  
+  // Interests & personality
+  interests         String[]
+  music             String[]
+  movies            String[]
+  
+  // Photos & media
+  photos            String[] // URLs
+  introVideo        String?
+  
+  // Status & premium
+  isVerified        Boolean  @default(false)
+  isPremium         Boolean  @default(false)
+  premiumExpiry     DateTime?
+  isOnline          Boolean  @default(false)
+  lastActive        DateTime @default(now())
+  profileComplete   Int      @default(0) // percentage
+  isActive          Boolean  @default(true)
+  isIncognito       Boolean  @default(false)
+  
+  // Stats
+  likesReceived     Int      @default(0)
+  matchCount        Int      @default(0)
+  profileViews      Int      @default(0)
+  boostActive       Boolean  @default(false)
+  boostExpiry       DateTime?
+  isFeatured        Boolean  @default(false)
+  featuredExpiry    DateTime?
+  
+  // Relations
+  sentLikes         DatingLike[]    @relation("SentLikes")
+  receivedLikes     DatingLike[]    @relation("ReceivedLikes")
+  matches1          DatingMatch[]   @relation("Match1")
+  matches2          DatingMatch[]   @relation("Match2")
+  sentMessages      DatingMessage[] @relation("SentMessages")
+  receivedMessages  DatingMessage[] @relation("ReceivedMessages")
+  blockedUsers      DatingBlock[]   @relation("BlockedBy")
+  blockedByUsers    DatingBlock[]   @relation("BlockedUser")
+  reports           DatingReport[]  @relation("ReportedBy")
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  @@map("dating_profiles")
+}
+
+model DatingLike {
+  id          String   @id @default(uuid())
+  fromId      String
+  toId        String
+  from        DatingProfile @relation("SentLikes", fields: [fromId], references: [id])
+  to          DatingProfile @relation("ReceivedLikes", fields: [toId], references: [id])
+  isSuperLike Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  @@unique([fromId, toId])
+  @@map("dating_likes")
+}
+
+model DatingMatch {
+  id          String   @id @default(uuid())
+  profile1Id  String
+  profile2Id  String
+  profile1    DatingProfile @relation("Match1", fields: [profile1Id], references: [id])
+  profile2    DatingProfile @relation("Match2", fields: [profile2Id], references: [id])
+  compatScore Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  messages    DatingMessage[]
+  @@unique([profile1Id, profile2Id])
+  @@map("dating_matches")
+}
+
+model DatingMessage {
+  id          String   @id @default(uuid())
+  matchId     String
+  match       DatingMatch @relation(fields: [matchId], references: [id])
+  fromId      String
+  toId        String
+  from        DatingProfile @relation("SentMessages", fields: [fromId], references: [id])
+  to          DatingProfile @relation("ReceivedMessages", fields: [toId], references: [id])
+  content     String   @db.Text
+  type        String   @default("text") // text, image, voice, video, gif
+  mediaUrl    String?
+  isRead      Boolean  @default(false)
+  readAt      DateTime?
+  reaction    String?
+  createdAt   DateTime @default(now())
+  @@map("dating_messages")
+}
+
+model DatingBlock {
+  id          String   @id @default(uuid())
+  blockerId   String
+  blockedId   String
+  blocker     DatingProfile @relation("BlockedBy", fields: [blockerId], references: [id])
+  blocked     DatingProfile @relation("BlockedUser", fields: [blockedId], references: [id])
+  createdAt   DateTime @default(now())
+  @@unique([blockerId, blockedId])
+  @@map("dating_blocks")
+}
+
+model DatingReport {
+  id          String   @id @default(uuid())
+  reporterId  String
+  reportedId  String
+  reporter    DatingProfile @relation("ReportedBy", fields: [reporterId], references: [id])
+  reason      String
+  details     String   @default("")
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+  @@map("dating_reports")
 }
