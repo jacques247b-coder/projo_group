@@ -346,7 +346,7 @@ const TABS = [
   { key: "reading",  label: "📚",  full: "Reading" },
   { key: "casino",      label: "🎰",  full: "18+ Casino" },
   { key: "classifieds", label: "📋",  full: "Classifieds" },
-  { key: "ads",         label: "🏪",  full: "Deals" },
+  { key: "ads",         label: "🏪",  full: "Biz Ads" },
 ];
 
 // ── MINI GAMES ────────────────────────────────────────────────
@@ -1624,6 +1624,8 @@ function LocalAdsTab({ user }) {
   const [showSubmit, setShowSubmit] = useState(false);
   const [form, setForm] = useState({ businessName: "", category: "Restaurant", offer: "", price: "", description: "", phone: "", website: "", mediaData: null, mediaType: null, mediaName: null, isPaid: false });
   const [submitting, setSubmitting] = useState(false);
+  const [bizTC, setBizTC] = useState(false);
+  const [showBizTC, setShowBizTC] = useState(false);
 
   const CATEGORIES = ["Restaurant","Retail","Service","Health","Beauty","Auto","Property","Events","Other"];
 
@@ -1661,8 +1663,8 @@ function LocalAdsTab({ user }) {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
         <div>
-          <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "16px", fontWeight: "800", color: "#f0ede8" }}>🏪 Local Business Deals</div>
-          <div style={{ fontSize: "11px", color: "#6b6760" }}>Exclusive deals from Rustenburg businesses</div>
+          <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "16px", fontWeight: "800", color: "#f0ede8" }}>🏪 Business Ads & Deals</div>
+          <div style={{ fontSize: "11px", color: "#6b6760" }}>Promote your business · Reach all PROJO users in Rustenburg</div>
         </div>
         <button onClick={() => setShowSubmit(true)} style={{ background: G, color: "#0a0a0a", border: "none", borderRadius: "8px", padding: "8px 14px", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>
           + Advertise
@@ -1787,6 +1789,33 @@ function LocalAdsTab({ user }) {
               </div>
             </div>
 
+            {/* Business Ads T&Cs */}
+            <div style={{ background:"rgba(232,184,75,0.03)", border:"1px solid rgba(232,184,75,0.15)", borderRadius:"10px", padding:"12px", marginBottom:"12px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"6px" }}>
+                <div style={{ fontSize:"12px", fontWeight:"700", color:G }}>📋 Business Advertising Terms</div>
+                <button onClick={() => setShowBizTC(t=>!t)} style={{ background:"none", border:"none", color:G, fontSize:"11px", cursor:"pointer", fontWeight:"700" }}>{showBizTC?"Hide ▲":"Read ▼"}</button>
+              </div>
+              {showBizTC && (
+                <div style={{ fontSize:"11px", color:"#a8a49e", lineHeight:1.7, marginBottom:"8px" }}>
+                  <strong style={{color:"#f0ede8"}}>PROJO GROUP — Business Advertising Terms</strong><br/><br/>
+                  <strong style={{color:G}}>1. Eligibility</strong><br/>Only legally operating SA businesses or sole traders may advertise. You confirm your business complies with all applicable South African laws.<br/><br/>
+                  <strong style={{color:G}}>2. Accuracy</strong><br/>All information, offers and prices must be truthful and accurate. PROJO GROUP may remove misleading ads without notice.<br/><br/>
+                  <strong style={{color:G}}>3. Prohibited Content</strong><br/>No false claims, unlicensed financial advice, adult content, illegal products or inappropriate use of competitor brands. Ads must comply with the Consumer Protection Act 68 of 2008 and the Advertising Regulatory Board standards.<br/><br/>
+                  <strong style={{color:G}}>4. Free vs Paid</strong><br/>Basic listings are free and reviewed within 24 hours. Paid promotions (R170/month) include featured placement and weekly social media posts. Paid promotions are non-refundable once activated.<br/><br/>
+                  <strong style={{color:G}}>5. Approval</strong><br/>All ads are reviewed before going live. We may approve, reject or request amendments at our discretion.<br/><br/>
+                  <strong style={{color:G}}>6. Media Rights</strong><br/>You may only submit media you own or have rights to use. By uploading you grant PROJO GROUP a licence to display and share it on the app and social media for the duration of your listing.<br/><br/>
+                  <strong style={{color:G}}>7. Social Media</strong><br/>Paid promotions include one weekly post to PROJO platforms. You grant PROJO GROUP permission to post on your behalf using your provided content.<br/><br/>
+                  <strong style={{color:G}}>8. Liability</strong><br/>PROJO GROUP is an advertising platform only and accepts no liability for transactions between businesses and customers.<br/><br/>
+                  <strong style={{color:G}}>9. Governing Law</strong><br/>Governed by South African law including the CPA 68 of 2008 and the ECT Act 25 of 2002.
+                </div>
+              )}
+              <div onClick={() => setBizTC(t=>!t)} style={{ display:"flex", alignItems:"center", gap:"10px", cursor:"pointer", marginTop:"4px" }}>
+                <div style={{ width:"20px", height:"20px", borderRadius:"4px", border:`2px solid ${bizTC?G:BORDER}`, background:bizTC?"rgba(232,184,75,0.2)":"transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                  {bizTC && <span style={{color:G, fontSize:"12px", fontWeight:"800"}}>✓</span>}
+                </div>
+                <span style={{fontSize:"12px", color:"#a8a49e"}}>I agree to the <span style={{color:G, fontWeight:"700"}}>Business Advertising Terms</span></span>
+              </div>
+            </div>
             <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "12px" }}>
               ✓ Free to submit · ✓ PROJO reviews within 24hrs · ✓ Reaches all app users · ✓ Basic listings are free
             </div>
