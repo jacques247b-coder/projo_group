@@ -40,30 +40,31 @@ function BookReader({ book, onClose }) {
 
   useEffect(() => {
     // Fetch book text from Project Gutenberg
-    const textUrl = `https://www.gutenberg.org/cache/epub/${book.gutenbergId}/pg${book.gutenbergId}.txt`;
-    fetch(`https://projo-group-backend.onrender.com/api/news/proxy?url=${encodeURIComponent(textUrl)}`)
-      .then(r => r.text())
-      .then(data => {
-        // Clean up Gutenberg header/footer
-        const start = data.indexOf("*** START OF");
-        const end = data.indexOf("*** END OF");
-        const cleaned = start > -1 ? data.slice(start + 50, end > -1 ? end : undefined) : data;
-        setText(cleaned.slice(0, 50000)); // first 50k chars
+    // Try multiple Gutenberg URL formats
+    const urls = [
+      `https://www.gutenberg.org/cache/epub/${book.gutenbergId}/pg${book.gutenbergId}.txt`,
+      `https://gutenberg.org/files/${book.gutenbergId}/${book.gutenbergId}-0.txt`,
+      `https://gutenberg.org/files/${book.gutenbergId}/${book.gutenbergId}.txt`,
+    ];
+
+    function tryFetch(urlList) {
+      if (!urlList.length) {
+        setText("Could not load this book. Try another one.");
         setLoading(false);
-      })
-      .catch(() => {
-        // Fallback: direct fetch
-        fetch(textUrl)
-          .then(r => r.text())
-          .then(data => {
-            const start = data.indexOf("*** START OF");
-            const end = data.indexOf("*** END OF");
-            const cleaned = start > -1 ? data.slice(start + 50, end > -1 ? end : undefined) : data;
-            setText(cleaned.slice(0, 50000));
-            setLoading(false);
-          })
-          .catch(() => { setText("Could not load book. Please try again."); setLoading(false); });
-      });
+        return;
+      }
+      fetch(urlList[0])
+        .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+        .then(data => {
+          const start = data.indexOf("*** START OF");
+          const end = data.indexOf("*** END OF");
+          const cleaned = start > -1 ? data.slice(start + 50, end > -1 ? end : data.length) : data;
+          setText(cleaned.slice(0, 80000));
+          setLoading(false);
+        })
+        .catch(() => tryFetch(urlList.slice(1)));
+    }
+    tryFetch(urls);
 
     // Load saved progress
     const saved = localStorage.getItem(`projo_book_${book.gutenbergId}`);
