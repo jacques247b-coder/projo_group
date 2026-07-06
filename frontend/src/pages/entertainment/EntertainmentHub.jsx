@@ -1321,7 +1321,9 @@ function ClassifiedsTab({ user }) {
   const [search, setSearch] = React.useState("");
   const [showForm, setShowForm] = React.useState(false);
   const [selectedAd, setSelectedAd] = React.useState(null);
-  const [form, setForm] = React.useState({ title:"", description:"", category:"General", price:"", location:"", phone:"", mediaData:null, mediaType:"", mediaName:"" });
+  const [form, setForm] = React.useState({ title:"", description:"", category:"", price:"", location:"", phone:"", mediaData:null, mediaType:"", mediaName:"" });
+  const [tcAccepted, setTcAccepted] = React.useState(false);
+  const [showTC, setShowTC] = React.useState(false);
   const [posting, setPosting] = React.useState(false);
 
   const token = localStorage.getItem("projo_token");
@@ -1353,6 +1355,9 @@ function ClassifiedsTab({ user }) {
 
   async function postAd() {
     if (!form.title || !form.description) return toast.error("Title and description required");
+    if (!form.category) return toast.error("Please select a category");
+    if (!form.phone) return toast.error("Phone number required for buyers to contact you");
+    if (!tcAccepted) return toast.error("Please accept the Terms & Conditions to post");
     setPosting(true);
     try {
       const res = await fetch(`${API}/entertainment/classifieds`, {
@@ -1531,8 +1536,9 @@ function ClassifiedsTab({ user }) {
 
             <input style={inp} placeholder="Ad Title *" value={form.title} onChange={e => setForm(f=>({...f,title:e.target.value}))} />
             <textarea style={{...inp, minHeight:"80px", resize:"vertical"}} placeholder="Description *" value={form.description} onChange={e => setForm(f=>({...f,description:e.target.value}))} />
-            <select style={inp} value={form.category} onChange={e => setForm(f=>({...f,category:e.target.value}))}>
-              {["General","Vehicles","Property","Electronics","Furniture","Clothing","Jobs","Services","Animals","Food","Other"].map(c => <option key={c}>{c}</option>)}
+            <select style={{...inp, color: form.category ? "#f0ede8" : "#6b6760"}} value={form.category} onChange={e => setForm(f=>({...f,category:e.target.value}))}>
+              <option value="" disabled>Select a Category *</option>
+              {["Vehicles","Property","Electronics","Furniture","Clothing","Jobs","Services","Animals","Food","General","Other"].map(c => <option key={c} style={{color:"#f0ede8"}}>{c}</option>)}
             </select>
             <input style={inp} placeholder="Price (e.g. R500 or Free or Swap)" value={form.price} onChange={e => setForm(f=>({...f,price:e.target.value}))} />
             <input style={inp} placeholder="Location (e.g. Rustenburg, Phokeng)" value={form.location} onChange={e => setForm(f=>({...f,location:e.target.value}))} />
@@ -1554,8 +1560,50 @@ function ClassifiedsTab({ user }) {
               )}
             </div>
 
-            <div style={{ fontSize:"11px", color:"#6b6760", marginBottom:"12px", lineHeight:1.5 }}>
-              ✓ 100% Free to post · ✓ Visible to all app users · ✓ Contact via phone or WhatsApp
+            {/* T&Cs */}
+            <div style={{ background:"rgba(232,184,75,0.03)", border:`1px solid ${BORDER}`, borderRadius:"10px", padding:"12px", marginBottom:"12px" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"6px" }}>
+                <div style={{ fontSize:"12px", fontWeight:"700", color:G }}>📋 Posting Rules & Terms</div>
+                <button onClick={() => setShowTC(t => !t)} style={{ background:"none", border:"none", color:G, fontSize:"11px", cursor:"pointer", fontWeight:"700" }}>{showTC ? "Hide ▲" : "Read ▼"}</button>
+              </div>
+              {showTC && (
+                <div style={{ fontSize:"11px", color:"#a8a49e", lineHeight:1.7, marginBottom:"8px" }}>
+                  <strong style={{color:"#f0ede8"}}>PROJO GROUP Free Classifieds — Posting Rules & Terms</strong><br/><br/>
+
+                  <strong style={{color:G}}>1. Eligibility</strong><br/>
+                  You must be 18 years or older to post a classified ad. By posting you confirm you are a resident of South Africa and that the item or service advertised is legally available for sale or trade in South Africa.<br/><br/>
+
+                  <strong style={{color:G}}>2. Honest & Accurate Listings</strong><br/>
+                  All information must be truthful and accurate. Misleading, fraudulent or exaggerated descriptions are prohibited. Photos must be of the actual item being sold — stock images or photos of similar items are not permitted. Price must reflect the actual asking price.<br/><br/>
+
+                  <strong style={{color:G}}>3. Prohibited Content</strong><br/>
+                  The following are strictly not allowed: illegal goods or services; counterfeit, stolen or unlicensed items; weapons, ammunition or explosives; controlled substances or drugs; adult or explicit content; financial services without FSCA registration; any item that violates South African law. PROJO GROUP reserves the right to remove any ad without notice.<br/><br/>
+
+                  <strong style={{color:G}}>4. One Ad Per Item</strong><br/>
+                  Duplicate ads for the same item are not allowed. Listing multiple different items in a single ad is prohibited. Each ad must be placed in the most relevant category — ads in the wrong category may be removed.<br/><br/>
+
+                  <strong style={{color:G}}>5. Ad Expiry & Renewal</strong><br/>
+                  All ads expire automatically after 2 months. You will receive a reminder 7 days before expiry. Expired ads can be renewed for free at any time. It is your responsibility to mark items as sold and remove ads for items no longer available.<br/><br/>
+
+                  <strong style={{color:G}}>6. Contact & Privacy</strong><br/>
+                  Your phone number will be visible to other app users. Do not share banking details, passwords or any sensitive personal information in your ad. PROJO GROUP is not responsible for transactions between buyers and sellers — always meet in a safe public place and use secure payment methods.<br/><br/>
+
+                  <strong style={{color:G}}>7. Safety</strong><br/>
+                  Beware of scams. Never accept overpayments. Never pay upfront for items you haven't seen. PROJO GROUP is a platform only — we are not a party to any transaction and accept no liability for losses arising from classified ad transactions.<br/><br/>
+
+                  <strong style={{color:G}}>8. Reporting</strong><br/>
+                  Users may report suspicious or inappropriate ads. PROJO GROUP reserves the right to remove, edit or suspend any ad or user account that violates these rules. Repeated violations may result in permanent account suspension.<br/><br/>
+
+                  <strong style={{color:G}}>9. Governing Law</strong><br/>
+                  These rules are governed by the laws of South Africa, including the Consumer Protection Act 68 of 2008 and the Electronic Communications and Transactions Act 25 of 2002.
+                </div>
+              )}
+              <div onClick={() => setTcAccepted(t => !t)} style={{ display:"flex", alignItems:"center", gap:"10px", cursor:"pointer", marginTop:"4px" }}>
+                <div style={{ width:"20px", height:"20px", borderRadius:"4px", border:`2px solid ${tcAccepted?G:BORDER}`, background:tcAccepted?"rgba(232,184,75,0.2)":"transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                  {tcAccepted && <span style={{color:G,fontSize:"12px",fontWeight:"800"}}>✓</span>}
+                </div>
+                <span style={{fontSize:"12px", color:"#a8a49e"}}>I have read and agree to the <span style={{color:G,fontWeight:"700"}}>Posting Rules & Terms</span></span>
+              </div>
             </div>
             <div style={{ display:"flex", gap:"8px" }}>
               <button onClick={postAd} disabled={posting} style={{ flex:1, background:G, color:"#0a0a0a", border:"none", borderRadius:"10px", padding:"14px", fontWeight:"800", fontSize:"14px", cursor:"pointer" }}>
