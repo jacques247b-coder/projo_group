@@ -378,6 +378,7 @@ const PROFILES = [
 // ── MAIN APP ──────────────────────────────────────────────────
 export default function ProjoDating() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [tab, setTab] = useState("discover");
   const [showProfile, setShowProfile] = useState(null);
   const [showPremium, setShowPremium] = useState(false);
@@ -434,8 +435,11 @@ export default function ProjoDating() {
       {/* Header */}
       <div style={{ position:"sticky", top:0, zIndex:100, background:"rgba(13,4,24,0.92)", backdropFilter:"blur(24px)", borderBottom:`1px solid ${C.border}`, padding:"12px 1rem" }}>
         <div style={{ maxWidth:"500px", margin:"0 auto", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-          <div style={{ fontFamily:FD, fontSize:"24px", fontWeight:"700", background:`linear-gradient(135deg, ${C.rose}, ${C.gold}, ${C.rose})`, backgroundSize:"200%", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>
-            💕 PROJO DATING
+          <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+            <button onClick={() => navigate("/")} aria-label="Back" style={{ background:"rgba(255,255,255,0.06)", border:`1px solid ${C.border}`, borderRadius:"10px", width:"36px", height:"36px", color:C.text, fontSize:"18px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>←</button>
+            <div style={{ fontFamily:FD, fontSize:"24px", fontWeight:"700", background:`linear-gradient(135deg, ${C.rose}, ${C.gold}, ${C.rose})`, backgroundSize:"200%", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>
+              💕 PROJO DATING
+            </div>
           </div>
           <div style={{ display:"flex", gap:"8px" }}>
             <button onClick={() => setShowFilter(true)} style={{ background:"rgba(232,20,74,0.1)", border:`1px solid ${C.border}`, borderRadius:"10px", padding:"6px 12px", color:C.roseLight, fontSize:"12px", fontWeight:"700", cursor:"pointer" }}>⚙ Filter</button>

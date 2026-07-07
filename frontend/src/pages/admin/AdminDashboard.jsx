@@ -294,13 +294,19 @@ export default function AdminDashboard() {
         {/* ── STATS ── */}
         {!loading && tab === "stats" && (
           <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "10px" }}>
               <button onClick={() => navigate("/admin/analytics")} style={{
                 background: "rgba(232,184,75,0.1)", border: `1px solid ${G}`,
                 borderRadius: "10px", padding: "10px 20px", color: G,
                 fontSize: "13px", fontWeight: "700", cursor: "pointer",
                 display: "flex", alignItems: "center", gap: "8px",
               }}>📈 Business Growth & Analytics</button>
+              <button onClick={() => navigate("/admin/community")} style={{
+                background: "rgba(46,217,180,0.1)", border: "1px solid #2ED9B4",
+                borderRadius: "10px", padding: "10px 20px", color: "#2ED9B4",
+                fontSize: "13px", fontWeight: "700", cursor: "pointer",
+                display: "flex", alignItems: "center", gap: "8px",
+              }}>🛡️ Community Moderation</button>
               <button onClick={() => {
                 const token = localStorage.getItem("projo_token");
                 const url = `${process.env.REACT_APP_API_URL || "http://localhost:5000/api"}/admin/export/emails`;

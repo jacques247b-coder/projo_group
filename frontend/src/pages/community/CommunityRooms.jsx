@@ -80,10 +80,13 @@ export default function CommunityRooms() {
       {/* Header */}
       <div style={{ padding: "1.5rem 1.25rem 1rem", maxWidth: 640, margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
-          <div>
-            <div style={{ fontFamily: FD, fontSize: "28px", fontWeight: 700, color: CC.text }}>Community</div>
-            <div style={{ fontSize: "12.5px", color: CC.textMuted, marginTop: "2px" }}>
-              Anonymous chat rooms — just conversation, no profiles.
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <button onClick={() => navigate("/")} aria-label="Back" style={{ background: CC.card, border: `1px solid ${CC.border}`, borderRadius: "10px", width: "36px", height: "36px", color: CC.text, fontSize: "18px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>←</button>
+            <div>
+              <div style={{ fontFamily: FD, fontSize: "28px", fontWeight: 700, color: CC.text }}>Community</div>
+              <div style={{ fontSize: "12.5px", color: CC.textMuted, marginTop: "2px" }}>
+                Anonymous chat rooms — just conversation, no profiles.
+              </div>
             </div>
           </div>
           {identity && (
