@@ -47,6 +47,8 @@ app.use((err, req, res, next) => {
 
 const { registerCommunitySocket } = require("./sockets/community.socket");
 registerCommunitySocket(io);
+const { registerDatingSocket } = require("./sockets/dating.socket");
+registerDatingSocket(io);
 
 io.on("connection", (socket) => {
   // Driver joins their room

@@ -306,6 +306,9 @@ model DatingProfile {
   blockedUsers      DatingBlock[]   @relation("BlockedBy")
   blockedByUsers    DatingBlock[]   @relation("BlockedUser")
   reports           DatingReport[]  @relation("ReportedBy")
+  sentPasses        DatingPass[]    @relation("SentPasses")
+  receivedPasses    DatingPass[]    @relation("ReceivedPasses")
+  verificationRequests DatingVerificationRequest[]
   
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -365,6 +368,30 @@ model DatingBlock {
   createdAt   DateTime @default(now())
   @@unique([blockerId, blockedId])
   @@map("dating_blocks")
+}
+
+model DatingPass {
+  id        String   @id @default(uuid())
+  fromId    String
+  toId      String
+  from      DatingProfile @relation("SentPasses", fields: [fromId], references: [id])
+  to        DatingProfile @relation("ReceivedPasses", fields: [toId], references: [id])
+  createdAt DateTime @default(now())
+  @@unique([fromId, toId])
+  @@map("dating_passes")
+}
+
+model DatingVerificationRequest {
+  id         String   @id @default(uuid())
+  profileId  String
+  profile    DatingProfile @relation(fields: [profileId], references: [id])
+  selfieUrl  String   @db.Text
+  status     String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  reviewedBy String?
+  reviewNote String   @default("")
+  createdAt  DateTime @default(now())
+  reviewedAt DateTime?
+  @@map("dating_verification_requests")
 }
 
 model DatingReport {

@@ -2,7 +2,10 @@
 // Visual: NW Landscapes + Romantic Silhouettes + Heart Particles
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { io } from "socket.io-client";
 import { useAuth } from "../../context/AuthContext";
+import { datingAPI } from "../../services/api";
+import ProfileSetup from "./ProfileSetup";
 import toast from "react-hot-toast";
 
 const C = {
@@ -12,8 +15,8 @@ const C = {
   border:"rgba(232,20,74,0.2)", borderGold:"rgba(212,175,55,0.3)",
   text:"#F8F0FF", textMuted:"#A89BC2", textDim:"#6B5B8A",
 };
-const FD = "\'Cormorant Garamond\', \'Georgia\', serif";
-const FB = "\'Inter\', sans-serif";
+const FD = "'Cormorant Garamond', 'Georgia', serif";
+const FB = "'Inter', sans-serif";
 
 // ── PREMIUM PHOTO BACKGROUND ────────────────────────────────
 // Split-image romantic silhouette scene (couple video-calling, hearts rising)
@@ -212,17 +215,18 @@ function PremiumModal({ onClose, onActivate }) {
 }
 
 // ── PROFILE DETAIL ───────────────────────────────────────────
-function ProfileDetail({ profile, onClose, onLike, onMessage, isPremium, onSuperLike, superLiked }) {
+function ProfileDetail({ profile, onClose, onLike, onMessage, isPremium, onSuperLike, superLiked, onBlock, onReport }) {
   const [rating, setRating] = useState(0);
   const [showPremium, setShowPremium] = useState(false);
+  const photo = profile.photos?.[0];
 
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.95)", zIndex:200, overflowY:"auto" }}>
       <div style={{ maxWidth:"500px", margin:"0 auto", paddingBottom:"2rem" }}>
         {/* Hero photo */}
-        <div style={{ position:"relative", height:"400px", background:`linear-gradient(135deg, ${C.purple} 0%, ${C.crimson} 50%, #3D0B2B 100%)`, display:"flex", alignItems:"center", justifyContent:"center" }}>
-          <div style={{ fontSize:"120px", filter:"drop-shadow(0 8px 24px rgba(0,0,0,0.6))" }}>{profile.photos[0]}</div>
-          
+        <div style={{ position:"relative", height:"400px", background:photo?`url(${photo}) center/cover`:`linear-gradient(135deg, ${C.purple} 0%, ${C.crimson} 50%, #3D0B2B 100%)`, display:"flex", alignItems:"center", justifyContent:"center" }}>
+          {!photo && <div style={{ fontSize:"120px", filter:"drop-shadow(0 8px 24px rgba(0,0,0,0.6))" }}>🙂</div>}
+
           {/* Gradient overlay */}
           <div style={{ position:"absolute", bottom:0, left:0, right:0, height:"200px", background:"linear-gradient(transparent, rgba(13,4,24,0.98))" }} />
 
@@ -231,8 +235,8 @@ function ProfileDetail({ profile, onClose, onLike, onMessage, isPremium, onSuper
 
           {/* Badges */}
           <div style={{ position:"absolute", top:"16px", right:"16px", display:"flex", flexDirection:"column", gap:"6px", alignItems:"flex-end" }}>
-            {profile.verified && <div style={{ background:"rgba(212,175,55,0.9)", borderRadius:"20px", padding:"4px 12px", fontSize:"11px", fontWeight:"700", color:C.dark }}>✓ Verified</div>}
-            {profile.online && <div style={{ background:"rgba(34,197,94,0.9)", borderRadius:"20px", padding:"4px 12px", fontSize:"11px", fontWeight:"700", color:"#fff" }}>● Online Now</div>}
+            {profile.isVerified && <div style={{ background:"rgba(212,175,55,0.9)", borderRadius:"20px", padding:"4px 12px", fontSize:"11px", fontWeight:"700", color:C.dark }}>✓ Verified</div>}
+            {profile.isOnline && <div style={{ background:"rgba(34,197,94,0.9)", borderRadius:"20px", padding:"4px 12px", fontSize:"11px", fontWeight:"700", color:"#fff" }}>● Online Now</div>}
           </div>
 
           {/* Compat */}
@@ -243,8 +247,8 @@ function ProfileDetail({ profile, onClose, onLike, onMessage, isPremium, onSuper
 
           {/* Name */}
           <div style={{ position:"absolute", bottom:"16px", left:"16px", right:"80px" }}>
-            <div style={{ fontFamily:FD, fontSize:"30px", fontWeight:"700", color:"#fff", letterSpacing:"0.5px" }}>{profile.name}, {profile.age}</div>
-            <div style={{ fontSize:"13px", color:C.rosePale }}>📍 {profile.city} · {profile.distance}km · {profile.job}</div>
+            <div style={{ fontFamily:FD, fontSize:"30px", fontWeight:"700", color:"#fff", letterSpacing:"0.5px" }}>{profile.displayName}, {profile.age}</div>
+            <div style={{ fontSize:"13px", color:C.rosePale }}>📍 {profile.city}{profile._distanceKm != null ? ` · ${profile._distanceKm}km` : ""}{profile.occupation ? ` · ${profile.occupation}` : ""}</div>
           </div>
         </div>
 
@@ -263,7 +267,7 @@ function ProfileDetail({ profile, onClose, onLike, onMessage, isPremium, onSuper
         <div style={{ padding:"0 1rem" }}>
           {/* About */}
           <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, border:`1px solid ${C.border}`, borderRadius:"18px", padding:"1.25rem", marginBottom:"12px" }}>
-            <div style={{ fontFamily:FD, fontSize:"18px", fontWeight:"700", color:C.text, marginBottom:"10px" }}>About {profile.name}</div>
+            <div style={{ fontFamily:FD, fontSize:"18px", fontWeight:"700", color:C.text, marginBottom:"10px" }}>About {profile.displayName}</div>
             <p style={{ fontSize:"14px", color:C.textMuted, lineHeight:1.7, margin:0 }}>{profile.bio}</p>
           </div>
 
@@ -271,7 +275,7 @@ function ProfileDetail({ profile, onClose, onLike, onMessage, isPremium, onSuper
           <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, border:`1px solid ${C.border}`, borderRadius:"18px", padding:"1.25rem", marginBottom:"12px" }}>
             <div style={{ fontFamily:FD, fontSize:"18px", fontWeight:"700", color:C.text, marginBottom:"12px" }}>Profile Details</div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"10px" }}>
-              {[["💼",profile.job,"Occupation"],["📍",`${profile.city}, NW`,"Location"],["🎯",profile.goals[0],"Looking for"],["💬","English","Languages"],["🌟",profile.premium?"Premium":"Free","Member type"],["🏃","Active","Lifestyle"]].map(([icon,val,label]) => (
+              {[["💼",profile.occupation||"—","Occupation"],["📍",profile.city,"Location"],["🎯",profile.relationshipGoals?.[0]||"—","Looking for"],["💬",profile.languages?.join(", ")||"English","Languages"],["🌟",profile.isPremium?"Premium":"Free","Member type"]].map(([icon,val,label]) => (
                 <div key={label} style={{ background:"rgba(255,255,255,0.04)", borderRadius:"12px", padding:"10px 12px" }}>
                   <div style={{ fontSize:"10px", color:C.textDim, marginBottom:"3px", textTransform:"uppercase", letterSpacing:"0.5px" }}>{label}</div>
                   <div style={{ fontSize:"13px", color:C.text, fontWeight:"600", display:"flex", alignItems:"center", gap:"6px" }}><span>{icon}</span>{val}</div>
@@ -284,7 +288,7 @@ function ProfileDetail({ profile, onClose, onLike, onMessage, isPremium, onSuper
           <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, border:`1px solid ${C.border}`, borderRadius:"18px", padding:"1.25rem", marginBottom:"12px" }}>
             <div style={{ fontFamily:FD, fontSize:"18px", fontWeight:"700", color:C.text, marginBottom:"12px" }}>Interests</div>
             <div style={{ display:"flex", flexWrap:"wrap", gap:"8px" }}>
-              {profile.interests.map(i => (
+              {(profile.interests||[]).map(i => (
                 <span key={i} style={{ background:`linear-gradient(135deg, rgba(107,33,168,0.3), rgba(139,0,0,0.2))`, border:"1px solid rgba(107,33,168,0.4)", borderRadius:"20px", padding:"6px 14px", fontSize:"13px", color:C.rosePale }}>
                   {i}
                 </span>
@@ -296,7 +300,7 @@ function ProfileDetail({ profile, onClose, onLike, onMessage, isPremium, onSuper
           <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, border:`1px solid ${C.border}`, borderRadius:"18px", padding:"1.25rem", marginBottom:"12px" }}>
             <div style={{ fontFamily:FD, fontSize:"18px", fontWeight:"700", color:C.text, marginBottom:"12px" }}>Relationship Goals</div>
             <div style={{ display:"flex", flexWrap:"wrap", gap:"8px" }}>
-              {profile.goals.map(g => (
+              {(profile.relationshipGoals||[]).map(g => (
                 <span key={g} style={{ background:"rgba(232,20,74,0.15)", border:`1px solid ${C.border}`, borderRadius:"20px", padding:"6px 14px", fontSize:"13px", color:C.roseLight }}>
                   💝 {g}
                 </span>
@@ -313,8 +317,8 @@ function ProfileDetail({ profile, onClose, onLike, onMessage, isPremium, onSuper
 
           {/* Report / Block */}
           <div style={{ display:"flex", gap:"8px", marginBottom:"2rem" }}>
-            <button style={{ flex:1, background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:"12px", padding:"10px", color:"#f87171", fontSize:"12px", cursor:"pointer" }}>🚫 Block User</button>
-            <button style={{ flex:1, background:"rgba(245,158,11,0.08)", border:"1px solid rgba(245,158,11,0.2)", borderRadius:"12px", padding:"10px", color:"#fbbf24", fontSize:"12px", cursor:"pointer" }}>⚠️ Report</button>
+            <button onClick={() => onBlock?.(profile)} style={{ flex:1, background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:"12px", padding:"10px", color:"#f87171", fontSize:"12px", cursor:"pointer" }}>🚫 Block User</button>
+            <button onClick={() => onReport?.(profile)} style={{ flex:1, background:"rgba(245,158,11,0.08)", border:"1px solid rgba(245,158,11,0.2)", borderRadius:"12px", padding:"10px", color:"#fbbf24", fontSize:"12px", cursor:"pointer" }}>⚠️ Report</button>
           </div>
         </div>
       </div>
@@ -327,31 +331,32 @@ function ProfileDetail({ profile, onClose, onLike, onMessage, isPremium, onSuper
 // ── PROFILE CARD ─────────────────────────────────────────────
 function ProfileCard({ profile, onLike, onPass, onOpen, onSuperLike, superLiked }) {
   const [liked, setLiked] = useState(false);
+  const photo = profile.photos?.[0];
   return (
     <div onClick={() => onOpen?.(profile)} style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, border:`1px solid ${C.border}`, borderRadius:"22px", overflow:"hidden", cursor:"pointer", boxShadow:`0 16px 48px rgba(139,0,0,0.25), 0 0 0 1px rgba(232,20,74,0.08)`, transition:"transform 0.2s" }}
       onMouseEnter={e => e.currentTarget.style.transform="translateY(-3px)"}
       onMouseLeave={e => e.currentTarget.style.transform="translateY(0)"}>
-      <div style={{ position:"relative", height:"280px", background:`linear-gradient(135deg, ${C.purple} 0%, ${C.crimson} 100%)`, display:"flex", alignItems:"center", justifyContent:"center" }}>
-        <div style={{ fontSize:"90px" }}>{profile.photos[0]}</div>
+      <div style={{ position:"relative", height:"280px", background:photo?`url(${photo}) center/cover`:`linear-gradient(135deg, ${C.purple} 0%, ${C.crimson} 100%)`, display:"flex", alignItems:"center", justifyContent:"center" }}>
+        {!photo && <div style={{ fontSize:"90px" }}>🙂</div>}
         <div style={{ position:"absolute", bottom:0, left:0, right:0, height:"140px", background:"linear-gradient(transparent, rgba(13,4,24,0.97))" }} />
         <div style={{ position:"absolute", top:"10px", left:"10px", display:"flex", gap:"5px" }}>
-          {profile.verified && <div style={{ background:"rgba(212,175,55,0.92)", borderRadius:"20px", padding:"3px 9px", fontSize:"10px", fontWeight:"700", color:C.dark }}>✓</div>}
-          {profile.online && <div style={{ background:"rgba(34,197,94,0.9)", borderRadius:"20px", padding:"3px 9px", fontSize:"10px", fontWeight:"700", color:"#fff" }}>●</div>}
-          {profile.premium && <div style={{ background:`linear-gradient(135deg, ${C.gold}, #B8960C)`, borderRadius:"20px", padding:"3px 9px", fontSize:"10px", fontWeight:"700", color:C.dark }}>★</div>}
+          {profile.isVerified && <div style={{ background:"rgba(212,175,55,0.92)", borderRadius:"20px", padding:"3px 9px", fontSize:"10px", fontWeight:"700", color:C.dark }}>✓</div>}
+          {profile.isOnline && <div style={{ background:"rgba(34,197,94,0.9)", borderRadius:"20px", padding:"3px 9px", fontSize:"10px", fontWeight:"700", color:"#fff" }}>●</div>}
+          {profile.isPremium && <div style={{ background:`linear-gradient(135deg, ${C.gold}, #B8960C)`, borderRadius:"20px", padding:"3px 9px", fontSize:"10px", fontWeight:"700", color:C.dark }}>★</div>}
         </div>
         <div style={{ position:"absolute", top:"10px", right:"10px", background:`linear-gradient(135deg, ${C.crimson}, ${C.roseLight})`, borderRadius:"50%", width:"44px", height:"44px", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
           <div style={{ fontSize:"13px", fontWeight:"800", color:"#fff", lineHeight:1 }}>{profile.compatScore}%</div>
           <div style={{ fontSize:"7px", color:"rgba(255,255,255,0.8)" }}>match</div>
         </div>
         <div style={{ position:"absolute", bottom:"12px", left:"14px", right:"14px" }}>
-          <div style={{ fontFamily:FD, fontSize:"22px", fontWeight:"700", color:"#fff" }}>{profile.name}, {profile.age}</div>
-          <div style={{ fontSize:"11px", color:C.rosePale }}>📍 {profile.city} · {profile.distance}km</div>
+          <div style={{ fontFamily:FD, fontSize:"22px", fontWeight:"700", color:"#fff" }}>{profile.displayName}, {profile.age}</div>
+          <div style={{ fontSize:"11px", color:C.rosePale }}>📍 {profile.city}{profile._distanceKm != null ? ` · ${profile._distanceKm}km` : ""}</div>
         </div>
       </div>
       <div style={{ padding:"14px" }}>
-        <p style={{ fontSize:"12px", color:C.textMuted, lineHeight:1.5, margin:"0 0 10px" }}>{profile.bio.slice(0,85)}...</p>
+        <p style={{ fontSize:"12px", color:C.textMuted, lineHeight:1.5, margin:"0 0 10px" }}>{(profile.bio||"").slice(0,85)}{profile.bio?.length > 85 ? "..." : ""}</p>
         <div style={{ display:"flex", gap:"5px", flexWrap:"wrap", marginBottom:"12px" }}>
-          {profile.interests.slice(0,3).map(i => <span key={i} style={{ background:"rgba(107,33,168,0.25)", border:"1px solid rgba(107,33,168,0.4)", borderRadius:"20px", padding:"2px 9px", fontSize:"10px", color:C.rosePale }}>{i}</span>)}
+          {(profile.interests||[]).slice(0,3).map(i => <span key={i} style={{ background:"rgba(107,33,168,0.25)", border:"1px solid rgba(107,33,168,0.4)", borderRadius:"20px", padding:"2px 9px", fontSize:"10px", color:C.rosePale }}>{i}</span>)}
         </div>
         <div style={{ display:"flex", gap:"8px" }} onClick={e => e.stopPropagation()}>
           <button onClick={() => onPass?.(profile)} style={{ width:"44px", height:"44px", borderRadius:"50%", background:"rgba(107,33,168,0.15)", border:"1px solid rgba(107,33,168,0.3)", color:C.textMuted, fontSize:"18px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>✕</button>
@@ -365,84 +370,386 @@ function ProfileCard({ profile, onLike, onPass, onOpen, onSuperLike, superLiked 
   );
 }
 
-// ── SAMPLE DATA ───────────────────────────────────────────────
-const PROFILES = [
-  { id:1, name:"Naledi", age:26, city:"Rustenburg", distance:2, job:"Nurse", bio:"Adventurous soul who loves hiking the Magalies, braaing on weekends, and deep conversations under the stars.", interests:["Hiking","Braai","Travel","Music","Yoga"], photos:["💃"], verified:true, online:true, premium:true, compatScore:94, goals:["Serious Relationship","Long-Term"] },
-  { id:2, name:"Thabo", age:30, city:"Rustenburg", distance:5, job:"Civil Engineer", bio:"Engineer by day, chef by night. I believe food is love. Seeking genuine connection with someone who appreciates authenticity.", interests:["Cooking","Gym","Soccer","Reading"], photos:["🧑"], verified:true, online:false, premium:false, compatScore:87, goals:["Long-Term Relationship"] },
-  { id:3, name:"Sasha", age:24, city:"Brits", distance:45, job:"Teacher", bio:"Passionate about education and dance. Love Sunday drives through the Hartbeespoort area and finding hidden gems.", interests:["Dancing","Books","Art","Nature"], photos:["👩"], verified:false, online:true, premium:true, compatScore:79, goals:["Dating","Friendship"] },
-  { id:4, name:"Lerato", age:28, city:"Rustenburg", distance:3, job:"Entrepreneur", bio:"Building my empire one step at a time. Looking for someone ambitious to share the journey. Wine lover, travel addict.", interests:["Business","Travel","Wine","Movies"], photos:["💁"], verified:true, online:true, premium:true, compatScore:91, goals:["Serious Relationship","Marriage"] },
-  { id:5, name:"Kagiso", age:32, city:"Phokeng", distance:12, job:"Doctor", bio:"Healing hearts medically and hoping to find someone to complete mine. Jazz nights, country drives, and good conversation.", interests:["Jazz","Travel","Cooking","Fitness"], photos:["🧔"], verified:true, online:false, premium:true, compatScore:85, goals:["Marriage","Serious Relationship"] },
-  { id:6, name:"Amara", age:25, city:"Rustenburg", distance:8, job:"Graphic Designer", bio:"I see beauty in everything. My ideal date? Sunset at Sun City followed by stargazing at Pilanesberg.", interests:["Art","Photography","Music","Stargazing"], photos:["🌸"], verified:false, online:true, premium:false, compatScore:76, goals:["Dating","Long-Term"] },
-];
+// ── REPORT MODAL ──────────────────────────────────────────────
+function ReportModal({ profile, onClose, onSubmit }) {
+  const [reason, setReason] = useState("");
+  const [details, setDetails] = useState("");
+  const REASONS = ["Fake profile", "Inappropriate photos", "Harassment", "Scam / soliciting money", "Underage", "Other"];
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:300, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
+      <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px 24px 0 0", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.border}` }}>
+        <div style={{ fontFamily:FD, fontSize:"20px", fontWeight:"700", color:C.text, marginBottom:"4px" }}>Report {profile.displayName}</div>
+        <div style={{ fontSize:"12px", color:C.textMuted, marginBottom:"1rem" }}>Our team reviews every report.</div>
+        <div style={{ display:"flex", flexDirection:"column", gap:"8px", marginBottom:"1rem" }}>
+          {REASONS.map(r => (
+            <div key={r} onClick={() => setReason(r)} style={{ padding:"10px 14px", borderRadius:"10px", cursor:"pointer", border:`1px solid ${reason===r?C.rose:C.border}`, background:reason===r?"rgba(232,20,74,0.12)":"transparent", fontSize:"13px", color:reason===r?C.roseLight:C.textMuted }}>{r}</div>
+          ))}
+        </div>
+        <textarea value={details} onChange={e => setDetails(e.target.value)} placeholder="Additional details (optional)" rows={3} style={{ width:"100%", padding:"10px", borderRadius:"10px", background:C.cardLight, border:`1px solid ${C.border}`, color:C.text, fontSize:"13px", marginBottom:"1rem", fontFamily:FB, resize:"vertical" }} />
+        <div style={{ display:"flex", gap:"10px" }}>
+          <button onClick={onClose} style={{ flex:1, padding:"12px", borderRadius:"12px", background:"none", border:`1px solid ${C.border}`, color:C.textMuted }}>Cancel</button>
+          <button onClick={() => reason ? onSubmit(reason, details) : toast.error("Pick a reason")} style={{ flex:1, padding:"12px", borderRadius:"12px", background:"rgba(245,158,11,0.15)", border:"1px solid rgba(245,158,11,0.4)", color:"#fbbf24", fontWeight:"700" }}>Submit Report</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── VERIFY MODAL ──────────────────────────────────────────────
+function VerifyModal({ onClose, onSubmit }) {
+  const [preview, setPreview] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  function handleFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setPreview(reader.result);
+    reader.readAsDataURL(file);
+  }
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:300, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
+      <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px 24px 0 0", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.borderGold}` }}>
+        <div style={{ fontFamily:FD, fontSize:"20px", fontWeight:"700", color:C.gold, marginBottom:"4px" }}>✓ Get Verified</div>
+        <div style={{ fontSize:"12px", color:C.textMuted, marginBottom:"1rem" }}>Upload a clear selfie. Our team reviews it and adds the verified badge to your profile.</div>
+        <label style={{ aspectRatio:"1", maxWidth:"200px", margin:"0 auto 1rem", borderRadius:"16px", border:`1.5px dashed ${C.borderGold}`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", overflow:"hidden" }}>
+          <input type="file" accept="image/*" onChange={handleFile} style={{ display:"none" }} />
+          {preview ? <img src={preview} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} /> : <span style={{ color:C.textDim, fontSize:"13px" }}>Tap to upload selfie</span>}
+        </label>
+        <div style={{ display:"flex", gap:"10px" }}>
+          <button onClick={onClose} style={{ flex:1, padding:"12px", borderRadius:"12px", background:"none", border:`1px solid ${C.border}`, color:C.textMuted }}>Cancel</button>
+          <button disabled={!preview || submitting} onClick={async () => { setSubmitting(true); await onSubmit(preview); setSubmitting(false); }} style={{ flex:1, padding:"12px", borderRadius:"12px", background:`linear-gradient(135deg, ${C.gold}, #9A7A10)`, border:"none", color:C.dark, fontWeight:"800" }}>
+            {submitting ? "Submitting…" : "Submit for Review"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── BLOCKED LIST MODAL ────────────────────────────────────────
+function BlockedListModal({ blocked, onUnblock, onClose }) {
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:300, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
+      <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px 24px 0 0", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.border}`, maxHeight:"75vh", overflowY:"auto" }}>
+        <div style={{ fontFamily:FD, fontSize:"20px", fontWeight:"700", color:C.text, marginBottom:"1rem" }}>🚫 Blocked Users</div>
+        {blocked.length === 0 ? (
+          <div style={{ color:C.textDim, textAlign:"center", padding:"2rem 0", fontSize:"13px" }}>No one blocked.</div>
+        ) : blocked.map(p => (
+          <div key={p.id} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 0", borderBottom:`1px solid ${C.border}` }}>
+            <span style={{ fontSize:"13px", color:C.text }}>{p.displayName}, {p.age}</span>
+            <button onClick={() => onUnblock(p.id)} style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:"8px", padding:"5px 12px", color:C.roseLight, fontSize:"12px", cursor:"pointer" }}>Unblock</button>
+          </div>
+        ))}
+        <button onClick={onClose} style={{ width:"100%", marginTop:"1rem", padding:"12px", borderRadius:"12px", background:"none", border:`1px solid ${C.border}`, color:C.textMuted }}>Close</button>
+      </div>
+    </div>
+  );
+}
 
 // ── MAIN APP ──────────────────────────────────────────────────
 export default function ProjoDating() {
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // ── Profile / onboarding state ──
+  const [myProfile, setMyProfile] = useState(null);
+  const [usage, setUsage] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+
+  // ── App state ──
   const [tab, setTab] = useState("discover");
   const [showProfile, setShowProfile] = useState(null);
   const [showPremium, setShowPremium] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
-  const [likes, setLikes] = useState([]);
-  const [superLikes, setSuperLikes] = useState([]);
-  const SUPER_LIKES_PER_DAY = 5;
+  const [discoverProfiles, setDiscoverProfiles] = useState([]);
+  const [discoverLoading, setDiscoverLoading] = useState(false);
   const [matches, setMatches] = useState([]);
+  const [likedMe, setLikedMe] = useState({ count: 0, profiles: [], premiumRequired: true });
   const [messages, setMessages] = useState({});
   const [msgInput, setMsgInput] = useState("");
   const [activeMatch, setActiveMatch] = useState(null);
   const [showFilter, setShowFilter] = useState(false);
-  const [profileRatings, setProfileRatings] = useState({});
+  const [filters, setFilters] = useState({ ageMin: 18, ageMax: 60, maxDistanceKm: "" });
+  const [typingMatchId, setTypingMatchId] = useState(null);
+  const [showReport, setShowReport] = useState(null);
+  const [showVerify, setShowVerify] = useState(false);
+  const [showBlockedList, setShowBlockedList] = useState(false);
+  const [blockedProfiles, setBlockedProfiles] = useState([]);
+  const [verifyStatus, setVerifyStatus] = useState(null);
 
-  function handleSuperLike(profile) {
-    if (!isPremium) { setShowPremium(true); return; }
-    if (superLikes.includes(profile.id)) return;
-    if (superLikes.length >= SUPER_LIKES_PER_DAY) {
-      toast.error(`You've used all ${SUPER_LIKES_PER_DAY} Super Likes for today — more tomorrow!`);
-      return;
-    }
-    setSuperLikes(p => [...p, profile.id]);
-    if (!likes.includes(profile.id)) setLikes(p => [...p, profile.id]);
-    // Super Likes make a strong impression — guaranteed match
-    setTimeout(() => {
-      setMatches(p => (p.some(m => m.id === profile.id) ? p : [...p, profile]));
+  const socketRef = useRef(null);
+  const isPremium = !!myProfile?.isPremium;
+
+  // ── Load my profile on mount ──
+  useEffect(() => {
+    (async () => {
+      setProfileLoading(true);
+      try {
+        const res = await datingAPI.getMe();
+        setMyProfile(res.profile);
+        setUsage(res.usage);
+      } catch (e) {
+        toast.error("Couldn't load your dating profile");
+      } finally {
+        setProfileLoading(false);
+      }
+    })();
+  }, []);
+
+  // ── Once we have a profile: connect socket, load discover/matches/liked-me ──
+  useEffect(() => {
+    if (!myProfile) return;
+    loadDiscover();
+    loadMatches();
+    loadLikedMe();
+
+    const sock = io(process.env.REACT_APP_API_URL?.replace("/api", "") || "http://localhost:5000", { transports: ["websocket"] });
+    socketRef.current = sock;
+    sock.emit("dating:join", { profileId: myProfile.id });
+
+    sock.on("dating:new_message", (message) => {
+      setMessages(prev => ({ ...prev, [message.matchId]: [...(prev[message.matchId] || []), message] }));
+      loadMatches();
+    });
+    sock.on("dating:new_match", () => {
       toast.custom(() => (
-        <div style={{ background:`linear-gradient(135deg, ${C.gold}, #9A7A10)`, borderRadius:"20px", padding:"20px 28px", textAlign:"center", boxShadow:"0 20px 60px rgba(212,175,55,0.5)" }}>
-          <div style={{ fontSize:"40px", marginBottom:"6px" }}>⭐</div>
-          <div style={{ fontFamily:FD, fontSize:"22px", fontWeight:"700", color:C.dark }}>Super Like Sent!</div>
-          <div style={{ fontSize:"12px", color:C.dark, marginTop:"4px" }}>{profile.name} will see you stood out 💫</div>
+        <div style={{ background:`linear-gradient(135deg, ${C.crimson}, ${C.purpleMid})`, borderRadius:"20px", padding:"20px 28px", textAlign:"center", boxShadow:"0 20px 60px rgba(139,0,0,0.6)" }}>
+          <div style={{ fontSize:"40px", marginBottom:"6px" }}>💝</div>
+          <div style={{ fontFamily:FD, fontSize:"22px", fontWeight:"700", color:"#fff" }}>It's a Match!</div>
+          <div style={{ fontSize:"12px", color:C.rosePale, marginTop:"4px" }}>Someone liked you back 💕</div>
         </div>
       ), { duration: 4000 });
-    }, 500);
+      loadMatches();
+    });
+    sock.on("dating:super_liked", () => {
+      toast("⭐ Someone Super Liked you!", { duration: 3500 });
+      loadLikedMe();
+    });
+    sock.on("dating:user_typing", ({ matchId }) => {
+      setTypingMatchId(matchId);
+      setTimeout(() => setTypingMatchId(t => (t === matchId ? null : t)), 3000);
+    });
+
+    return () => { sock.emit("dating:leave", { profileId: myProfile.id }); sock.disconnect(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myProfile?.id]);
+
+  async function refreshMyProfile() {
+    try {
+      const res = await datingAPI.getMe();
+      setMyProfile(res.profile);
+      setUsage(res.usage);
+    } catch {}
   }
 
-  function handleLike(profile) {
-    if (likes.includes(profile.id)) return;
-    setLikes(p => [...p, profile.id]);
-    if (Math.random() > 0.45) {
-      setTimeout(() => {
-        setMatches(p => [...p, profile]);
-        toast.custom(() => (
-          <div style={{ background:`linear-gradient(135deg, ${C.crimson}, ${C.purpleMid})`, borderRadius:"20px", padding:"20px 28px", textAlign:"center", boxShadow:"0 20px 60px rgba(139,0,0,0.6)" }}>
-            <div style={{ fontSize:"40px", marginBottom:"6px" }}>💝</div>
-            <div style={{ fontFamily:FD, fontSize:"22px", fontWeight:"700", color:"#fff" }}>It's a Match!</div>
-            <div style={{ fontSize:"12px", color:C.rosePale, marginTop:"4px" }}>You and {profile.name} liked each other 💕</div>
-          </div>
-        ), { duration: 4000 });
-      }, 700);
+  async function loadDiscover(customFilters = filters) {
+    setDiscoverLoading(true);
+    try {
+      const params = { ageMin: customFilters.ageMin, ageMax: customFilters.ageMax };
+      if (customFilters.maxDistanceKm) params.maxDistanceKm = customFilters.maxDistanceKm;
+      const res = await datingAPI.getProfiles(params);
+      setDiscoverProfiles(res.profiles || []);
+    } catch (e) {
+      toast.error("Couldn't load profiles");
+    } finally {
+      setDiscoverLoading(false);
     }
   }
 
-  function handleMessage(profile) {
-    setActiveMatch(profile);
-    setTab("messages");
-    setShowProfile(null);
+  async function loadMatches() {
+    try {
+      const res = await datingAPI.getMatches();
+      setMatches(res.matches || []);
+    } catch {}
   }
 
-  function sendMsg(matchId) {
+  async function loadLikedMe() {
+    try {
+      const res = await datingAPI.getLikedMe();
+      setLikedMe(res);
+    } catch {}
+  }
+
+  function otherProfileInMatch(match) {
+    return match.profile1Id === myProfile.id ? match.profile2 : match.profile1;
+  }
+
+  // ── Like / Pass / Super Like / Undo ──
+  async function handleLike(profile, isSuperLike = false) {
+    try {
+      const res = await datingAPI.like(profile.id, isSuperLike);
+      setDiscoverProfiles(prev => prev.filter(p => p.id !== profile.id));
+      setShowProfile(null);
+      if (res.matched) {
+        toast.custom(() => (
+          <div style={{ background: isSuperLike ? `linear-gradient(135deg, ${C.gold}, #9A7A10)` : `linear-gradient(135deg, ${C.crimson}, ${C.purpleMid})`, borderRadius:"20px", padding:"20px 28px", textAlign:"center", boxShadow:"0 20px 60px rgba(139,0,0,0.6)" }}>
+            <div style={{ fontSize:"40px", marginBottom:"6px" }}>{isSuperLike ? "⭐" : "💝"}</div>
+            <div style={{ fontFamily:FD, fontSize:"22px", fontWeight:"700", color: isSuperLike ? C.dark : "#fff" }}>It's a Match!</div>
+            <div style={{ fontSize:"12px", color: isSuperLike ? C.dark : C.rosePale, marginTop:"4px" }}>You and {profile.displayName} liked each other 💕</div>
+          </div>
+        ), { duration: 4000 });
+        loadMatches();
+      } else if (isSuperLike) {
+        toast.success(`⭐ Super Like sent to ${profile.displayName}!`);
+      }
+      refreshMyProfile();
+    } catch (e) {
+      if (e.error?.includes("Premium")) { setShowPremium(true); return; }
+      toast.error(e.error || "Something went wrong");
+    }
+  }
+
+  async function handleSuperLike(profile) {
+    if (!isPremium) { setShowPremium(true); return; }
+    if ((usage?.superLikesUsedToday || 0) >= (usage?.superLikesLimit || 0)) {
+      toast.error(`You've used all ${usage?.superLikesLimit} Super Likes for today — more tomorrow!`);
+      return;
+    }
+    handleLike(profile, true);
+  }
+
+  async function handlePass(profile) {
+    try {
+      await datingAPI.pass(profile.id);
+      setDiscoverProfiles(prev => prev.filter(p => p.id !== profile.id));
+    } catch (e) {
+      toast.error("Something went wrong");
+    }
+  }
+
+  async function handleUndo() {
+    try {
+      const res = await datingAPI.undoPass();
+      if (res.profile) {
+        setDiscoverProfiles(prev => [res.profile, ...prev]);
+        toast.success(`Brought back ${res.profile.displayName}`);
+      }
+    } catch (e) {
+      if (e.error?.includes("Premium")) { setShowPremium(true); return; }
+      toast.error(e.error || "Nothing to undo");
+    }
+  }
+
+  // ── Messaging ──
+  function openMatch(match) {
+    setActiveMatch(match);
+    setTab("messages");
+    if (!messages[match.id]) {
+      datingAPI.getMessages(match.id).then(res => {
+        setMessages(prev => ({ ...prev, [match.id]: res.messages }));
+      }).catch(() => {});
+    }
+  }
+
+  async function sendMsg(matchId) {
     if (!msgInput.trim()) return;
     if (!isPremium) { setShowPremium(true); return; }
-    setMessages(prev => ({ ...prev, [matchId]: [...(prev[matchId]||[]), { from:"me", text:msgInput, time: new Date().toLocaleTimeString("en-ZA",{hour:"2-digit",minute:"2-digit"}) }] }));
+    const content = msgInput;
     setMsgInput("");
+    try {
+      const res = await datingAPI.sendMessage({ matchId, content });
+      setMessages(prev => ({ ...prev, [matchId]: [...(prev[matchId] || []), res.message] }));
+    } catch (e) {
+      toast.error(e.error || "Couldn't send message");
+    }
+  }
+
+  function handleTyping(matchId) {
+    if (!socketRef.current || !activeMatch) return;
+    const other = otherProfileInMatch(activeMatch);
+    socketRef.current.emit("dating:typing", { matchId, toProfileId: other.id });
+  }
+
+  function icebreakers(match) {
+    const other = otherProfileInMatch(match);
+    const shared = (myProfile.interests || []).filter(i => (other.interests || []).includes(i));
+    const opener = shared.length
+      ? `I see we both love ${shared[0]} — what got you into it?`
+      : `Hey ${other.displayName}! What's been the highlight of your week?`;
+    return [opener, `What are you looking for on here?`, `Coffee or something stronger? ☕🍷`];
+  }
+
+  // ── Boost / Incognito ──
+  async function handleBoost() {
+    try {
+      await datingAPI.activateBoost();
+      toast.success("🚀 Boost activated for 30 minutes!");
+      refreshMyProfile();
+    } catch (e) {
+      if (e.error?.includes("Premium")) { setShowPremium(true); return; }
+      toast.error(e.error || "Couldn't activate Boost");
+    }
+  }
+
+  async function handleToggleIncognito() {
+    try {
+      await datingAPI.setIncognito(!myProfile.isIncognito);
+      toast.success(myProfile.isIncognito ? "Incognito Mode off" : "Incognito Mode on — you're browsing privately");
+      refreshMyProfile();
+    } catch (e) {
+      if (e.error?.includes("Premium")) { setShowPremium(true); return; }
+      toast.error(e.error || "Couldn't update");
+    }
+  }
+
+  // ── Block / Report ──
+  async function handleBlock(profile) {
+    try {
+      await datingAPI.block(profile.id);
+      toast.success(`${profile.displayName} blocked`);
+      setShowProfile(null);
+      setDiscoverProfiles(prev => prev.filter(p => p.id !== profile.id));
+    } catch (e) {
+      toast.error("Couldn't block user");
+    }
+  }
+
+  async function handleReportSubmit(reason, details) {
+    try {
+      await datingAPI.report({ reportedId: showReport.id, reason, details });
+      toast.success("Report submitted — thank you");
+      setShowReport(null);
+    } catch (e) {
+      toast.error("Couldn't submit report");
+    }
+  }
+
+  async function openBlockedList() {
+    try {
+      const res = await datingAPI.getBlocked();
+      setBlockedProfiles(res.blocked || []);
+      setShowBlockedList(true);
+    } catch { toast.error("Couldn't load blocked list"); }
+  }
+
+  async function handleUnblock(profileId) {
+    try {
+      await datingAPI.unblock(profileId);
+      setBlockedProfiles(prev => prev.filter(p => p.id !== profileId));
+      toast.success("Unblocked");
+    } catch { toast.error("Couldn't unblock"); }
+  }
+
+  // ── Verification ──
+  useEffect(() => {
+    if (myProfile) datingAPI.getVerificationStatus().then(setVerifyStatus).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myProfile?.isVerified]);
+
+  async function handleVerifySubmit(selfieDataUrl) {
+    try {
+      await datingAPI.requestVerification(selfieDataUrl);
+      toast.success("Submitted! We'll review it shortly.");
+      setShowVerify(false);
+      datingAPI.getVerificationStatus().then(setVerifyStatus).catch(() => {});
+    } catch (e) {
+      toast.error(e.error || "Couldn't submit verification");
+    }
+  }
+
+  function applyFilters() {
+    setShowFilter(false);
+    loadDiscover(filters);
   }
 
   const tabs = [
@@ -451,6 +758,29 @@ export default function ProjoDating() {
     { key:"messages", icon:"💬", label:"Messages" },
     { key:"profile",  icon:"👤", label:"Profile" },
   ];
+
+  // ── Loading / onboarding gates ──
+  if (profileLoading) {
+    return (
+      <div style={{ minHeight:"100vh", background:C.midnight, display:"flex", alignItems:"center", justifyContent:"center", color:C.textMuted, fontFamily:FB }}>
+        Loading PROJO Dating…
+      </div>
+    );
+  }
+
+  if (!myProfile || showEditProfile) {
+    return (
+      <ProfileSetup
+        C={C} FD={FD} FB={FB}
+        existingProfile={myProfile}
+        onCancel={myProfile ? () => setShowEditProfile(false) : undefined}
+        onSaved={async () => {
+          setShowEditProfile(false);
+          await refreshMyProfile();
+        }}
+      />
+    );
+  }
 
   return (
     <div style={{ minHeight:"100vh", background:C.midnight, color:C.text, fontFamily:FB, position:"relative", overflowX:"hidden" }}>
@@ -480,18 +810,34 @@ export default function ProjoDating() {
         {/* ── DISCOVER ── */}
         {tab === "discover" && (
           <div>
-            <div style={{ fontFamily:FD, fontSize:"26px", fontWeight:"700", color:C.text, marginBottom:"4px" }}>Find Your Match 💕</div>
-            <div style={{ fontSize:"12px", color:C.textMuted, marginBottom:"1.25rem" }}>Rustenburg & North West Province</div>
-            {["🔥 Today's Top Picks", "🌟 New Members", "💚 Online Now", "✓ Verified Profiles"].map((section, si) => (
-              <div key={section} style={{ marginBottom:"1.75rem" }}>
-                <div style={{ fontFamily:FD, fontSize:"20px", fontWeight:"700", color:C.text, marginBottom:"12px" }}>{section}</div>
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px" }}>
-                  {PROFILES.slice(si % 3, (si % 3) + 2).map(p => (
-                    <ProfileCard key={p.id} profile={p} onLike={handleLike} onPass={() => {}} onOpen={setShowProfile} onSuperLike={handleSuperLike} superLiked={superLikes.includes(p.id)} />
-                  ))}
-                </div>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:"4px" }}>
+              <div style={{ fontFamily:FD, fontSize:"26px", fontWeight:"700", color:C.text }}>Find Your Match 💕</div>
+              {isPremium && <button onClick={handleUndo} style={{ background:"rgba(212,175,55,0.1)", border:`1px solid ${C.borderGold}`, borderRadius:"10px", padding:"6px 10px", color:C.goldLight, fontSize:"11px", fontWeight:"700", cursor:"pointer" }}>↩ Rewind</button>}
+            </div>
+            <div style={{ fontSize:"12px", color:C.textMuted, marginBottom:"1rem" }}>
+              {myProfile.city} & surrounds
+              {!isPremium && usage && <span> · {Math.max(0, (usage.likesLimit||0) - (usage.likesUsedToday||0))} likes left today</span>}
+            </div>
+            {myProfile.boostActive && myProfile.boostExpiry && new Date(myProfile.boostExpiry) > new Date() && (
+              <div style={{ background:"rgba(212,175,55,0.12)", border:`1px solid ${C.borderGold}`, borderRadius:"12px", padding:"8px 14px", fontSize:"12px", color:C.goldLight, marginBottom:"1rem" }}>
+                🚀 Boost active — you're being shown to more people right now
               </div>
-            ))}
+            )}
+            {discoverLoading ? (
+              <div style={{ textAlign:"center", color:C.textDim, padding:"3rem 0" }}>Finding people near you…</div>
+            ) : discoverProfiles.length === 0 ? (
+              <div style={{ textAlign:"center", padding:"4rem 1.5rem" }}>
+                <div style={{ fontSize:"56px", marginBottom:"12px" }}>🔍</div>
+                <div style={{ fontFamily:FD, fontSize:"20px", color:C.text, marginBottom:"6px" }}>No more profiles right now</div>
+                <div style={{ color:C.textMuted, fontSize:"13px" }}>Check back later, or widen your filters.</div>
+              </div>
+            ) : (
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px" }}>
+                {discoverProfiles.map(p => (
+                  <ProfileCard key={p.id} profile={p} onLike={(pr) => handleLike(pr, false)} onPass={handlePass} onOpen={setShowProfile} onSuperLike={handleSuperLike} superLiked={false} />
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -499,9 +845,30 @@ export default function ProjoDating() {
         {tab === "matches" && (
           <div>
             <div style={{ fontFamily:FD, fontSize:"26px", fontWeight:"700", color:C.text, marginBottom:"4px" }}>Matches 💝</div>
-            <div style={{ fontSize:"12px", color:C.textMuted, marginBottom:"1.25rem" }}>{matches.length} mutual connections</div>
+            <div style={{ fontSize:"12px", color:C.textMuted, marginBottom:"1rem" }}>{matches.length} mutual connections</div>
+
+            {/* Who Liked Me */}
+            <div onClick={() => !isPremium && setShowPremium(true)} style={{ background:`linear-gradient(135deg, rgba(212,175,55,0.12), rgba(139,0,0,0.12))`, border:`1px solid ${C.borderGold}`, borderRadius:"16px", padding:"14px", marginBottom:"1.25rem", cursor: isPremium ? "default" : "pointer" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                <div>
+                  <div style={{ fontWeight:"700", color:C.gold, fontSize:"14px" }}>💌 Liked You ({likedMe.count})</div>
+                  <div style={{ fontSize:"11px", color:C.textMuted, marginTop:"2px" }}>{isPremium ? "See who's interested" : "Upgrade to see who liked you"}</div>
+                </div>
+                {!isPremium && <span style={{ fontSize:"18px" }}>🔒</span>}
+              </div>
+              {likedMe.profiles?.length > 0 && (
+                <div style={{ display:"flex", gap:"8px", marginTop:"10px", overflowX:"auto" }}>
+                  {likedMe.profiles.slice(0,6).map((p,i) => (
+                    <div key={p.id||i} style={{ width:"52px", height:"52px", borderRadius:"50%", flexShrink:0, background: p.blurred ? `linear-gradient(135deg, ${C.purple}, ${C.crimson})` : (p.photos?.[0] ? `url(${p.photos[0]}) center/cover` : `linear-gradient(135deg, ${C.purple}, ${C.crimson})`), filter: p.blurred ? "blur(4px)" : "none", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"20px", border:`2px solid ${C.borderGold}` }}>
+                      {!p.blurred && !p.photos?.[0] && "🙂"}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {matches.length === 0 ? (
-              <div style={{ textAlign:"center", padding:"5rem 2rem" }}>
+              <div style={{ textAlign:"center", padding:"4rem 2rem" }}>
                 <div style={{ fontSize:"64px", marginBottom:"16px" }}>💕</div>
                 <div style={{ fontFamily:FD, fontSize:"24px", color:C.text, marginBottom:"8px" }}>No matches yet</div>
                 <div style={{ color:C.textMuted, marginBottom:"24px" }}>Keep liking profiles to find your match</div>
@@ -509,19 +876,23 @@ export default function ProjoDating() {
               </div>
             ) : (
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px" }}>
-                {matches.map(p => (
-                  <div key={p.id} style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, border:`2px solid rgba(232,20,74,0.35)`, borderRadius:"18px", overflow:"hidden", cursor:"pointer" }} onClick={() => { setActiveMatch(p); setTab("messages"); }}>
-                    <div style={{ height:"150px", background:`linear-gradient(135deg, ${C.crimson}, ${C.purpleMid})`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"64px", position:"relative" }}>
-                      {p.photos[0]}
-                      <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(transparent, rgba(13,4,24,0.9))", padding:"8px 10px" }}>
-                        <div style={{ fontFamily:FD, fontSize:"16px", fontWeight:"700", color:"#fff" }}>{p.name}, {p.age}</div>
+                {matches.map(m => {
+                  const p = otherProfileInMatch(m);
+                  const photo = p.photos?.[0];
+                  return (
+                    <div key={m.id} style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, border:`2px solid rgba(232,20,74,0.35)`, borderRadius:"18px", overflow:"hidden", cursor:"pointer" }} onClick={() => openMatch(m)}>
+                      <div style={{ height:"150px", background:photo?`url(${photo}) center/cover`:`linear-gradient(135deg, ${C.crimson}, ${C.purpleMid})`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"64px", position:"relative" }}>
+                        {!photo && "🙂"}
+                        <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(transparent, rgba(13,4,24,0.9))", padding:"8px 10px" }}>
+                          <div style={{ fontFamily:FD, fontSize:"16px", fontWeight:"700", color:"#fff" }}>{p.displayName}, {p.age}</div>
+                        </div>
+                      </div>
+                      <div style={{ padding:"10px" }}>
+                        <button style={{ width:"100%", background:`linear-gradient(135deg, ${C.crimson}, ${C.purpleMid})`, border:"none", borderRadius:"10px", padding:"9px", color:"#fff", fontSize:"12px", fontWeight:"700", cursor:"pointer" }}>💬 Message</button>
                       </div>
                     </div>
-                    <div style={{ padding:"10px" }}>
-                      <button style={{ width:"100%", background:`linear-gradient(135deg, ${C.crimson}, ${C.purpleMid})`, border:"none", borderRadius:"10px", padding:"9px", color:"#fff", fontSize:"12px", fontWeight:"700", cursor:"pointer" }}>💬 Message</button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -544,42 +915,64 @@ export default function ProjoDating() {
                 <div style={{ fontSize:"48px", marginBottom:"12px" }}>💬</div>
                 <div>Match with someone first!</div>
               </div>
-            ) : matches.map(p => (
-              <div key={p.id} style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, border:`1px solid ${activeMatch?.id===p.id?C.rose:C.border}`, borderRadius:"18px", padding:"1rem", marginBottom:"12px" }}>
-                <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"12px", cursor:"pointer" }} onClick={() => setActiveMatch(activeMatch?.id===p.id?null:p)}>
-                  <div style={{ width:"48px", height:"48px", borderRadius:"50%", background:`linear-gradient(135deg, ${C.crimson}, ${C.purpleMid})`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"24px", flexShrink:0, border:`2px solid ${C.rose}` }}>{p.photos[0]}</div>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontFamily:FD, fontSize:"17px", fontWeight:"700", color:C.text }}>{p.name}</div>
-                    <div style={{ fontSize:"11px", color:p.online?"#22c55e":C.textDim }}>{p.online?"● Online":"Last seen recently"}</div>
+            ) : matches.map(m => {
+              const p = otherProfileInMatch(m);
+              const msgList = messages[m.id] || [];
+              const isOpen = activeMatch?.id === m.id;
+              return (
+                <div key={m.id} style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, border:`1px solid ${isOpen?C.rose:C.border}`, borderRadius:"18px", padding:"1rem", marginBottom:"12px" }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"12px", cursor:"pointer" }} onClick={() => isOpen ? setActiveMatch(null) : openMatch(m)}>
+                    <div style={{ width:"48px", height:"48px", borderRadius:"50%", background:p.photos?.[0]?`url(${p.photos[0]}) center/cover`:`linear-gradient(135deg, ${C.crimson}, ${C.purpleMid})`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"24px", flexShrink:0, border:`2px solid ${C.rose}` }}>{!p.photos?.[0] && "🙂"}</div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontFamily:FD, fontSize:"17px", fontWeight:"700", color:C.text }}>{p.displayName}</div>
+                      <div style={{ fontSize:"11px", color:p.isOnline?"#22c55e":C.textDim }}>
+                        {typingMatchId === m.id ? "typing…" : p.isOnline ? "● Online" : "Last seen recently"}
+                      </div>
+                    </div>
+                    <span style={{ color:C.textDim }}>{isOpen ? "▲" : "▼"}</span>
                   </div>
-                  <span style={{ color:C.textDim }}>{activeMatch?.id===p.id?"▲":"▼"}</span>
+                  {isOpen && (
+                    <>
+                      <div style={{ background:"rgba(0,0,0,0.35)", borderRadius:"12px", padding:"12px", minHeight:"100px", marginBottom:"10px", maxHeight:"220px", overflowY:"auto" }}>
+                        {msgList.length === 0 ? (
+                          <div>
+                            <div style={{ color:C.textDim, fontSize:"13px", textAlign:"center", padding:"1rem 0 1.25rem" }}>
+                              💕 You matched with {p.displayName}!<br/>
+                              <span style={{ fontSize:"11px" }}>{isPremium?"Send a message to get started":"Upgrade to Premium to start chatting"}</span>
+                            </div>
+                            {isPremium && (
+                              <div style={{ display:"flex", flexDirection:"column", gap:"6px" }}>
+                                {icebreakers(m).map((ice, i) => (
+                                  <button key={i} onClick={() => setMsgInput(ice)} style={{ textAlign:"left", background:"rgba(232,20,74,0.1)", border:`1px solid ${C.border}`, borderRadius:"10px", padding:"8px 10px", color:C.rosePale, fontSize:"12px", cursor:"pointer" }}>💡 {ice}</button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : msgList.map((msg) => {
+                          const isMine = msg.fromId === myProfile.id;
+                          return (
+                            <div key={msg.id} style={{ marginBottom:"8px", textAlign:isMine?"right":"left" }}>
+                              <span style={{ background:isMine?`linear-gradient(135deg, ${C.crimson}, ${C.purpleMid})`:"rgba(255,255,255,0.1)", borderRadius:"14px", padding:"8px 14px", fontSize:"13px", color:"#fff", display:"inline-block", maxWidth:"80%" }}>{msg.content}</span>
+                              <div style={{ fontSize:"9px", color:C.textDim, marginTop:"2px" }}>
+                                {new Date(msg.createdAt).toLocaleTimeString("en-ZA",{hour:"2-digit",minute:"2-digit"})}
+                                {isMine && (msg.isRead ? " · Read" : " · Sent")}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div style={{ display:"flex", gap:"8px" }}>
+                        <input value={msgInput} onChange={e => { setMsgInput(e.target.value); handleTyping(m.id); }}
+                          onKeyDown={e => e.key==="Enter" && sendMsg(m.id)}
+                          placeholder={isPremium?"Type a message... 💕":"Premium required to message"}
+                          style={{ flex:1, background:"rgba(255,255,255,0.07)", border:`1px solid ${C.border}`, borderRadius:"12px", color:C.text, padding:"10px 14px", fontSize:"13px", outline:"none" }} />
+                        <button onClick={() => sendMsg(m.id)} style={{ background:`linear-gradient(135deg, ${C.crimson}, ${C.rose})`, border:"none", borderRadius:"12px", padding:"10px 18px", color:"#fff", fontSize:"18px", cursor:"pointer" }}>→</button>
+                      </div>
+                    </>
+                  )}
                 </div>
-                {activeMatch?.id === p.id && (
-                  <>
-                    <div style={{ background:"rgba(0,0,0,0.35)", borderRadius:"12px", padding:"12px", minHeight:"100px", marginBottom:"10px", maxHeight:"220px", overflowY:"auto" }}>
-                      {(messages[p.id]||[]).length === 0 ? (
-                        <div style={{ color:C.textDim, fontSize:"13px", textAlign:"center", padding:"1.5rem 0" }}>
-                          💕 You matched with {p.name}!<br/>
-                          <span style={{ fontSize:"11px" }}>{isPremium?"Send a message to get started":"Upgrade to Premium to start chatting"}</span>
-                        </div>
-                      ) : (messages[p.id]||[]).map((msg,i) => (
-                        <div key={i} style={{ marginBottom:"8px", textAlign:msg.from==="me"?"right":"left" }}>
-                          <span style={{ background:msg.from==="me"?`linear-gradient(135deg, ${C.crimson}, ${C.purpleMid})`:"rgba(255,255,255,0.1)", borderRadius:"14px", padding:"8px 14px", fontSize:"13px", color:"#fff", display:"inline-block", maxWidth:"80%" }}>{msg.text}</span>
-                          <div style={{ fontSize:"9px", color:C.textDim, marginTop:"2px" }}>{msg.time}</div>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{ display:"flex", gap:"8px" }}>
-                      <input value={msgInput} onChange={e => setMsgInput(e.target.value)}
-                        onKeyDown={e => e.key==="Enter" && sendMsg(p.id)}
-                        placeholder={isPremium?"Type a message... 💕":"Premium required to message"}
-                        style={{ flex:1, background:"rgba(255,255,255,0.07)", border:`1px solid ${C.border}`, borderRadius:"12px", color:C.text, padding:"10px 14px", fontSize:"13px", outline:"none" }} />
-                      <button onClick={() => sendMsg(p.id)} style={{ background:`linear-gradient(135deg, ${C.crimson}, ${C.rose})`, border:"none", borderRadius:"12px", padding:"10px 18px", color:"#fff", fontSize:"18px", cursor:"pointer" }}>→</button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -587,14 +980,16 @@ export default function ProjoDating() {
         {tab === "profile" && (
           <div>
             <div style={{ textAlign:"center", marginBottom:"1.5rem" }}>
-              <div style={{ width:"96px", height:"96px", borderRadius:"50%", background:`linear-gradient(135deg, ${C.crimson}, ${C.purpleMid})`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"44px", margin:"0 auto 12px", border:`3px solid ${C.rose}`, boxShadow:`0 0 32px rgba(232,20,74,0.45)` }}>
-                {user?.name?.[0]||"👤"}
+              <div style={{ width:"96px", height:"96px", borderRadius:"50%", background:myProfile.photos?.[0]?`url(${myProfile.photos[0]}) center/cover`:`linear-gradient(135deg, ${C.crimson}, ${C.purpleMid})`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"44px", margin:"0 auto 12px", border:`3px solid ${C.rose}`, boxShadow:`0 0 32px rgba(232,20,74,0.45)` }}>
+                {!myProfile.photos?.[0] && (user?.name?.[0]||"👤")}
               </div>
-              <div style={{ fontFamily:FD, fontSize:"24px", fontWeight:"700", color:C.text }}>{user?.name||"Your Name"}</div>
-              <div style={{ fontSize:"12px", color:C.textMuted }}>Rustenburg, North West</div>
+              <div style={{ fontFamily:FD, fontSize:"24px", fontWeight:"700", color:C.text, display:"flex", alignItems:"center", justifyContent:"center", gap:"6px" }}>
+                {myProfile.displayName}, {myProfile.age} {myProfile.isVerified && <span style={{ color:C.gold, fontSize:"16px" }}>✓</span>}
+              </div>
+              <div style={{ fontSize:"12px", color:C.textMuted }}>{myProfile.city}</div>
             </div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"10px", marginBottom:"1.5rem" }}>
-              {[["💝","Likes",likes.length],["💕","Matches",matches.length],["👁️","Views","47"]].map(([icon,label,val]) => (
+              {[["💝","Likes",myProfile.likesReceived||0],["💕","Matches",myProfile.matchCount||0],["👁️","Views",myProfile.profileViews||0]].map(([icon,label,val]) => (
                 <div key={label} style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, border:`1px solid ${C.border}`, borderRadius:"14px", padding:"14px", textAlign:"center" }}>
                   <div style={{ fontSize:"20px" }}>{icon}</div>
                   <div style={{ fontFamily:FD, fontSize:"24px", fontWeight:"700", color:C.rose }}>{val}</div>
@@ -612,18 +1007,55 @@ export default function ProjoDating() {
                 </div>
               </div>
             )}
-            {[["✏️","Edit Profile","Update your photos and info"],["🔒","Privacy","Incognito, location visibility"],["🛡️","Safety","Block list, report history"],["🔔","Notifications","Matches, messages, likes"],["❓","Help & Support","FAQ, contact PROJO"]].map(item => (
-              <div key={item[0]} style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, border:`1px solid ${C.border}`, borderRadius:"14px", padding:"14px 16px", marginBottom:"8px", display:"flex", justifyContent:"space-between", alignItems:"center", cursor:"pointer" }}>
+            {isPremium && (
+              <button onClick={handleBoost} style={{ width:"100%", marginBottom:"1rem", background:`linear-gradient(135deg, ${C.purpleMid}, ${C.gold})`, border:"none", borderRadius:"14px", padding:"14px", color:"#fff", fontWeight:"700", fontSize:"14px", cursor:"pointer" }}>
+                🚀 {myProfile.boostActive && new Date(myProfile.boostExpiry) > new Date() ? "Boost Active" : "Activate Boost (30 min)"}
+              </button>
+            )}
+            <div onClick={() => setShowEditProfile(true)} style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, border:`1px solid ${C.border}`, borderRadius:"14px", padding:"14px 16px", marginBottom:"8px", display:"flex", justifyContent:"space-between", alignItems:"center", cursor:"pointer" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:"12px" }}>
+                <span style={{ fontSize:"18px" }}>✏️</span>
+                <div>
+                  <div style={{ fontSize:"14px", fontWeight:"600", color:C.text }}>Edit Profile</div>
+                  <div style={{ fontSize:"11px", color:C.textMuted }}>Update your photos and info</div>
+                </div>
+              </div>
+              <span style={{ color:C.textDim }}>›</span>
+            </div>
+            <div onClick={handleToggleIncognito} style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, border:`1px solid ${C.border}`, borderRadius:"14px", padding:"14px 16px", marginBottom:"8px", display:"flex", justifyContent:"space-between", alignItems:"center", cursor:"pointer" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:"12px" }}>
+                <span style={{ fontSize:"18px" }}>🔒</span>
+                <div>
+                  <div style={{ fontSize:"14px", fontWeight:"600", color:C.text }}>Incognito Mode {isPremium ? "" : "(Premium)"}</div>
+                  <div style={{ fontSize:"11px", color:C.textMuted }}>{myProfile.isIncognito ? "On — you're hidden from Discover" : "Browse privately"}</div>
+                </div>
+              </div>
+              <span style={{ color: myProfile.isIncognito ? C.rose : C.textDim }}>{myProfile.isIncognito ? "●" : "○"}</span>
+            </div>
+            {!myProfile.isVerified && (
+              <div onClick={() => setShowVerify(true)} style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, border:`1px solid ${C.border}`, borderRadius:"14px", padding:"14px 16px", marginBottom:"8px", display:"flex", justifyContent:"space-between", alignItems:"center", cursor:"pointer" }}>
                 <div style={{ display:"flex", alignItems:"center", gap:"12px" }}>
-                  <span style={{ fontSize:"18px" }}>{item[0]}</span>
+                  <span style={{ fontSize:"18px" }}>✓</span>
                   <div>
-                    <div style={{ fontSize:"14px", fontWeight:"600", color:C.text }}>{item[1]}</div>
-                    <div style={{ fontSize:"11px", color:C.textMuted }}>{item[2]}</div>
+                    <div style={{ fontSize:"14px", fontWeight:"600", color:C.text }}>Get Verified</div>
+                    <div style={{ fontSize:"11px", color:C.textMuted }}>
+                      {verifyStatus?.latestRequest?.status === "PENDING" ? "Pending review" : verifyStatus?.latestRequest?.status === "REJECTED" ? "Last submission rejected — try again" : "Stand out with a verified badge"}
+                    </div>
                   </div>
                 </div>
                 <span style={{ color:C.textDim }}>›</span>
               </div>
-            ))}
+            )}
+            <div onClick={openBlockedList} style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, border:`1px solid ${C.border}`, borderRadius:"14px", padding:"14px 16px", marginBottom:"8px", display:"flex", justifyContent:"space-between", alignItems:"center", cursor:"pointer" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:"12px" }}>
+                <span style={{ fontSize:"18px" }}>🛡️</span>
+                <div>
+                  <div style={{ fontSize:"14px", fontWeight:"600", color:C.text }}>Safety</div>
+                  <div style={{ fontSize:"11px", color:C.textMuted }}>Blocked users</div>
+                </div>
+              </div>
+              <span style={{ color:C.textDim }}>›</span>
+            </div>
           </div>
         )}
       </div>
@@ -647,11 +1079,13 @@ export default function ProjoDating() {
         <ProfileDetail
           profile={showProfile}
           onClose={() => setShowProfile(null)}
-          onLike={handleLike}
-          onMessage={handleMessage}
+          onLike={(pr) => handleLike(pr, false)}
+          onMessage={(pr) => { const m = matches.find(mm => otherProfileInMatch(mm).id === pr.id); if (m) openMatch(m); }}
           isPremium={isPremium}
           onSuperLike={handleSuperLike}
-          superLiked={superLikes.includes(showProfile.id)}
+          superLiked={false}
+          onBlock={handleBlock}
+          onReport={setShowReport}
         />
       )}
 
@@ -659,8 +1093,30 @@ export default function ProjoDating() {
       {showPremium && (
         <PremiumModal
           onClose={() => setShowPremium(false)}
-          onActivate={() => { setIsPremium(true); setShowPremium(false); toast.success("👑 Welcome to PROJO Premium! 💕"); }}
+          onActivate={async () => {
+            try {
+              await datingAPI.upsertProfile({ isPremium: true });
+              await refreshMyProfile();
+              setShowPremium(false);
+              toast.success("👑 Welcome to PROJO Premium! 💕");
+            } catch { toast.error("Couldn't activate Premium"); }
+          }}
         />
+      )}
+
+      {/* Report Modal */}
+      {showReport && (
+        <ReportModal profile={showReport} onClose={() => setShowReport(null)} onSubmit={handleReportSubmit} />
+      )}
+
+      {/* Verify Modal */}
+      {showVerify && (
+        <VerifyModal onClose={() => setShowVerify(false)} onSubmit={handleVerifySubmit} />
+      )}
+
+      {/* Blocked List Modal */}
+      {showBlockedList && (
+        <BlockedListModal blocked={blockedProfiles} onUnblock={handleUnblock} onClose={() => setShowBlockedList(false)} />
       )}
 
       {/* Filter Modal */}
@@ -668,13 +1124,14 @@ export default function ProjoDating() {
         <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:200, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
           <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px 24px 0 0", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.border}` }}>
             <div style={{ fontFamily:FD, fontSize:"22px", fontWeight:"700", color:C.text, marginBottom:"1.25rem" }}>⚙ Filter Profiles</div>
-            {[["Age range","18 – 45"],["Distance","50km"],["Gender","Women & Men"],["Goals","All relationship types"]].map(([label,val]) => (
-              <div key={label} style={{ display:"flex", justifyContent:"space-between", padding:"12px 0", borderBottom:`1px solid ${C.border}` }}>
-                <span style={{ fontSize:"14px", color:C.textMuted }}>{label}</span>
-                <span style={{ fontSize:"14px", color:C.text, fontWeight:"600" }}>{val}</span>
-              </div>
-            ))}
-            <button onClick={() => setShowFilter(false)} style={{ width:"100%", background:`linear-gradient(135deg, ${C.crimson}, ${C.purpleMid})`, border:"none", borderRadius:"14px", padding:"14px", color:"#fff", fontWeight:"700", fontSize:"15px", cursor:"pointer", marginTop:"1rem" }}>Apply Filters</button>
+            <label style={{ fontSize:"12px", color:C.textMuted, display:"block", marginBottom:"6px" }}>Age range: {filters.ageMin} – {filters.ageMax}</label>
+            <div style={{ display:"flex", gap:"10px", marginBottom:"1rem" }}>
+              <input type="number" min="18" max="99" value={filters.ageMin} onChange={e => setFilters(f => ({...f, ageMin: e.target.value}))} style={{ flex:1, padding:"8px", borderRadius:"8px", background:C.cardLight, border:`1px solid ${C.border}`, color:C.text }} />
+              <input type="number" min="18" max="99" value={filters.ageMax} onChange={e => setFilters(f => ({...f, ageMax: e.target.value}))} style={{ flex:1, padding:"8px", borderRadius:"8px", background:C.cardLight, border:`1px solid ${C.border}`, color:C.text }} />
+            </div>
+            <label style={{ fontSize:"12px", color:C.textMuted, display:"block", marginBottom:"6px" }}>Max distance (km) — leave blank for no limit</label>
+            <input type="number" min="1" placeholder="e.g. 25" value={filters.maxDistanceKm} onChange={e => setFilters(f => ({...f, maxDistanceKm: e.target.value}))} style={{ width:"100%", padding:"10px", borderRadius:"10px", background:C.cardLight, border:`1px solid ${C.border}`, color:C.text, marginBottom:"1rem" }} />
+            <button onClick={applyFilters} style={{ width:"100%", background:`linear-gradient(135deg, ${C.crimson}, ${C.purpleMid})`, border:"none", borderRadius:"14px", padding:"14px", color:"#fff", fontWeight:"700", fontSize:"15px", cursor:"pointer" }}>Apply Filters</button>
           </div>
         </div>
       )}

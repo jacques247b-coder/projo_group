@@ -44,6 +44,7 @@ import DriverSignupPage from "./pages/driver/DriverSignupPage";
 import CommunityRooms from "./pages/community/CommunityRooms";
 import CommunityRoomView from "./pages/community/CommunityRoomView";
 import CommunityModerationPage from "./pages/admin/CommunityModerationPage";
+import DatingVerificationPage from "./pages/admin/DatingVerificationPage";
 
 // Protected route wrapper
 function Protected({ children, roles }) {
@@ -142,6 +143,9 @@ function AppRoutes() {
       } />
       <Route path="/admin/community" element={
         <Protected roles={["ADMIN"]}><CommunityModerationPage /></Protected>
+      } />
+      <Route path="/admin/dating-verification" element={
+        <Protected roles={["ADMIN"]}><DatingVerificationPage /></Protected>
       } />
       <Route path="/" element={<Navigate to={homeRoute} replace />} />
 

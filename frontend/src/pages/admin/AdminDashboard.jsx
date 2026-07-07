@@ -307,6 +307,12 @@ export default function AdminDashboard() {
                 fontSize: "13px", fontWeight: "700", cursor: "pointer",
                 display: "flex", alignItems: "center", gap: "8px",
               }}>🛡️ Community Moderation</button>
+              <button onClick={() => navigate("/admin/dating-verification")} style={{
+                background: "rgba(232,20,74,0.1)", border: "1px solid #E8144A",
+                borderRadius: "10px", padding: "10px 20px", color: "#FF4D7A",
+                fontSize: "13px", fontWeight: "700", cursor: "pointer",
+                display: "flex", alignItems: "center", gap: "8px",
+              }}>✓ Dating Verification</button>
               <button onClick={() => {
                 const token = localStorage.getItem("projo_token");
                 const url = `${process.env.REACT_APP_API_URL || "http://localhost:5000/api"}/admin/export/emails`;

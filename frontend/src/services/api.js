@@ -103,6 +103,44 @@ export const adminAPI = {
   getLiveRides: () => api.get("/admin/rides/live"),
 };
 
+export const datingAPI = {
+  // Profile
+  getProfiles: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return api.get(`/dating/profiles${qs ? `?${qs}` : ""}`);
+  },
+  upsertProfile: (data) => api.post("/dating/profile", data),
+  getMe: () => api.get("/dating/me"),
+  // Like / Pass / Undo
+  like: (toId, isSuperLike = false) => api.post(`/dating/like/${toId}`, { isSuperLike }),
+  pass: (toId) => api.post(`/dating/pass/${toId}`),
+  undoPass: () => api.post("/dating/undo-pass"),
+  // Who liked me
+  getLikedMe: () => api.get("/dating/liked-me"),
+  // Matches & messages
+  getMatches: () => api.get("/dating/matches"),
+  sendMessage: (data) => api.post("/dating/message", data),
+  getMessages: (matchId) => api.get(`/dating/messages/${matchId}`),
+  // Boost & Incognito
+  activateBoost: () => api.post("/dating/boost"),
+  setIncognito: (enabled) => api.post("/dating/incognito", { enabled }),
+  // Photos
+  addPhoto: (dataUrl) => api.post("/dating/photo", { dataUrl }),
+  removePhoto: (index) => api.post("/dating/photo/remove", { index }),
+  // Block & Report
+  block: (profileId) => api.post(`/dating/block/${profileId}`),
+  unblock: (profileId) => api.post(`/dating/unblock/${profileId}`),
+  getBlocked: () => api.get("/dating/blocked"),
+  report: (data) => api.post("/dating/report", data),
+  // Verification
+  requestVerification: (selfieUrl) => api.post("/dating/verify/request", { selfieUrl }),
+  getVerificationStatus: () => api.get("/dating/verify/status"),
+  // Admin
+  adminListPendingVerifications: () => api.get("/dating/admin/verify/pending"),
+  adminApproveVerification: (id) => api.post(`/dating/admin/verify/${id}/approve`),
+  adminRejectVerification: (id, reviewNote) => api.post(`/dating/admin/verify/${id}/reject`, { reviewNote }),
+};
+
 export const communityAPI = {
   // Identity
   getIdentity: () => api.get("/community/identity"),
