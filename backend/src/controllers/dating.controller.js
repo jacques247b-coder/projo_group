@@ -121,11 +121,16 @@ exports.upsertProfile = async (req, res) => {
       }
     }
 
-    const profile = await prisma.datingProfile.upsert({
-      where: { userId: req.user.id },
-      update: { ...data, updatedAt: new Date() },
-      create: { ...data, userId: req.user.id },
-    });
+    // IMPORTANT: prisma.upsert() validates the shape of BOTH the update AND
+    // create objects up front, even if the row already exists and only the
+    // update branch will run — so a partial payload (e.g. just toggling
+    // hasSeenOnboardingTour) always threw 'Argument displayName is missing'
+    // even for existing profiles. Checking existence first and using a
+    // plain update avoids that entirely.
+    const existing = await prisma.datingProfile.findUnique({ where: { userId: req.user.id } });
+    const profile = existing
+      ? await prisma.datingProfile.update({ where: { userId: req.user.id }, data: { ...data, updatedAt: new Date() } })
+      : await prisma.datingProfile.create({ data: { ...data, userId: req.user.id } });
     res.json({ profile });
   } catch (err) {
     console.error("[upsertProfile] Prisma error:", err.message);
