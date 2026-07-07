@@ -166,6 +166,7 @@ function PremiumModal({ onClose, onActivate }) {
       <div style={{ background:`linear-gradient(160deg, #1A0F2E, #0D0418)`, borderRadius:"28px", padding:"1.5rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom, 0px))", width:"100%", maxWidth:"620px", border:`1px solid rgba(212,175,55,0.4)`, maxHeight:"88vh", overflowY:"auto", WebkitOverflowScrolling:"touch", touchAction:"pan-y" }}>
         {/* Animated gold header */}
         <div style={{ textAlign:"center", marginBottom:"1.1rem", position:"relative" }}>
+          <button onClick={onClose} aria-label="Close" style={{ position:"absolute", top:0, right:0, background:"rgba(255,255,255,0.06)", border:`1px solid ${C.border}`, borderRadius:"10px", width:"32px", height:"32px", color:C.text, fontSize:"16px", cursor:"pointer" }}>✕</button>
           <div style={{ fontSize:"44px", marginBottom:"6px" }}>👑</div>
           <div style={{ fontFamily:FD, fontSize:"26px", fontWeight:"700", background:`linear-gradient(135deg, ${C.gold}, ${C.rose}, ${C.gold})`, backgroundSize:"200%", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", marginBottom:"4px" }}>
             PROJO Premium
