@@ -117,6 +117,95 @@ function BookingWidget() {
   );
 }
 
+
+// ── PROJO SUPER APP COLLAGE BACKGROUND ──────────────────────
+// Only the background changes — everything else untouched
+function CollageBackground() {
+  const items = [
+    // Row 1 — top left cluster
+    { emoji:"📚", size:72, x:2,   y:8,   rot:-12, opacity:0.22, blur:0,   scale:1 },
+    { emoji:"🎓", size:56, x:8,   y:4,   rot:8,   opacity:0.18, blur:1,   scale:0.9 },
+    { emoji:"🤖", size:64, x:14,  y:12,  rot:-5,  opacity:0.20, blur:0,   scale:1 },
+    // Top middle
+    { emoji:"✈️", size:80, x:35,  y:3,   rot:15,  opacity:0.20, blur:0,   scale:1.1 },
+    { emoji:"🌍", size:60, x:44,  y:7,   rot:-8,  opacity:0.18, blur:1,   scale:0.95 },
+    { emoji:"📱", size:52, x:52,  y:2,   rot:5,   opacity:0.20, blur:0,   scale:1 },
+    // Top right cluster
+    { emoji:"🎵", size:68, x:72,  y:5,   rot:-10, opacity:0.22, blur:0,   scale:1 },
+    { emoji:"🎮", size:74, x:80,  y:9,   rot:12,  opacity:0.20, blur:1,   scale:1.05 },
+    { emoji:"🏉", size:76, x:90,  y:4,   rot:-15, opacity:0.22, blur:0,   scale:1 },
+    // Left side
+    { emoji:"🔧", size:58, x:1,   y:28,  rot:10,  opacity:0.20, blur:0,   scale:1 },
+    { emoji:"📦", size:64, x:5,   y:38,  rot:-8,  opacity:0.22, blur:1,   scale:0.95 },
+    { emoji:"🚖", size:78, x:0,   y:50,  rot:5,   opacity:0.20, blur:0,   scale:1 },
+    { emoji:"📍", size:52, x:7,   y:62,  rot:-12, opacity:0.22, blur:0,   scale:1 },
+    { emoji:"💼", size:60, x:2,   y:72,  rot:8,   opacity:0.18, blur:1,   scale:0.9 },
+    // Right side
+    { emoji:"🛍️", size:70, x:92,  y:25,  rot:-10, opacity:0.22, blur:0,   scale:1 },
+    { emoji:"🚚", size:80, x:88,  y:38,  rot:6,   opacity:0.20, blur:1,   scale:1.05 },
+    { emoji:"⭐", size:54, x:94,  y:50,  rot:-5,  opacity:0.22, blur:0,   scale:1 },
+    { emoji:"🎰", size:66, x:90,  y:62,  rot:12,  opacity:0.18, blur:1,   scale:0.95 },
+    { emoji:"☕", size:52, x:95,  y:73,  rot:-8,  opacity:0.20, blur:0,   scale:1 },
+    // Center left
+    { emoji:"❤️", size:58, x:18,  y:25,  rot:-15, opacity:0.22, blur:0,   scale:1 },
+    { emoji:"💕", size:48, x:22,  y:35,  rot:10,  opacity:0.20, blur:1,   scale:0.9 },
+    { emoji:"💬", size:62, x:15,  y:44,  rot:-6,  opacity:0.22, blur:0,   scale:1 },
+    { emoji:"🍔", size:60, x:20,  y:56,  rot:8,   opacity:0.20, blur:1,   scale:1 },
+    { emoji:"📰", size:66, x:14,  y:68,  rot:-10, opacity:0.18, blur:0,   scale:0.95 },
+    // Center right
+    { emoji:"💻", size:72, x:75,  y:22,  rot:8,   opacity:0.20, blur:1,   scale:1 },
+    { emoji:"🎁", size:56, x:80,  y:35,  rot:-12, opacity:0.22, blur:0,   scale:1 },
+    { emoji:"🌟", size:50, x:76,  y:48,  rot:6,   opacity:0.20, blur:1,   scale:0.9 },
+    { emoji:"🏠", size:64, x:82,  y:60,  rot:-8,  opacity:0.22, blur:0,   scale:1 },
+    { emoji:"📊", size:58, x:77,  y:72,  rot:10,  opacity:0.18, blur:1,   scale:0.95 },
+    // Bottom cluster
+    { emoji:"🎧", size:68, x:25,  y:78,  rot:-10, opacity:0.22, blur:0,   scale:1 },
+    { emoji:"🚀", size:62, x:38,  y:82,  rot:15,  opacity:0.20, blur:1,   scale:1.05 },
+    { emoji:"💳", size:54, x:50,  y:85,  rot:-6,  opacity:0.22, blur:0,   scale:1 },
+    { emoji:"🌺", size:58, x:62,  y:80,  rot:8,   opacity:0.18, blur:1,   scale:0.9 },
+    { emoji:"🏆", size:64, x:72,  y:84,  rot:-12, opacity:0.20, blur:0,   scale:1 },
+    // Mid-center scattered
+    { emoji:"🔑", size:46, x:32,  y:20,  rot:20,  opacity:0.16, blur:1,   scale:0.85 },
+    { emoji:"💡", size:50, x:60,  y:18,  rot:-15, opacity:0.18, blur:0,   scale:0.9 },
+    { emoji:"🛡️", size:52, x:42,  y:72,  rot:10,  opacity:0.16, blur:1,   scale:0.88 },
+    { emoji:"🎯", size:48, x:56,  y:75,  rot:-8,  opacity:0.18, blur:0,   scale:0.92 },
+  ];
+
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:0, pointerEvents:"none", overflow:"hidden" }}>
+      {/* Dark overlay for readability */}
+      <div style={{ position:"absolute", inset:0, background:"rgba(13,5,5,0.6)", zIndex:1 }} />
+      
+      {/* Subtle vignette */}
+      <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse at center, transparent 30%, rgba(13,5,5,0.5) 100%)", zIndex:2 }} />
+
+      {/* Collage items */}
+      {items.map((item, i) => (
+        <div key={i} style={{
+          position:"absolute",
+          left:`${item.x}%`,
+          top:`${item.y}%`,
+          fontSize:`${item.size}px`,
+          transform:`rotate(${item.rot}deg) scale(${item.scale})`,
+          opacity:item.opacity,
+          filter:`blur(${item.blur}px) drop-shadow(0 4px 12px rgba(232,184,75,0.15))`,
+          zIndex:0,
+          userSelect:"none",
+          transition:"opacity 0.3s",
+          lineHeight:1,
+        }}>
+          {item.emoji}
+        </div>
+      ))}
+
+      {/* Glowing accent orbs */}
+      <div style={{ position:"absolute", width:"300px", height:"300px", borderRadius:"50%", background:"radial-gradient(circle, rgba(232,184,75,0.04) 0%, transparent 70%)", top:"10%", left:"5%", zIndex:0 }} />
+      <div style={{ position:"absolute", width:"400px", height:"400px", borderRadius:"50%", background:"radial-gradient(circle, rgba(139,0,0,0.05) 0%, transparent 70%)", top:"40%", right:"5%", zIndex:0 }} />
+      <div style={{ position:"absolute", width:"250px", height:"250px", borderRadius:"50%", background:"radial-gradient(circle, rgba(232,184,75,0.03) 0%, transparent 70%)", bottom:"10%", left:"30%", zIndex:0 }} />
+    </div>
+  );
+}
+
 export default function LandingPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -155,7 +244,8 @@ export default function LandingPage() {
   const homeRoute = !user ? "/login" : user.role==="DRIVER" ? "/driver" : user.role==="ADMIN" ? "/admin" : "/book";
 
   return (
-    <div style={{ background:"#0d0505", color:"#f5ede8", fontFamily:"'DM Sans',sans-serif", minHeight:"100vh", overflowX:"hidden" }}>
+    <div style={{ background:"#0d0505", color:"#f5ede8", fontFamily:"'DM Sans',sans-serif", minHeight:"100vh", overflowX:"hidden", position:"relative" }}>
+      <CollageBackground />
 
       {/* ── NAV ── */}
       <nav style={{
