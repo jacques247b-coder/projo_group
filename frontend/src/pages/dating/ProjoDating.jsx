@@ -16,77 +16,17 @@ const FD = "\'Cormorant Garamond\', \'Georgia\', serif";
 const FB = "\'Inter\', sans-serif";
 
 // ── PREMIUM PHOTO BACKGROUND ────────────────────────────────
-// Real photos via Unsplash + floating love icons
+// Split-image romantic silhouette scene (couple video-calling, hearts rising)
+// Desktop: image cut in half — left half anchored to the left of the centered
+// column, right half anchored to the right, with a matching gradient fill
+// bridging the middle so the two halves + center read as one continuous scene.
+// Mobile: the same image shown whole, centered behind the column.
 
-const PHOTO_LAYERS = [
-  // Real people — romantic couples & individuals
-  {
-    src: "https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?w=400&q=80",
-    alt: "Romantic couple",
-    style: { left:"2%", bottom:"5%", width:"220px", height:"320px", objectFit:"cover", objectPosition:"top",
-      borderRadius:"120px 120px 80px 80px", opacity:0.28, transform:"rotate(-4deg)",
-      filter:"brightness(0.75) saturate(1.2)", boxShadow:"0 30px 80px rgba(139,0,0,0.5)" }
-  },
-  {
-    src: "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=400&q=80",
-    alt: "Happy couple",
-    style: { right:"2%", bottom:"8%", width:"200px", height:"300px", objectFit:"cover", objectPosition:"top",
-      borderRadius:"100px 100px 70px 70px", opacity:0.26, transform:"rotate(5deg)",
-      filter:"brightness(0.75) saturate(1.3)", boxShadow:"0 30px 80px rgba(139,0,0,0.4)" }
-  },
-  {
-    src: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=300&q=80",
-    alt: "Couple holding hands",
-    style: { left:"50%", bottom:"3%", width:"160px", height:"260px", objectFit:"cover", objectPosition:"top",
-      transform:"translateX(-50%) rotate(2deg)", borderRadius:"80px 80px 60px 60px",
-      opacity:0.22, filter:"brightness(0.7) saturate(1.2)", boxShadow:"0 20px 60px rgba(139,0,0,0.3)" }
-  },
-  {
-    src: "https://images.unsplash.com/photo-1487700160041-bacb2b06d6e9?w=300&q=80",
-    alt: "Woman smiling",
-    style: { left:"20%", top:"12%", width:"130px", height:"200px", objectFit:"cover", objectPosition:"top",
-      borderRadius:"65px 65px 50px 50px", opacity:0.20, transform:"rotate(-6deg)",
-      filter:"brightness(0.72) saturate(1.3)", boxShadow:"0 20px 50px rgba(232,20,74,0.3)" }
-  },
-  {
-    src: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&q=80",
-    alt: "Handsome man",
-    style: { right:"18%", top:"10%", width:"120px", height:"190px", objectFit:"cover", objectPosition:"top",
-      borderRadius:"60px 60px 45px 45px", opacity:0.20, transform:"rotate(7deg)",
-      filter:"brightness(0.72) saturate(1.2)", boxShadow:"0 20px 50px rgba(107,33,168,0.3)" }
-  },
-  // Real roses & flowers
-  {
-    src: "https://images.unsplash.com/photo-1548460644-bc43d7b81d8e?w=300&q=80",
-    alt: "Red roses",
-    style: { left:"0%", top:"0%", width:"200px", height:"200px", objectFit:"cover",
-      borderRadius:"0 0 100px 0", opacity:0.25, transform:"rotate(0deg)",
-      filter:"brightness(0.65) saturate(1.5) hue-rotate(-10deg)", boxShadow:"20px 20px 60px rgba(139,0,0,0.4)" }
-  },
-  {
-    src: "https://images.unsplash.com/photo-1490750967868-88df5691cc11?w=300&q=80",
-    alt: "Pink flowers",
-    style: { right:"0%", top:"0%", width:"200px", height:"200px", objectFit:"cover",
-      borderRadius:"0 0 0 100px", opacity:0.25, transform:"rotate(0deg)",
-      filter:"brightness(0.65) saturate(1.4) hue-rotate(10deg)", boxShadow:"-20px 20px 60px rgba(139,0,0,0.3)" }
-  },
-  {
-    src: "https://images.unsplash.com/photo-1562692403-2a09a30d0d01?w=250&q=80",
-    alt: "Rose bouquet",
-    style: { left:"5%", top:"35%", width:"130px", height:"130px", objectFit:"cover",
-      borderRadius:"50%", opacity:0.22, transform:"rotate(-8deg)",
-      filter:"brightness(0.7) saturate(1.5)", boxShadow:"0 15px 40px rgba(232,20,74,0.3)" }
-  },
-  {
-    src: "https://images.unsplash.com/photo-1464983953574-0892a716854b?w=250&q=80",
-    alt: "Flowers",
-    style: { right:"5%", top:"32%", width:"120px", height:"120px", objectFit:"cover",
-      borderRadius:"50%", opacity:0.22, transform:"rotate(8deg)",
-      filter:"brightness(0.7) saturate(1.4)", boxShadow:"0 15px 40px rgba(232,20,74,0.25)" }
-  },
-];
+const DATING_BG_LEFT  = "/assets/dating/dating-bg-left.webp";
+const DATING_BG_RIGHT = "/assets/dating/dating-bg-right.webp";
+const DATING_BG_FULL  = "/assets/dating/dating-bg-full.webp";
 
-// Floating icons config
+// Floating love & romance icons
 const FLOAT_ICONS = [
   { emoji:"💕", x:"15%",  y:"22%", size:32, delay:0,   duration:4.5 },
   { emoji:"❤️", x:"82%",  y:"25%", size:28, delay:0.8, duration:3.8 },
@@ -102,55 +42,32 @@ const FLOAT_ICONS = [
   { emoji:"✦",  x:"92%",  y:"78%", size:20, delay:0.4, duration:4.6 },
   { emoji:"💎", x:"48%",  y:"78%", size:24, delay:2.0, duration:4.1 },
   { emoji:"🌸", x:"62%",  y:"18%", size:30, delay:0.9, duration:5.1 },
+  { emoji:"💘", x:"5%",   y:"12%", size:26, delay:1.3, duration:4.4 },
+  { emoji:"💞", x:"95%",  y:"40%", size:24, delay:0.6, duration:4.9 },
 ];
 
-function RomanticBackground() {
-  const [loaded, setLoaded] = React.useState({});
+// Approximate gradient sampled from the source artwork (blue corners →
+// purple → soft pink/white glow just below center) so the fill strip
+// between the two photo halves reads as one continuous background.
+const MIDDLE_FILL =
+  "radial-gradient(ellipse 90% 75% at 50% 60%, " +
+  "rgba(255,222,254,0.95) 0%, rgba(255,166,255,0.9) 16%, " +
+  "rgba(180,120,240,0.9) 36%, rgba(103,112,255,0.92) 56%, " +
+  "rgba(30,60,180,0.95) 78%, rgba(0,20,93,1) 100%)";
 
+function RomanticBackground() {
   return (
     <div style={{ position:"fixed", inset:0, zIndex:0, pointerEvents:"none", overflow:"hidden" }}>
-      {/* Deep gradient base */}
-      <div style={{ position:"absolute", inset:0,
-        background:"linear-gradient(135deg, #0D0418 0%, #1A0535 30%, #2D0A25 60%, #1A0230 80%, #0D0418 100%)" }} />
 
-      {/* Atmospheric glow orbs */}
-      <div style={{ position:"absolute", width:"500px", height:"500px", borderRadius:"50%", left:"-100px", top:"-100px",
-        background:"radial-gradient(circle, rgba(139,0,0,0.12) 0%, transparent 70%)" }} />
-      <div style={{ position:"absolute", width:"500px", height:"500px", borderRadius:"50%", right:"-100px", top:"-100px",
-        background:"radial-gradient(circle, rgba(107,33,168,0.10) 0%, transparent 70%)" }} />
-      <div style={{ position:"absolute", width:"600px", height:"300px", borderRadius:"50%", left:"50%", bottom:"-50px", transform:"translateX(-50%)",
-        background:"radial-gradient(ellipse, rgba(232,20,74,0.08) 0%, transparent 70%)" }} />
-
-      {/* Real photos */}
-      {PHOTO_LAYERS.map((photo, i) => (
-        <img
-          key={i}
-          src={photo.src}
-          alt={photo.alt}
-          loading="lazy"
-          onLoad={() => setLoaded(p => ({...p, [i]: true}))}
-          style={{
-            position:"absolute",
-            ...photo.style,
-            transition:"opacity 1.2s ease",
-            opacity: loaded[i] ? photo.style.opacity : 0,
-          }}
-        />
-      ))}
-
-      {/* Glowing border rings around photos */}
-      <div style={{ position:"absolute", left:"2%", bottom:"5%", width:"220px", height:"320px",
-        borderRadius:"120px 120px 80px 80px", border:"1px solid rgba(232,20,74,0.25)",
-        boxShadow:"0 0 30px rgba(232,20,74,0.1)", transform:"rotate(-4deg)", zIndex:1 }} />
-      <div style={{ position:"absolute", right:"2%", bottom:"8%", width:"200px", height:"300px",
-        borderRadius:"100px 100px 70px 70px", border:"1px solid rgba(212,175,55,0.2)",
-        boxShadow:"0 0 30px rgba(212,175,55,0.08)", transform:"rotate(5deg)", zIndex:1 }} />
-
-      {/* Floating love icons with CSS animation */}
       <style>{`
+        .dating-bg-half-left, .dating-bg-half-right { display:none; }
+        .dating-bg-mobile { display:block; }
+        @media (min-width: 901px) {
+          .dating-bg-half-left, .dating-bg-half-right { display:block; }
+          .dating-bg-mobile { display:none; }
+        }
         @keyframes float1 { 0%,100%{transform:translateY(0px) rotate(0deg);} 50%{transform:translateY(-18px) rotate(8deg);} }
         @keyframes float2 { 0%,100%{transform:translateY(0px) rotate(0deg);} 50%{transform:translateY(-14px) rotate(-6deg);} }
-        @keyframes float3 { 0%,100%{transform:translateY(0px) scale(1);} 50%{transform:translateY(-22px) scale(1.1);} }
         @keyframes pulse  { 0%,100%{opacity:0.7;} 50%{opacity:1;} }
         @keyframes drift  { 0%{transform:translateY(0) translateX(0) rotate(0deg);}
                            33%{transform:translateY(-20px) translateX(8px) rotate(5deg);}
@@ -158,16 +75,49 @@ function RomanticBackground() {
                           100%{transform:translateY(0) translateX(0) rotate(0deg);} }
       `}</style>
 
+      {/* Base gradient — doubles as the seamless "fill" behind & between the photo halves */}
+      <div style={{ position:"absolute", inset:0, background:MIDDLE_FILL }} />
+
+      {/* ── DESKTOP: image split in half, either side of the centered column ── */}
+      <div className="dating-bg-half-left" style={{
+        position:"absolute", top:0, left:0, bottom:0,
+        width:"calc(50% - 260px)", minWidth:"120px",
+        backgroundImage:`url(${DATING_BG_LEFT})`,
+        backgroundSize:"cover", backgroundPosition:"right center", backgroundRepeat:"no-repeat",
+        WebkitMaskImage:"linear-gradient(to right, black 55%, transparent 100%)",
+        maskImage:"linear-gradient(to right, black 55%, transparent 100%)",
+      }} />
+      <div className="dating-bg-half-right" style={{
+        position:"absolute", top:0, right:0, bottom:0,
+        width:"calc(50% - 260px)", minWidth:"120px",
+        backgroundImage:`url(${DATING_BG_RIGHT})`,
+        backgroundSize:"cover", backgroundPosition:"left center", backgroundRepeat:"no-repeat",
+        WebkitMaskImage:"linear-gradient(to left, black 55%, transparent 100%)",
+        maskImage:"linear-gradient(to left, black 55%, transparent 100%)",
+      }} />
+
+      {/* ── MOBILE: full image, whole & centered, behind the column ── */}
+      <div className="dating-bg-mobile" style={{
+        position:"absolute", inset:0,
+        backgroundImage:`url(${DATING_BG_FULL})`,
+        backgroundSize:"cover", backgroundPosition:"center 35%", backgroundRepeat:"no-repeat",
+      }} />
+
+      {/* Premium gold vignette frame */}
+      <div style={{ position:"absolute", inset:0,
+        boxShadow:"inset 0 0 180px rgba(13,4,24,0.55), inset 0 0 40px rgba(212,175,55,0.06)" }} />
+
+      {/* Floating love & romance icons */}
       {FLOAT_ICONS.map((icon, i) => (
         <div key={i} style={{
           position:"absolute",
           left:icon.x,
           top:icon.y,
           fontSize:`${icon.size}px`,
-          opacity:0.55,
+          opacity:0.6,
           zIndex:2,
-          animation:`${i%3===0?"float1":i%3===1?"float2":"drift"} ${icon.duration}s ${icon.delay}s ease-in-out infinite, pulse ${icon.duration*0.8}s ${icon.delay}s ease-in-out infinite`,
-          filter:"drop-shadow(0 4px 12px rgba(232,20,74,0.4)) drop-shadow(0 0 20px rgba(212,175,55,0.2))",
+          animation:`${i%2===0?"float1":"float2"} ${icon.duration}s ${icon.delay}s ease-in-out infinite, pulse ${icon.duration*0.8}s ${icon.delay}s ease-in-out infinite`,
+          filter:"drop-shadow(0 4px 12px rgba(232,20,74,0.4)) drop-shadow(0 0 20px rgba(212,175,55,0.25))",
           userSelect:"none",
           lineHeight:1,
         }}>
@@ -175,14 +125,14 @@ function RomanticBackground() {
         </div>
       ))}
 
-
-      {/* Content readability overlay — gradient darkens center */}
+      {/* Content readability overlay — darkens center where the column sits */}
       <div style={{ position:"absolute", inset:0,
-        background:"radial-gradient(ellipse 80% 60% at 50% 50%, rgba(13,4,24,0.4) 0%, rgba(13,4,24,0.75) 100%)",
+        background:"radial-gradient(ellipse 60% 60% at 50% 50%, rgba(13,4,24,0.55) 0%, rgba(13,4,24,0.2) 60%, rgba(13,4,24,0) 100%)",
         zIndex:3 }} />
     </div>
   );
 }
+
 
 // ── STAR RATING ─────────────────────────────────────────────// ── STAR RATING ─────────────────────────────────────────────// ── STAR RATING ─────────────────────────────────────────────
 function StarRating({ profileId, currentRating, onRate }) {
