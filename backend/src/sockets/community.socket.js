@@ -7,9 +7,12 @@ const prisma = new PrismaClient();
 const { moderateMessage } = require("../services/moderation.service");
 const { getAvatar } = require("../utils/communityIdentity");
 
-function sanitize(message) {
-  const { userId, ...rest } = message;
-  return rest;
+function sanitize(message, roomMode) {
+  if (roomMode === "ANONYMOUS") {
+    const { userId, ...rest } = message;
+    return rest;
+  }
+  return message; // OPEN_LOCAL: real identity is already public, keep userId for "is this me" checks
 }
 
 function registerCommunitySocket(io) {
@@ -40,18 +43,29 @@ function registerCommunitySocket(io) {
         const room = await prisma.chatRoom.findUnique({ where: { id: roomId } });
         if (!room || !room.isActive) return respond({ ok: false, error: "Room not available" });
 
-        const identity = await prisma.communityIdentity.findUnique({ where: { userId } });
-        if (!identity) return respond({ ok: false, error: "No community identity — join the room first" });
+        // Resolve identity: real name/photo for OPEN_LOCAL, masked alias for ANONYMOUS
+        let identityId = null, displayName, avatarKey = null, avatarUrl = null;
+        if (room.mode === "OPEN_LOCAL") {
+          const user = await prisma.user.findUnique({ where: { id: userId } });
+          if (!user) return respond({ ok: false, error: "User not found" });
+          displayName = user.name;
+          avatarUrl = user.avatarUrl || null;
+        } else {
+          const identity = await prisma.communityIdentity.findUnique({ where: { userId } });
+          if (!identity) return respond({ ok: false, error: "No community identity — join the room first" });
+          identityId = identity.id;
+          displayName = identity.displayName;
+          avatarKey = identity.avatarKey;
+        }
 
-        const result = await moderateMessage({ userId, roomId, type, content });
+        const result = await moderateMessage({ userId, roomId, type, content, roomMode: room.mode });
 
         if (!result.allowed) {
           // Held-for-review messages are persisted but invisible to everyone else
           if (result.heldForReview) {
             await prisma.chatMessage.create({
               data: {
-                roomId, userId, identityId: identity.id,
-                displayName: identity.displayName, avatarKey: identity.avatarKey,
+                roomId, userId, identityId, displayName, avatarKey, avatarUrl,
                 type, content, mediaUrl,
                 status: "HELD_FOR_REVIEW", isFlagged: true, flagReason: result.flagReason,
               },
@@ -63,8 +77,7 @@ function registerCommunitySocket(io) {
 
         const message = await prisma.chatMessage.create({
           data: {
-            roomId, userId, identityId: identity.id,
-            displayName: identity.displayName, avatarKey: identity.avatarKey,
+            roomId, userId, identityId, displayName, avatarKey, avatarUrl,
             type, content: result.content ?? content, mediaUrl,
             status: "VISIBLE", isFlagged: !!result.isFlagged, flagReason: result.flagReason || null,
           },
@@ -75,7 +88,7 @@ function registerCommunitySocket(io) {
           data: { messageCount: { increment: 1 }, lastActivityAt: new Date() },
         });
 
-        const outgoing = { ...sanitize(message), avatar: getAvatar(message.avatarKey) };
+        const outgoing = { ...sanitize(message, room.mode), avatar: message.avatarKey ? getAvatar(message.avatarKey) : null };
         io.to(`community_room:${roomId}`).emit("community:new_message", outgoing);
         respond({ ok: true, message: outgoing });
       } catch (err) {

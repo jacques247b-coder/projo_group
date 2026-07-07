@@ -31,7 +31,13 @@ function AvatarBadge({ emoji = "💬", color = CC.teal, size = 40 }) {
   );
 }
 
-export default function CommunityRooms() {
+export default function CommunityRooms({
+  mode = "OPEN_LOCAL",
+  basePath = "/community",
+  backPath = "/",
+  title = "PROJO Community",
+  subtitle = "Open chat for Rustenburg & surrounds — share freely, be kind.",
+}) {
   const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,14 +48,16 @@ export default function CommunityRooms() {
 
   useEffect(() => {
     loadRooms();
-    communityAPI.getIdentity().then((r) => setIdentity(r.identity)).catch(() => {});
+    if (mode === "ANONYMOUS") {
+      communityAPI.getIdentity().then((r) => setIdentity(r.identity)).catch(() => {});
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sort]);
+  }, [sort, mode]);
 
   async function loadRooms() {
     setLoading(true);
     try {
-      const res = await communityAPI.listRooms(sort === "trending" ? { sort: "trending" } : {});
+      const res = await communityAPI.listRooms({ mode, ...(sort === "trending" ? { sort: "trending" } : {}) });
       setRooms(res.rooms || []);
     } catch (e) {
       toast.error("Couldn't load rooms");
@@ -69,7 +77,7 @@ export default function CommunityRooms() {
   async function enterRoom(slug) {
     try {
       await communityAPI.joinRoom(slug);
-      navigate(`/community/${slug}`);
+      navigate(`${basePath}/${slug}`);
     } catch (e) {
       toast.error(e.error || "Couldn't join that room");
     }
@@ -81,11 +89,11 @@ export default function CommunityRooms() {
       <div style={{ padding: "1.5rem 1.25rem 1rem", maxWidth: 640, margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <button onClick={() => navigate("/")} aria-label="Back" style={{ background: CC.card, border: `1px solid ${CC.border}`, borderRadius: "10px", width: "36px", height: "36px", color: CC.text, fontSize: "18px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>←</button>
+            <button onClick={() => navigate(backPath)} aria-label="Back" style={{ background: CC.card, border: `1px solid ${CC.border}`, borderRadius: "10px", width: "36px", height: "36px", color: CC.text, fontSize: "18px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>←</button>
             <div>
-              <div style={{ fontFamily: FD, fontSize: "28px", fontWeight: 700, color: CC.text }}>Community</div>
+              <div style={{ fontFamily: FD, fontSize: "28px", fontWeight: 700, color: CC.text }}>{title}</div>
               <div style={{ fontSize: "12.5px", color: CC.textMuted, marginTop: "2px" }}>
-                Anonymous chat rooms — just conversation, no profiles.
+                {subtitle}
               </div>
             </div>
           </div>
@@ -174,8 +182,9 @@ export default function CommunityRooms() {
 
       <div style={{ maxWidth: 640, margin: "1.5rem auto 0", padding: "0 1.25rem" }}>
         <div style={{ fontSize: "11.5px", color: CC.textDim, textAlign: "center", lineHeight: 1.6 }}>
-          Community Chat is anonymous and separate from PROJO Dating — no profiles, photos, or matching here.
-          Sharing contact details is not allowed and is filtered automatically.
+          {mode === "ANONYMOUS"
+            ? "The Dating Lounge is anonymous and separate from PROJO Dating profiles — no photos or matching here. Sharing contact details is not allowed and is filtered automatically."
+            : "PROJO Community is open to everyone in Rustenburg & surrounds, under your real name. Photos and contact details are welcome — just keep it kind. Messages are filtered for profanity in English, Afrikaans & isiZulu."}
         </div>
       </div>
     </div>

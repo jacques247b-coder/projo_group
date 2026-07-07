@@ -21,7 +21,15 @@ const FB = "'Inter', sans-serif";
 
 const QUICK_REACTIONS = ["❤️", "😂", "👍", "😮", "😢", "🙌"];
 
-function AvatarBadge({ emoji = "💬", color = CC.teal, size = 34 }) {
+function AvatarBadge({ emoji = "💬", color = CC.teal, size = 34, photoUrl = null }) {
+  if (photoUrl) {
+    return (
+      <img src={photoUrl} alt="" style={{
+        width: size, height: size, borderRadius: "50%", objectFit: "cover",
+        border: `1.5px solid ${color}66`, flexShrink: 0,
+      }} />
+    );
+  }
   return (
     <div style={{
       width: size, height: size, borderRadius: "50%",
@@ -82,7 +90,7 @@ export default function CommunityRoomView() {
         scrollToBottom();
       } catch (e) {
         toast.error(e.error || "Couldn't load this room");
-        navigate("/community");
+        navigate("/");
       } finally {
         if (active) setLoading(false);
       }
@@ -201,7 +209,7 @@ export default function CommunityRoomView() {
     <div style={{ minHeight: "100vh", background: `linear-gradient(160deg, ${CC.bg0}, ${CC.bg1})`, fontFamily: FB, color: CC.text, display: "flex", flexDirection: "column" }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px 16px", borderBottom: `1px solid ${CC.border}`, background: CC.card, position: "sticky", top: 0, zIndex: 5 }}>
-        <button onClick={() => navigate("/community")} style={{ background: "none", border: "none", color: CC.textMuted, fontSize: "20px", cursor: "pointer" }}>←</button>
+        <button onClick={() => navigate(room?.mode === "ANONYMOUS" ? "/dating/lounge" : "/community")} style={{ background: "none", border: "none", color: CC.textMuted, fontSize: "20px", cursor: "pointer" }}>←</button>
         <AvatarBadge emoji={room?.icon} color={CC.teal} size={36} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontFamily: FD, fontSize: "17px", fontWeight: 700 }}>{room?.name}</div>
@@ -225,10 +233,10 @@ export default function CommunityRoomView() {
           </div>
         )}
         {messages.map((msg) => {
-          const isMe = msg.displayName === identity?.displayName;
+          const isMe = msg.userId ? msg.userId === user?.id : msg.displayName === identity?.displayName;
           return (
             <div key={msg.id} style={{ display: "flex", gap: "8px", flexDirection: isMe ? "row-reverse" : "row", alignItems: "flex-end" }}>
-              <AvatarBadge emoji={msg.avatar?.emoji || "💬"} color={isMe ? CC.gold : CC.teal} size={30} />
+              <AvatarBadge emoji={msg.avatar?.emoji || "💬"} color={isMe ? CC.gold : CC.teal} size={30} photoUrl={msg.avatarUrl} />
               <div style={{ maxWidth: "72%" }}>
                 {!isMe && <div style={{ fontSize: "11px", color: CC.textMuted, marginBottom: "2px" }}>{msg.displayName}</div>}
                 <div style={{

@@ -128,8 +128,14 @@ function AppRoutes() {
       <Route path="/dating" element={
         <Protected><ProjoDating /></Protected>
       } />
+      <Route path="/dating/lounge" element={
+        <Protected><CommunityRooms mode="ANONYMOUS" basePath="/dating/lounge" backPath="/dating" title="Dating Lounge" subtitle="Anonymous chat with the Dating community — no profiles, just conversation." /></Protected>
+      } />
+      <Route path="/dating/lounge/:slug" element={
+        <Protected><CommunityRoomView /></Protected>
+      } />
       <Route path="/community" element={
-        <Protected><CommunityRooms /></Protected>
+        <Protected><CommunityRooms mode="OPEN_LOCAL" basePath="/community" backPath="/" title="PROJO Community" subtitle="Open chat for Rustenburg & surrounds — share freely, be kind." /></Protected>
       } />
       <Route path="/community/:slug" element={
         <Protected><CommunityRoomView /></Protected>

@@ -72,16 +72,31 @@ function detectContactInfo(rawContent) {
   return { blocked: false };
 }
 
-// ── 2. PROFANITY FILTER ─────────────────────────────────────────
-// Lightweight, extensible word-list filter. Mild hits get masked in place;
-// nothing here needs to reproduce slurs, so the list stays short/generic —
-// extend PROFANITY_WORDS as needed for your community's standards.
+// ── 2. PROFANITY FILTER (English, Afrikaans, Zulu) ─────────────
+// Lightweight, extensible word-list filter covering the three languages
+// most common around Rustenburg & surrounds. Mild hits get masked in place;
+// nothing here needs to reproduce slurs, so the lists stay generic —
+// extend per-language arrays as needed for your community's standards.
 
-const PROFANITY_WORDS = [
+const PROFANITY_EN = [
   "fuck", "shit", "bitch", "cunt", "asshole", "dick", "bastard", "whore", "slut",
 ];
 
-const SEVERE_WORDS = new Set(["cunt"]);
+const PROFANITY_AF = [
+  // Afrikaans profanity/insults
+  "poes", "kak", "fok", "fokken", "voetsek", "gatvol", "doos", "moer", "hoer",
+  "naaier", "piel", "poephol", "teef", "bliksem", "kakhuis",
+];
+
+const PROFANITY_ZU = [
+  // isiZulu profanity/insults
+  "msunu", "unyoko", "phuza", "phekula", "voester", "isishimane", "inja",
+  "sfebe", "ipenge",
+];
+
+const PROFANITY_WORDS = [...PROFANITY_EN, ...PROFANITY_AF, ...PROFANITY_ZU];
+
+const SEVERE_WORDS = new Set(["cunt", "poes", "msunu"]);
 
 function scanProfanity(rawContent) {
   const lower = rawContent.toLowerCase();
@@ -144,7 +159,9 @@ async function getActiveSanction(userId, roomId) {
 
 // ── MAIN ENTRY POINT ─────────────────────────────────────────────
 // Call this before persisting/broadcasting any chat message.
-async function moderateMessage({ userId, roomId, type, content }) {
+// `roomMode`: "ANONYMOUS" (Dating Lounge — blocks contact info) or
+// "OPEN_LOCAL" (PROJO Community — contact info & photos are allowed).
+async function moderateMessage({ userId, roomId, type, content, roomMode = "ANONYMOUS" }) {
   // 1. Active mute/ban?
   const sanction = await getActiveSanction(userId, roomId);
   if (sanction) {
@@ -152,12 +169,12 @@ async function moderateMessage({ userId, roomId, type, content }) {
       allowed: false,
       publicReason:
         sanction.type === "BAN"
-          ? "You've been banned from Community Chat."
-          : "You're temporarily muted in Community Chat.",
+          ? "You've been banned from chat."
+          : "You're temporarily muted in chat.",
     };
   }
 
-  // 2. Flood protection
+  // 2. Flood protection — applies to every room
   if (isFlooding(userId)) {
     await logModerationEvent({
       userId, roomId, action: "FLOOD_BLOCKED",
@@ -168,24 +185,28 @@ async function moderateMessage({ userId, roomId, type, content }) {
 
   // Only text-like content needs contact-info / profanity scanning
   if ((type === "text" || type === undefined) && content) {
-    // 3. Contact-info circumvention check — hold for review, don't broadcast
-    const contactCheck = detectContactInfo(content);
-    if (contactCheck.blocked) {
-      await logModerationEvent({
-        userId, roomId, action: "BLOCKED_CONTACT_INFO",
-        reason: contactCheck.reason, detail: content.slice(0, 300),
-      });
-      return {
-        allowed: false,
-        heldForReview: true,
-        flagReason: contactCheck.reason,
-        publicReason:
-          "Sharing phone numbers, emails, or social media handles isn't allowed in Community Chat. " +
-          "Connect through PROJO Dating's Premium messaging instead.",
-      };
+    // 3. Contact-info circumvention check — ANONYMOUS (Dating Lounge) rooms only.
+    // OPEN_LOCAL (PROJO Community) rooms allow contact info & photos by design.
+    if (roomMode === "ANONYMOUS") {
+      const contactCheck = detectContactInfo(content);
+      if (contactCheck.blocked) {
+        await logModerationEvent({
+          userId, roomId, action: "BLOCKED_CONTACT_INFO",
+          reason: contactCheck.reason, detail: content.slice(0, 300),
+        });
+        return {
+          allowed: false,
+          heldForReview: true,
+          flagReason: contactCheck.reason,
+          publicReason:
+            "Sharing phone numbers, emails, or social media handles isn't allowed in the Dating Lounge. " +
+            "Connect through PROJO Dating's Premium messaging instead.",
+        };
+      }
     }
 
-    // 4. Profanity — mask and let it through, but log it; severe hits are held for review
+    // 4. Profanity (English/Afrikaans/Zulu) — mask and let it through, but log it;
+    // severe hits are held for review. Applies in every room.
     const profanityCheck = scanProfanity(content);
     if (profanityCheck.hit) {
       await logModerationEvent({

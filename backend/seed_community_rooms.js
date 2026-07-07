@@ -1,4 +1,8 @@
-// PROJO GROUP — Seed default Community Chat Rooms
+// PROJO GROUP — Seed default Dating Lounge rooms (anonymous, contact-info blocked)
+// These are the Community rooms accessed from inside PROJO Dating — masked
+// identity, no contact-info sharing, purely for engagement around dating/
+// relationships topics. For the open, real-identity Rustenburg community
+// rooms, see seed_local_community_rooms.js instead.
 // Run once after migrating: node seed_community_rooms.js
 require("dotenv").config();
 const { PrismaClient } = require("@prisma/client");
@@ -13,8 +17,6 @@ const ROOMS = [
     description: "Ask for advice or lend an ear. Be kind." },
   { name: "Fun & Games",         slug: "fun-games",       icon: "🎉", category: "Fun",
     description: "Icebreakers, polls, games, and lighthearted chat." },
-  { name: "Rustenburg Local",    slug: "local-rustenburg",icon: "📍", category: "Local",
-    description: "What's happening around Rustenburg this week." },
   { name: "Wellness & Mindset",  slug: "wellness",        icon: "🧘", category: "Support",
     description: "Self-care, motivation, and mental wellness chat." },
 ];

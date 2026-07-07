@@ -400,6 +400,8 @@ model ChatRoom {
   description  String   @default("")
   category     String   @default("General") // General, Relationships, Advice, Fun, Local, Support
   icon         String   @default("💬")
+  mode         String   @default("ANONYMOUS") // ANONYMOUS = Dating Lounge (masked identity, contact-info blocked)
+                                                // OPEN_LOCAL = PROJO Community (real identity, contact info & photos allowed)
   isActive     Boolean  @default(true)
   isPinnedTop  Boolean  @default(false)
   messageCount Int      @default(0)
@@ -428,10 +430,11 @@ model ChatMessage {
   id          String   @id @default(uuid())
   roomId      String
   room        ChatRoom @relation(fields: [roomId], references: [id])
-  userId      String              // real user id — NEVER exposed to other members
-  identityId  String              // anon identity id used for this message
-  displayName String              // snapshot of anon name at send time
-  avatarKey   String              // snapshot of anon avatar at send time
+  userId      String              // real user id — never exposed for ANONYMOUS rooms; kept for OPEN_LOCAL rooms
+  identityId  String?             // anon identity id (ANONYMOUS rooms only)
+  displayName String              // anon alias (ANONYMOUS) or real name snapshot (OPEN_LOCAL)
+  avatarKey   String?             // built-in avatar key (ANONYMOUS rooms only)
+  avatarUrl   String?             // real profile photo snapshot (OPEN_LOCAL rooms only)
   type        String   @default("text") // text, emoji, gif, image, voice, poll, announcement
   content     String   @default("") @db.Text
   mediaUrl    String?  @db.Text

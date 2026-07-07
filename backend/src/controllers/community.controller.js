@@ -65,13 +65,14 @@ exports.setAvatar = async (req, res) => {
 };
 
 // ── ROOMS ────────────────────────────────────────────────────────
-// GET /api/community/rooms — list rooms (supports ?search=&sort=trending)
+// GET /api/community/rooms — list rooms (supports ?search=&sort=trending&mode=)
 exports.listRooms = async (req, res) => {
   try {
-    const { search, sort } = req.query;
+    const { search, sort, mode } = req.query;
     const rooms = await prisma.chatRoom.findMany({
       where: {
         isActive: true,
+        ...(mode ? { mode } : {}),
         ...(search ? { name: { contains: search, mode: "insensitive" } } : {}),
       },
       orderBy:
@@ -103,11 +104,10 @@ exports.getRoom = async (req, res) => {
       where: { roomId: room.id, isPinned: true, status: "VISIBLE" },
     });
 
-    // Never expose userId to the client — anon identity only
-    const sanitize = (m) => {
-      const { userId, ...rest } = m;
-      return rest;
-    };
+    // Anonymity only matters for ANONYMOUS (Dating Lounge) rooms — strip userId there.
+    // OPEN_LOCAL (PROJO Community) rooms show real identities already, so keep it
+    // so the frontend can reliably tell "is this my message".
+    const sanitize = (m) => (room.mode === "ANONYMOUS" ? (({ userId, ...rest }) => rest)(m) : m);
 
     res.json({
       room,
@@ -127,15 +127,27 @@ exports.joinRoom = async (req, res) => {
     const sanction = await getActiveSanction(req.user.id, room.id);
     if (sanction) {
       return res.status(403).json({
-        error: sanction.type === "BAN" ? "You've been banned from Community Chat." : "You're currently muted.",
+        error: sanction.type === "BAN" ? "You've been banned from chat." : "You're currently muted.",
       });
     }
 
-    let identity = await prisma.communityIdentity.findUnique({ where: { userId: req.user.id } });
-    if (!identity) {
-      identity = await prisma.communityIdentity.create({
-        data: { userId: req.user.id, displayName: generateDisplayName(), avatarKey: generateAvatarKey() },
-      });
+    let identity;
+    if (room.mode === "OPEN_LOCAL") {
+      // Real identity — no anonymity here, contact info & photos are allowed
+      identity = {
+        displayName: req.user.name,
+        avatarUrl: req.user.avatarUrl || null,
+        avatar: null,
+        isAnonymous: false,
+      };
+    } else {
+      let anon = await prisma.communityIdentity.findUnique({ where: { userId: req.user.id } });
+      if (!anon) {
+        anon = await prisma.communityIdentity.create({
+          data: { userId: req.user.id, displayName: generateDisplayName(), avatarKey: generateAvatarKey() },
+        });
+      }
+      identity = { ...anon, avatar: getAvatar(anon.avatarKey), isAnonymous: true };
     }
 
     const existing = await prisma.chatRoomMember.findUnique({
@@ -151,7 +163,7 @@ exports.joinRoom = async (req, res) => {
       });
     }
 
-    res.json({ room, identity: { ...identity, avatar: getAvatar(identity.avatarKey) } });
+    res.json({ room, identity });
   } catch (err) { res.status(500).json({ error: err.message }); }
 };
 

@@ -442,6 +442,7 @@ export default function ProjoDating() {
             </div>
           </div>
           <div style={{ display:"flex", gap:"8px" }}>
+            <button onClick={() => navigate("/dating/lounge")} style={{ background:"rgba(212,175,55,0.1)", border:`1px solid ${C.borderGold}`, borderRadius:"10px", padding:"6px 12px", color:C.goldLight, fontSize:"12px", fontWeight:"700", cursor:"pointer" }}>👥 Lounge</button>
             <button onClick={() => setShowFilter(true)} style={{ background:"rgba(232,20,74,0.1)", border:`1px solid ${C.border}`, borderRadius:"10px", padding:"6px 12px", color:C.roseLight, fontSize:"12px", fontWeight:"700", cursor:"pointer" }}>⚙ Filter</button>
             {!isPremium && <button onClick={() => setShowPremium(true)} style={{ background:`linear-gradient(135deg, ${C.gold}, #9A7A10)`, border:"none", borderRadius:"10px", padding:"6px 12px", color:C.dark, fontSize:"12px", fontWeight:"800", cursor:"pointer" }}>★ Premium</button>}
             {isPremium && <div style={{ background:`linear-gradient(135deg, ${C.gold}, #9A7A10)`, borderRadius:"10px", padding:"6px 12px", color:C.dark, fontSize:"12px", fontWeight:"800" }}>👑 Premium</div>}
