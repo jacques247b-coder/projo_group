@@ -193,12 +193,12 @@ function PremiumModal({ onClose, onActivate }) {
         {/* Pricing */}
         <div style={{ background:`linear-gradient(135deg, rgba(212,175,55,0.1), rgba(139,0,0,0.1))`, border:`1px solid rgba(212,175,55,0.3)`, borderRadius:"16px", padding:"16px", textAlign:"center", margin:"16px 0" }}>
           <div style={{ fontSize:"11px", color:C.textMuted, marginBottom:"4px", textTransform:"uppercase", letterSpacing:"1px" }}>Monthly</div>
-          <div style={{ fontFamily:FD, fontSize:"38px", fontWeight:"700", color:C.gold }}>R99.99<span style={{ fontSize:"15px", color:C.textMuted }}>/month</span></div>
+          <div style={{ fontFamily:FD, fontSize:"38px", fontWeight:"700", color:C.gold }}>R80<span style={{ fontSize:"15px", color:C.textMuted }}>/month</span></div>
           <div style={{ fontSize:"11px", color:C.textMuted, marginTop:"4px" }}>Cancel anytime · No hidden fees · Secure payment</div>
         </div>
 
         <button onClick={onActivate} style={{ width:"100%", background:`linear-gradient(135deg, ${C.gold}, #9A7A10)`, border:"none", borderRadius:"14px", padding:"16px", color:C.dark, fontWeight:"800", fontSize:"16px", cursor:"pointer", marginBottom:"10px", boxShadow:`0 8px 24px rgba(212,175,55,0.4)` }}>
-          👑 Activate Premium — R99.99/month
+          👑 Activate Premium — R80/month
         </button>
         <button onClick={onClose} style={{ width:"100%", background:"none", border:`1px solid ${C.border}`, borderRadius:"14px", padding:"12px", color:C.textMuted, fontSize:"14px", cursor:"pointer" }}>
           Maybe later
@@ -511,7 +511,7 @@ export default function ProjoDating() {
               <div onClick={() => setShowPremium(true)} style={{ background:`linear-gradient(135deg, rgba(212,175,55,0.15), rgba(139,0,0,0.15))`, border:`1px solid ${C.borderGold}`, borderRadius:"16px", padding:"16px", marginBottom:"1rem", cursor:"pointer", textAlign:"center" }}>
                 <div style={{ fontSize:"28px", marginBottom:"6px" }}>🔒</div>
                 <div style={{ fontWeight:"700", color:C.gold }}>Premium Required to Message</div>
-                <div style={{ fontSize:"12px", color:C.textMuted, marginTop:"4px", marginBottom:"10px" }}>Unlock unlimited messaging for R99.99/month</div>
+                <div style={{ fontSize:"12px", color:C.textMuted, marginTop:"4px", marginBottom:"10px" }}>Unlock unlimited messaging for R80/month</div>
                 <div style={{ background:`linear-gradient(135deg, ${C.gold}, #9A7A10)`, borderRadius:"8px", padding:"8px 20px", color:C.dark, fontWeight:"800", display:"inline-block" }}>★ Upgrade Now</div>
               </div>
             )}
@@ -583,7 +583,7 @@ export default function ProjoDating() {
                 <div style={{ fontFamily:FD, fontSize:"22px", fontWeight:"700", color:C.gold, marginBottom:"6px" }}>★ Upgrade to Premium</div>
                 <div style={{ fontSize:"13px", color:C.textMuted, marginBottom:"12px", lineHeight:1.5 }}>Unlock messaging, see who liked you, boost your profile and much more.</div>
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                  <div style={{ fontFamily:FD, fontSize:"24px", color:C.text }}>R99.99<span style={{ fontSize:"13px", color:C.textMuted }}>/month</span></div>
+                  <div style={{ fontFamily:FD, fontSize:"24px", color:C.text }}>R80<span style={{ fontSize:"13px", color:C.textMuted }}>/month</span></div>
                   <div style={{ background:`linear-gradient(135deg, ${C.gold}, #9A7A10)`, borderRadius:"10px", padding:"8px 18px", color:C.dark, fontWeight:"800", fontSize:"13px" }}>Upgrade →</div>
                 </div>
               </div>
