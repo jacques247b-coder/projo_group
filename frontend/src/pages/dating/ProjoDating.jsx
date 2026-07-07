@@ -337,7 +337,7 @@ function ProfileDetail({ profile, onClose, onLike, onMessage, isPremium, onSuper
 }
 
 // ── PROFILE CARD ─────────────────────────────────────────────
-function ProfileCard({ profile, onLike, onPass, onOpen, onSuperLike, superLiked }) {
+function ProfileCard({ profile, onLike, onPass, onOpen, onSuperLike, superLiked, isFirstCard }) {
   const [liked, setLiked] = useState(false);
   const photo = profile.photos?.[0];
   return (
@@ -372,7 +372,7 @@ function ProfileCard({ profile, onLike, onPass, onOpen, onSuperLike, superLiked 
           <button onClick={() => { setLiked(true); onLike?.(profile); }} style={{ flex:1, height:"44px", borderRadius:"22px", background:liked?`linear-gradient(135deg, ${C.rose}, ${C.roseLight})`:`linear-gradient(135deg, ${C.crimson}, ${C.rose})`, border:"none", color:"#fff", fontWeight:"800", fontSize:"15px", cursor:"pointer", boxShadow:`0 4px 16px rgba(232,20,74,0.4)` }}>
             {liked ? "♥ Liked!" : "♥ Like"}
           </button>
-          <button onClick={() => onSuperLike?.(profile)} disabled={superLiked} style={{ width:"44px", height:"44px", borderRadius:"50%", background:superLiked?`linear-gradient(135deg, ${C.gold}, #B8960C)`:`linear-gradient(135deg, rgba(212,175,55,0.2), rgba(212,175,55,0.1))`, border:`1px solid ${C.borderGold}`, color:superLiked?C.dark:C.gold, fontSize:"18px", cursor:superLiked?"default":"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>⭐</button>
+          <button id={isFirstCard ? "tour-superlike-btn" : undefined} onClick={() => onSuperLike?.(profile)} disabled={superLiked} style={{ width:"44px", height:"44px", borderRadius:"50%", background:superLiked?`linear-gradient(135deg, ${C.gold}, #B8960C)`:`linear-gradient(135deg, rgba(212,175,55,0.2), rgba(212,175,55,0.1))`, border:`1px solid ${C.borderGold}`, color:superLiked?C.dark:C.gold, fontSize:"18px", cursor:superLiked?"default":"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>⭐</button>
         </div>
       </div>
     </div>
@@ -438,47 +438,118 @@ function VerifyModal({ onClose, onSubmit }) {
 // ── BLOCKED LIST MODAL ────────────────────────────────────────
 // ── WELCOME / INFO MODAL (non-Premium members, shown each sign-in) ──
 // ── ONBOARDING TOUR (first sign-in only) ────────────────────────
+// ── ONBOARDING TOUR (spotlight / coach-mark style, first sign-in only) ──
+// Each step points at a REAL element on screen via its DOM id, dims
+// everything else, and shows a finger pointer + explanation callout
+// right next to it. Falls back to a centered card if the target isn't
+// on screen for some reason (e.g. no profiles loaded yet), so the tour
+// never breaks.
 const TOUR_STEPS = [
-  { icon:"💕", title:"Welcome to PROJO Dating", text:"Let's take a quick look around so you know exactly where everything is. This only takes a minute." },
-  { icon:"💫", title:"Discover", text:"This is your home screen. Swipe through profiles — tap ✕ to pass, ♥ to Like. Free members get 20 Likes a day." },
-  { icon:"⭐", title:"Super Like", text:"The gold star sends a Super Like — it makes a stronger impression and is a Premium feature (5 a day)." },
-  { icon:"⚙", title:"Filter", text:"Tap Filter in the header to narrow Discover by age range or distance from you." },
-  { icon:"👥", title:"Dating Lounge", text:"Tap Lounge to join anonymous chat rooms with the Dating community — no profiles or photos, just conversation." },
-  { icon:"💝", title:"Matches", text:"When you and someone else both Like each other, it's a match — find them all in the Matches tab, along with anyone who's Liked you." },
-  { icon:"💬", title:"Messages", text:"Chat with your matches here. Messaging is a Premium feature, but browsing and matching are always free." },
-  { icon:"👤", title:"Your Profile", text:"Edit your details and photos, activate a visibility Boost, request Verification, and manage blocked users — all from the Profile tab." },
-  { icon:"👑", title:"Going Premium", text:"Premium unlocks messaging, seeing who liked you, Super Likes, Boost, Incognito Mode and more — R80/month, cancel anytime." },
+  { targetId:null, tab:"discover", icon:"💕", title:"Welcome to PROJO Dating", text:"Let's take a quick look around so you know exactly where everything is. Tap Next to begin." },
+  { targetId:"tour-nav-discover", tab:"discover", title:"Discover", text:"This is your home screen. Swipe through profiles — tap ✕ to pass, ♥ to Like. Free members get 20 Likes a day." },
+  { targetId:"tour-superlike-btn", tab:"discover", title:"Super Like", text:"The gold star sends a Super Like — it makes a stronger impression. Premium members get 5 a day." },
+  { targetId:"tour-filter-btn", tab:"discover", title:"Filter", text:"Narrow Discover down by age range or distance from you." },
+  { targetId:"tour-lounge-btn", tab:"discover", title:"Dating Lounge", text:"Join anonymous chat rooms with the Dating community here — no profiles or photos, just conversation." },
+  { targetId:"tour-nav-matches", tab:"discover", title:"Matches", text:"When you and someone else both Like each other, it's a match. Find them all here, along with anyone who's Liked you." },
+  { targetId:"tour-nav-messages", tab:"discover", title:"Messages", text:"Chat with your matches here. Messaging is a Premium feature, but browsing and matching are always free." },
+  { targetId:"tour-nav-profile", tab:"profile", title:"Your Profile", text:"Edit your details and photos, activate a visibility Boost, request Verification, and manage blocked users." },
+  { targetId:"tour-premium-btn", tab:"profile", title:"Going Premium", text:"Premium unlocks messaging, seeing who liked you, Super Likes, Boost, Incognito Mode and more — R80/month, cancel anytime." },
 ];
 
-function OnboardingTour({ onFinish }) {
+function SpotlightTour({ onFinish, setTab }) {
   const [step, setStep] = useState(0);
+  const [rect, setRect] = useState(null);
   const isLast = step === TOUR_STEPS.length - 1;
   const current = TOUR_STEPS[step];
 
-  return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.95)", zIndex:700, display:"flex", alignItems:"center", justifyContent:"center", padding:"1.25rem" }}>
-      <div style={{ background:`linear-gradient(160deg, #1A0F2E, #0D0418)`, borderRadius:"24px", padding:"2rem 1.5rem 1.5rem", width:"100%", maxWidth:"460px", border:`1px solid ${C.borderGold}`, textAlign:"center" }}>
-        <div style={{ fontSize:"52px", marginBottom:"14px" }}>{current.icon}</div>
-        <div style={{ fontFamily:FD, fontSize:"22px", fontWeight:"700", color:C.text, marginBottom:"10px" }}>{current.title}</div>
-        <div style={{ fontSize:"13.5px", color:C.textMuted, lineHeight:1.6, marginBottom:"1.5rem", minHeight:"60px" }}>{current.text}</div>
+  useEffect(() => {
+    if (current.tab) setTab(current.tab);
+    setRect(null);
+    // Small delay lets the tab switch render before we measure the target
+    const t1 = setTimeout(locate, 60);
+    const t2 = setTimeout(locate, 220); // second pass in case content was still loading
+    function locate() {
+      if (!current.targetId) return;
+      const el = document.getElementById(current.targetId);
+      if (el) setRect(el.getBoundingClientRect());
+    }
+    window.addEventListener("resize", locate);
+    return () => { clearTimeout(t1); clearTimeout(t2); window.removeEventListener("resize", locate); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
-        {/* Dots */}
-        <div style={{ display:"flex", justifyContent:"center", gap:"6px", marginBottom:"1.5rem" }}>
+  const vw = typeof window !== "undefined" ? window.innerWidth : 400;
+  const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+  const pad = 8;
+  const hasTarget = !!rect && current.targetId;
+
+  let calloutStyle = {};
+  let pointerStyle = null;
+  if (hasTarget) {
+    const targetCenterX = rect.left + rect.width / 2;
+    const spaceBelow = vh - rect.bottom;
+    const spaceAbove = rect.top;
+    const placeBelow = spaceBelow > 200 || spaceBelow > spaceAbove;
+    const calloutWidth = Math.min(300, vw - 24);
+    const left = Math.max(12, Math.min(targetCenterX - calloutWidth / 2, vw - calloutWidth - 12));
+
+    calloutStyle = placeBelow
+      ? { top: rect.bottom + 34, left }
+      : { bottom: vh - rect.top + 34, left };
+
+    pointerStyle = placeBelow
+      ? { top: rect.bottom + 4, left: targetCenterX - 14 }
+      : { top: rect.top - 38, left: targetCenterX - 14 };
+  }
+
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:700 }}>
+      <style>{`@keyframes tourBounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(6px); } }`}</style>
+
+      {/* Dimmed backdrop with a spotlight cutout around the target */}
+      {hasTarget ? (
+        <div style={{
+          position:"fixed",
+          top: rect.top - pad, left: rect.left - pad,
+          width: rect.width + pad * 2, height: rect.height + pad * 2,
+          borderRadius:"16px", boxShadow:"0 0 0 9999px rgba(5,2,10,0.88)",
+          border:`2px solid ${C.gold}`, pointerEvents:"none",
+        }} />
+      ) : (
+        <div style={{ position:"fixed", inset:0, background:"rgba(5,2,10,0.92)" }} />
+      )}
+
+      {/* Pointer */}
+      {hasTarget && pointerStyle && (
+        <div style={{ position:"fixed", ...pointerStyle, fontSize:"30px", animation:"tourBounce 1s ease-in-out infinite", pointerEvents:"none" }}>
+          {calloutStyle.top !== undefined ? "👆" : "👇"}
+        </div>
+      )}
+
+      {/* Callout */}
+      <div style={ hasTarget
+        ? { position:"fixed", width:"300px", maxWidth:"90vw", ...calloutStyle, background:`linear-gradient(160deg, #1A0F2E, #0D0418)`, borderRadius:"18px", padding:"1.1rem", border:`1px solid ${C.borderGold}` }
+        : { position:"fixed", top:"50%", left:"50%", transform:"translate(-50%,-50%)", width:"300px", maxWidth:"90vw", background:`linear-gradient(160deg, #1A0F2E, #0D0418)`, borderRadius:"18px", padding:"1.5rem", border:`1px solid ${C.borderGold}`, textAlign:"center" }
+      }>
+        <div style={{ fontFamily:FD, fontSize:"18px", fontWeight:"700", color:C.text, marginBottom:"6px" }}>{current.title}</div>
+        <div style={{ fontSize:"12.5px", color:C.textMuted, lineHeight:1.55, marginBottom:"12px" }}>{current.text}</div>
+
+        <div style={{ display:"flex", justifyContent:"center", gap:"5px", marginBottom:"12px" }}>
           {TOUR_STEPS.map((_, i) => (
-            <div key={i} style={{ width: i === step ? "18px" : "6px", height:"6px", borderRadius:"3px", background: i === step ? C.rose : "rgba(255,255,255,0.2)", transition:"width 0.2s" }} />
+            <div key={i} style={{ width: i === step ? "16px" : "5px", height:"5px", borderRadius:"3px", background: i === step ? C.rose : "rgba(255,255,255,0.2)", transition:"width 0.2s" }} />
           ))}
         </div>
 
-        <div style={{ display:"flex", gap:"10px" }}>
+        <div style={{ display:"flex", gap:"8px" }}>
           {step > 0 && (
-            <button onClick={() => setStep(s => s - 1)} style={{ flex:1, padding:"13px", borderRadius:"14px", background:"none", border:`1px solid ${C.border}`, color:C.textMuted, fontSize:"14px", cursor:"pointer" }}>Back</button>
+            <button onClick={() => setStep(s => s - 1)} style={{ flex:1, padding:"10px", borderRadius:"12px", background:"none", border:`1px solid ${C.border}`, color:C.textMuted, fontSize:"12.5px", cursor:"pointer" }}>Back</button>
           )}
           {!isLast && (
-            <button onClick={onFinish} style={{ flex: step > 0 ? "none" : 1, padding:"13px 16px", borderRadius:"14px", background:"none", border:"none", color:C.textDim, fontSize:"13px", cursor:"pointer" }}>Skip</button>
+            <button onClick={onFinish} style={{ padding:"10px 12px", borderRadius:"12px", background:"none", border:"none", color:C.textDim, fontSize:"12px", cursor:"pointer" }}>Skip</button>
           )}
           <button
             onClick={() => (isLast ? onFinish() : setStep(s => s + 1))}
-            style={{ flex:2, padding:"13px", borderRadius:"14px", background:`linear-gradient(135deg, ${C.crimson}, ${C.rose})`, border:"none", color:"#fff", fontWeight:"700", fontSize:"14px", cursor:"pointer" }}
+            style={{ flex:2, padding:"10px", borderRadius:"12px", background:`linear-gradient(135deg, ${C.crimson}, ${C.rose})`, border:"none", color:"#fff", fontWeight:"700", fontSize:"12.5px", cursor:"pointer" }}
           >
             {isLast ? "Get Started 💕" : "Next"}
           </button>
@@ -487,6 +558,7 @@ function OnboardingTour({ onFinish }) {
     </div>
   );
 }
+
 
 function WelcomeInfoModal({ onClose, onUpgrade }) {
   const canDo = [
@@ -940,10 +1012,10 @@ export default function ProjoDating() {
             </div>
           </div>
           <div style={{ display:"flex", gap:"8px" }}>
-            <button onClick={() => navigate("/dating/lounge")} style={{ background:"rgba(212,175,55,0.1)", border:`1px solid ${C.borderGold}`, borderRadius:"10px", padding:"6px 12px", color:C.goldLight, fontSize:"12px", fontWeight:"700", cursor:"pointer" }}>👥 Lounge</button>
-            <button onClick={() => setShowFilter(true)} style={{ background:"rgba(232,20,74,0.1)", border:`1px solid ${C.border}`, borderRadius:"10px", padding:"6px 12px", color:C.roseLight, fontSize:"12px", fontWeight:"700", cursor:"pointer" }}>⚙ Filter</button>
-            {!isPremium && <button onClick={() => setShowPremium(true)} style={{ background:`linear-gradient(135deg, ${C.gold}, #9A7A10)`, border:"none", borderRadius:"10px", padding:"6px 12px", color:C.dark, fontSize:"12px", fontWeight:"800", cursor:"pointer" }}>★ Premium</button>}
-            {isPremium && <div style={{ background:`linear-gradient(135deg, ${C.gold}, #9A7A10)`, borderRadius:"10px", padding:"6px 12px", color:C.dark, fontSize:"12px", fontWeight:"800" }}>👑 Premium</div>}
+            <button id="tour-lounge-btn" onClick={() => navigate("/dating/lounge")} style={{ background:"rgba(212,175,55,0.1)", border:`1px solid ${C.borderGold}`, borderRadius:"10px", padding:"6px 12px", color:C.goldLight, fontSize:"12px", fontWeight:"700", cursor:"pointer" }}>👥 Lounge</button>
+            <button id="tour-filter-btn" onClick={() => setShowFilter(true)} style={{ background:"rgba(232,20,74,0.1)", border:`1px solid ${C.border}`, borderRadius:"10px", padding:"6px 12px", color:C.roseLight, fontSize:"12px", fontWeight:"700", cursor:"pointer" }}>⚙ Filter</button>
+            {!isPremium && <button id="tour-premium-btn" onClick={() => setShowPremium(true)} style={{ background:`linear-gradient(135deg, ${C.gold}, #9A7A10)`, border:"none", borderRadius:"10px", padding:"6px 12px", color:C.dark, fontSize:"12px", fontWeight:"800", cursor:"pointer" }}>★ Premium</button>}
+            {isPremium && <div id="tour-premium-btn" style={{ background:`linear-gradient(135deg, ${C.gold}, #9A7A10)`, borderRadius:"10px", padding:"6px 12px", color:C.dark, fontSize:"12px", fontWeight:"800" }}>👑 Premium</div>}
           </div>
         </div>
       </div>
@@ -980,8 +1052,8 @@ export default function ProjoDating() {
               </div>
             ) : (
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px" }}>
-                {discoverProfiles.map(p => (
-                  <ProfileCard key={p.id} profile={p} onLike={(pr) => handleLike(pr, false)} onPass={handlePass} onOpen={setShowProfile} onSuperLike={handleSuperLike} superLiked={superLikedIds.has(p.id)} />
+                {discoverProfiles.map((p, i) => (
+                  <ProfileCard key={p.id} profile={p} onLike={(pr) => handleLike(pr, false)} onPass={handlePass} onOpen={setShowProfile} onSuperLike={handleSuperLike} superLiked={superLikedIds.has(p.id)} isFirstCard={i === 0} />
                 ))}
               </div>
             )}
@@ -1211,7 +1283,7 @@ export default function ProjoDating() {
       <div style={{ position:"fixed", bottom:0, left:0, right:0, zIndex:100, background:"rgba(13,4,24,0.97)", backdropFilter:"blur(24px)", borderTop:`1px solid ${C.border}` }}>
         <div style={{ display:"flex", justifyContent:"space-around", maxWidth:"500px", margin:"0 auto", padding:"8px 0 14px" }}>
           {tabs.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)} style={{ background:"none", border:"none", display:"flex", flexDirection:"column", alignItems:"center", gap:"3px", cursor:"pointer", padding:"4px 16px", position:"relative" }}>
+            <button key={t.key} id={`tour-nav-${t.key}`} onClick={() => setTab(t.key)} style={{ background:"none", border:"none", display:"flex", flexDirection:"column", alignItems:"center", gap:"3px", cursor:"pointer", padding:"4px 16px", position:"relative" }}>
               <span style={{ fontSize:"24px", filter:tab===t.key?"none":"grayscale(60%) opacity(0.45)" }}>{t.icon}</span>
               <span style={{ fontSize:"10px", fontWeight:"700", color:tab===t.key?C.rose:C.textDim }}>{t.label}</span>
               {tab===t.key && <div style={{ position:"absolute", bottom:"-2px", width:"28px", height:"2px", background:`linear-gradient(90deg, ${C.crimson}, ${C.rose})`, borderRadius:"2px" }} />}
@@ -1276,7 +1348,7 @@ export default function ProjoDating() {
 
       {/* Onboarding Tour — first sign-in only */}
       {showTour && (
-        <OnboardingTour onFinish={finishTour} />
+        <SpotlightTour onFinish={finishTour} setTab={setTab} />
       )}
 
       {/* Filter Modal */}
