@@ -20,7 +20,7 @@
 
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-const twilioService = require("./twilio.service");
+const twilioService = require("../services/twilio.service");
 const { sendWhatsAppNotification } = require("../services/whatsapp.service"); // CallMeBot fallback
 
 const MAX_PERSONAL_CONTACTS = 2;
