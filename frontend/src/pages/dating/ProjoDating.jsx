@@ -377,8 +377,8 @@ function ReportModal({ profile, onClose, onSubmit }) {
   const [details, setDetails] = useState("");
   const REASONS = ["Fake profile", "Inappropriate photos", "Harassment", "Scam / soliciting money", "Underage", "Other"];
   return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:300, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
-      <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px 24px 0 0", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.border}`, maxHeight:"85vh", overflowY:"auto", WebkitOverflowScrolling:"touch" }}>
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:"1.25rem" }}>
+      <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.border}`, maxHeight:"85vh", overflowY:"auto", WebkitOverflowScrolling:"touch" }}>
         <div style={{ fontFamily:FD, fontSize:"20px", fontWeight:"700", color:C.text, marginBottom:"4px" }}>Report {profile.displayName}</div>
         <div style={{ fontSize:"12px", color:C.textMuted, marginBottom:"1rem" }}>Our team reviews every report.</div>
         <div style={{ display:"flex", flexDirection:"column", gap:"8px", marginBottom:"1rem" }}>
@@ -408,8 +408,8 @@ function VerifyModal({ onClose, onSubmit }) {
     reader.readAsDataURL(file);
   }
   return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:300, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
-      <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px 24px 0 0", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.borderGold}`, maxHeight:"85vh", overflowY:"auto", WebkitOverflowScrolling:"touch" }}>
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:"1.25rem" }}>
+      <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.borderGold}`, maxHeight:"85vh", overflowY:"auto", WebkitOverflowScrolling:"touch" }}>
         <div style={{ fontFamily:FD, fontSize:"20px", fontWeight:"700", color:C.gold, marginBottom:"4px" }}>✓ Get Verified</div>
         <div style={{ fontSize:"12px", color:C.textMuted, marginBottom:"1rem" }}>Upload a clear selfie. Our team reviews it and adds the verified badge to your profile.</div>
         <label style={{ aspectRatio:"1", maxWidth:"200px", margin:"0 auto 1rem", borderRadius:"16px", border:`1.5px dashed ${C.borderGold}`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", overflow:"hidden" }}>
@@ -430,8 +430,8 @@ function VerifyModal({ onClose, onSubmit }) {
 // ── BLOCKED LIST MODAL ────────────────────────────────────────
 function BlockedListModal({ blocked, onUnblock, onClose }) {
   return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:300, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
-      <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px 24px 0 0", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.border}`, maxHeight:"75vh", overflowY:"auto", WebkitOverflowScrolling:"touch" }}>
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:"1.25rem" }}>
+      <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.border}`, maxHeight:"75vh", overflowY:"auto", WebkitOverflowScrolling:"touch" }}>
         <div style={{ fontFamily:FD, fontSize:"20px", fontWeight:"700", color:C.text, marginBottom:"1rem" }}>🚫 Blocked Users</div>
         {blocked.length === 0 ? (
           <div style={{ color:C.textDim, textAlign:"center", padding:"2rem 0", fontSize:"13px" }}>No one blocked.</div>
