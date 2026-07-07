@@ -280,6 +280,7 @@ model DatingProfile {
   // Status & premium
   isVerified        Boolean  @default(false)
   isPremium         Boolean  @default(false)
+  isPromoFree       Boolean  @default(false) // true if Premium was granted via the first-150-free promo (no payment owed)
   premiumExpiry     DateTime?
   isOnline          Boolean  @default(false)
   lastActive        DateTime @default(now())

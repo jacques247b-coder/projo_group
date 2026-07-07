@@ -111,6 +111,8 @@ export const datingAPI = {
   },
   upsertProfile: (data) => api.post("/dating/profile", data),
   getMe: () => api.get("/dating/me"),
+  getPromoStatus: () => api.get("/dating/promo-status"),
+  activatePremium: () => api.post("/dating/activate-premium"),
   // Like / Pass / Undo
   like: (toId, isSuperLike = false) => api.post(`/dating/like/${toId}`, { isSuperLike }),
   pass: (toId) => api.post(`/dating/pass/${toId}`),

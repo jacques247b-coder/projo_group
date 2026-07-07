@@ -160,7 +160,8 @@ function StarRating({ profileId, currentRating, onRate }) {
 }
 
 // ── PREMIUM MODAL ─────────────────────────────────────────────
-function PremiumModal({ onClose, onActivate }) {
+function PremiumModal({ onClose, onActivate, promoStatus }) {
+  const promoActive = promoStatus?.promoActive;
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.92)", zIndex:500, display:"flex", alignItems:"center", justifyContent:"center", padding:"1.25rem" }}>
       <div style={{ background:`linear-gradient(160deg, #1A0F2E, #0D0418)`, borderRadius:"28px", padding:"1.5rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom, 0px))", width:"100%", maxWidth:"620px", border:`1px solid rgba(212,175,55,0.4)`, maxHeight:"88vh", overflowY:"auto", WebkitOverflowScrolling:"touch", touchAction:"pan-y" }}>
@@ -173,6 +174,18 @@ function PremiumModal({ onClose, onActivate }) {
           </div>
           <div style={{ fontSize:"13px", color:C.textMuted }}>Unlock your perfect connection</div>
         </div>
+
+        {promoStatus && promoActive && (
+          <div style={{ background:`linear-gradient(135deg, rgba(74,222,128,0.15), rgba(212,175,55,0.15))`, border:"1px solid rgba(74,222,128,0.4)", borderRadius:"14px", padding:"12px 14px", textAlign:"center", marginBottom:"1rem" }}>
+            <div style={{ fontSize:"13px", fontWeight:"800", color:"#4ADE80" }}>🎉 FREE for our first {promoStatus.limit} members!</div>
+            <div style={{ fontSize:"12px", color:C.textMuted, marginTop:"2px" }}>Only <b style={{ color:"#4ADE80" }}>{promoStatus.remaining}</b> free spots left — after that it's R{promoStatus.priceZar}/month</div>
+          </div>
+        )}
+        {promoStatus && !promoActive && (
+          <div style={{ background:"rgba(255,255,255,0.05)", border:`1px solid ${C.border}`, borderRadius:"14px", padding:"10px 14px", textAlign:"center", marginBottom:"1rem" }}>
+            <div style={{ fontSize:"12px", color:C.textMuted }}>All {promoStatus.limit} free spots have been claimed — Premium is R{promoStatus.priceZar}/month.</div>
+          </div>
+        )}
 
         {/* Features */}
         {[
@@ -197,12 +210,16 @@ function PremiumModal({ onClose, onActivate }) {
         {/* Pricing */}
         <div style={{ background:`linear-gradient(135deg, rgba(212,175,55,0.1), rgba(139,0,0,0.1))`, border:`1px solid rgba(212,175,55,0.3)`, borderRadius:"16px", padding:"14px", textAlign:"center", margin:"12px 0" }}>
           <div style={{ fontSize:"11px", color:C.textMuted, marginBottom:"4px", textTransform:"uppercase", letterSpacing:"1px" }}>Monthly</div>
-          <div style={{ fontFamily:FD, fontSize:"34px", fontWeight:"700", color:C.gold }}>R80<span style={{ fontSize:"15px", color:C.textMuted }}>/month</span></div>
+          {promoActive ? (
+            <div style={{ fontFamily:FD, fontSize:"34px", fontWeight:"700", color:"#4ADE80" }}>FREE<span style={{ fontSize:"15px", color:C.textMuted }}> right now</span></div>
+          ) : (
+            <div style={{ fontFamily:FD, fontSize:"34px", fontWeight:"700", color:C.gold }}>R80<span style={{ fontSize:"15px", color:C.textMuted }}>/month</span></div>
+          )}
           <div style={{ fontSize:"11px", color:C.textMuted, marginTop:"4px" }}>Cancel anytime · No hidden fees · Secure payment</div>
         </div>
 
         <button onClick={onActivate} style={{ width:"100%", background:`linear-gradient(135deg, ${C.gold}, #9A7A10)`, border:"none", borderRadius:"14px", padding:"15px", color:C.dark, fontWeight:"800", fontSize:"15px", cursor:"pointer", marginBottom:"10px", boxShadow:`0 8px 24px rgba(212,175,55,0.4)` }}>
-          👑 Activate Premium — R80/month
+          {promoActive ? "🎉 Claim Free Premium" : "👑 Activate Premium — R80/month"}
         </button>
         <button onClick={onClose} style={{ width:"100%", background:"none", border:`1px solid ${C.border}`, borderRadius:"14px", padding:"12px", color:C.textMuted, fontSize:"14px", cursor:"pointer" }}>
           Maybe later
@@ -560,7 +577,7 @@ function SpotlightTour({ onFinish, setTab }) {
 }
 
 
-function WelcomeInfoModal({ onClose, onUpgrade }) {
+function WelcomeInfoModal({ onClose, onUpgrade, promoStatus }) {
   const canDo = [
     ["💫", "Browse & discover profiles near you"],
     ["♥", "Like up to 20 profiles a day"],
@@ -582,6 +599,12 @@ function WelcomeInfoModal({ onClose, onUpgrade }) {
 
         <div style={{ fontFamily:FD, fontSize:"22px", fontWeight:"700", color:C.text, marginBottom:"4px", paddingRight:"2.5rem" }}>Welcome to PROJO Dating 💕</div>
         <div style={{ fontSize:"12.5px", color:C.textMuted, marginBottom:"1.1rem" }}>Here's what you can do on a free account — and what Premium unlocks.</div>
+
+        {promoStatus?.promoActive && (
+          <div style={{ background:`linear-gradient(135deg, rgba(74,222,128,0.15), rgba(212,175,55,0.15))`, border:"1px solid rgba(74,222,128,0.4)", borderRadius:"12px", padding:"10px 12px", marginBottom:"1rem", textAlign:"center" }}>
+            <span style={{ fontSize:"12.5px", fontWeight:"700", color:"#4ADE80" }}>🎉 Only {promoStatus.remaining} of {promoStatus.limit} free Premium spots left!</span>
+          </div>
+        )}
 
         <div style={{ fontSize:"12px", fontWeight:"700", color:"#4ADE80", textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:"8px" }}>✓ You can</div>
         {canDo.map(([icon, text]) => (
@@ -660,6 +683,7 @@ export default function ProjoDating() {
   const [superLikedIds, setSuperLikedIds] = useState(new Set());
   const [showWelcomeInfo, setShowWelcomeInfo] = useState(false);
   const [showTour, setShowTour] = useState(false);
+  const [promoStatus, setPromoStatus] = useState(null);
   const [showReport, setShowReport] = useState(null);
   const [showVerify, setShowVerify] = useState(false);
   const [showBlockedList, setShowBlockedList] = useState(false);
@@ -701,6 +725,7 @@ export default function ProjoDating() {
     loadDiscover();
     loadMatches();
     loadLikedMe();
+    datingAPI.getPromoStatus().then(setPromoStatus).catch(() => {});
     if (!myProfile.hasSeenOnboardingTour) {
       setShowTour(true);
     } else if (!myProfile.isPremium) {
@@ -1037,6 +1062,11 @@ export default function ProjoDating() {
               {myProfile.city} & surrounds
               {!isPremium && usage && <span> · {Math.max(0, (usage.likesLimit||0) - (usage.likesUsedToday||0))} likes left today</span>}
             </div>
+            {!isPremium && promoStatus?.promoActive && (
+              <div onClick={() => setShowPremium(true)} style={{ background:"linear-gradient(135deg, rgba(74,222,128,0.15), rgba(212,175,55,0.15))", border:"1px solid rgba(74,222,128,0.4)", borderRadius:"12px", padding:"8px 14px", fontSize:"12px", color:"#4ADE80", marginBottom:"1rem", cursor:"pointer", fontWeight:"600" }}>
+                🎉 Only {promoStatus.remaining} of {promoStatus.limit} free Premium spots left — tap to claim yours
+              </div>
+            )}
             {myProfile.boostActive && myProfile.boostExpiry && new Date(myProfile.boostExpiry) > new Date() && (
               <div style={{ background:"rgba(212,175,55,0.12)", border:`1px solid ${C.borderGold}`, borderRadius:"12px", padding:"8px 14px", fontSize:"12px", color:C.goldLight, marginBottom:"1rem" }}>
                 🚀 Boost active — you're being shown to more people right now
@@ -1311,14 +1341,18 @@ export default function ProjoDating() {
       {/* Premium Modal */}
       {showPremium && (
         <PremiumModal
+          promoStatus={promoStatus}
           onClose={() => setShowPremium(false)}
           onActivate={async () => {
             try {
-              await datingAPI.upsertProfile({ isPremium: true });
+              const res = await datingAPI.activatePremium();
               await refreshMyProfile();
+              datingAPI.getPromoStatus().then(setPromoStatus).catch(() => {});
               setShowPremium(false);
-              toast.success("👑 Welcome to PROJO Premium! 💕");
-            } catch { toast.error("Couldn't activate Premium"); }
+              toast.success(res.viaPromo
+                ? "🎉 You got PROJO Premium FREE — welcome!"
+                : "👑 Welcome to PROJO Premium! R80/month starts now.");
+            } catch (e) { toast.error(e.error || "Couldn't activate Premium"); }
           }}
         />
       )}
@@ -1343,6 +1377,7 @@ export default function ProjoDating() {
         <WelcomeInfoModal
           onClose={() => setShowWelcomeInfo(false)}
           onUpgrade={() => { setShowWelcomeInfo(false); setShowPremium(true); }}
+          promoStatus={promoStatus}
         />
       )}
 

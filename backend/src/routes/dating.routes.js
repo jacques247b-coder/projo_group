@@ -8,6 +8,8 @@ const dating = require("../controllers/dating.controller");
 router.get("/profiles",           authenticate, dating.getProfiles);
 router.post("/profile",           authenticate, dating.upsertProfile);
 router.get("/me",                 authenticate, dating.getMyProfileWithStatus);
+router.get("/promo-status",       authenticate, dating.getPromoStatus);
+router.post("/activate-premium",  authenticate, dating.activatePremium);
 
 // Like / Pass / Undo
 router.post("/like/:toId",        authenticate, dating.likeProfile);

@@ -8,6 +8,12 @@ const BOOST_MINUTES = 30;
 // Once this many real (non-demo) active profiles exist, demo/placeholder
 // profiles stop appearing in Discover — no manual cleanup needed.
 const DEMO_PHASEOUT_THRESHOLD = 15;
+// First N members to activate Premium get it free — after that, activating
+// Premium is understood as a paid R80/month subscription (isPromoFree:false).
+// NOTE: there's no payment gateway wired in yet, so this only tracks and
+// labels who owes money — it doesn't charge a card. See activatePremium().
+const PROMO_FREE_LIMIT = 150;
+const PREMIUM_PRICE_ZAR = 80;
 
 function startOfToday() {
   const d = new Date();
@@ -330,6 +336,38 @@ exports.getMessages = async (req, res) => {
       });
     }
     res.json({ messages });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
+// ── PREMIUM ACTIVATION (free promo -> paid) ─────────────────────
+// GET /api/dating/promo-status — how many free Premium spots remain
+exports.getPromoStatus = async (req, res) => {
+  try {
+    const claimed = await prisma.datingProfile.count({ where: { isPromoFree: true } });
+    const remaining = Math.max(0, PROMO_FREE_LIMIT - claimed);
+    res.json({ limit: PROMO_FREE_LIMIT, claimed, remaining, promoActive: remaining > 0, priceZar: PREMIUM_PRICE_ZAR });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
+// POST /api/dating/activate-premium — grants free Premium while promo spots
+// remain, otherwise activates as a paid subscription. No payment gateway is
+// wired in yet, so "paid" here just labels the account correctly for manual
+// billing/follow-up — it doesn't charge a card automatically.
+exports.activatePremium = async (req, res) => {
+  try {
+    const myProfile = await getMyProfile(req.user.id);
+    if (!myProfile) return res.status(404).json({ error: "Create your profile first" });
+    if (myProfile.isPremium) return res.json({ activated: true, alreadyPremium: true, viaPromo: myProfile.isPromoFree });
+
+    const claimed = await prisma.datingProfile.count({ where: { isPromoFree: true } });
+    const viaPromo = claimed < PROMO_FREE_LIMIT;
+
+    const profile = await prisma.datingProfile.update({
+      where: { id: myProfile.id },
+      data: { isPremium: true, isPromoFree: viaPromo },
+    });
+
+    res.json({ activated: true, viaPromo, priceZar: PREMIUM_PRICE_ZAR, profile });
   } catch (err) { res.status(500).json({ error: err.message }); }
 };
 

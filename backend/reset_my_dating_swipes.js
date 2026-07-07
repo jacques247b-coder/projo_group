@@ -1,9 +1,3 @@
-// PROJO DATING — Dev utility: reset your own swipe history
-// Clears your DatingLike and DatingPass rows so previously-seen profiles
-// (including demo ones) reappear in Discover. Safe to run anytime during
-// testing — it only touches the profile matching the phone number you pass.
-//
-// Usage: node reset_my_dating_swipes.js 0821234567
 require("dotenv").config();
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
