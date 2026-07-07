@@ -49,22 +49,26 @@ exports.getProfiles = async (req, res) => {
       prisma.datingBlock.findMany({ where: { blockerId: myProfile.id }, select: { blockedId: true } }),
       prisma.datingBlock.findMany({ where: { blockedId: myProfile.id }, select: { blockerId: true } }),
     ]);
-    const excludeIds = new Set([
+    // Hard exclusions (self + blocks) always apply, even to demo profiles.
+    const hardExcludeIds = new Set([
       myProfile.id,
-      ...likes.map((l) => l.toId),
-      ...passes.map((p) => p.toId),
       ...blocksA.map((b) => b.blockedId),
       ...blocksB.map((b) => b.blockerId),
     ]);
+    // Swipe exclusions (already liked/passed) only apply to REAL profiles —
+    // demo/placeholder profiles keep reappearing so Discover never looks
+    // empty, and they're clearly labeled as test accounts in the UI.
+    const swipeExcludeIds = new Set([...likes.map((l) => l.toId), ...passes.map((p) => p.toId)]);
 
     let profiles = await prisma.datingProfile.findMany({
       where: {
-        id: { notIn: [...excludeIds] },
+        id: { notIn: [...hardExcludeIds] },
         isActive: true,
         isIncognito: false,
         age: { gte: parseInt(ageMin), lte: parseInt(ageMax) },
         ...(city ? { city } : {}),
         ...(includeDemoProfiles ? {} : { isDemo: false }),
+        OR: [{ isDemo: true }, { id: { notIn: [...swipeExcludeIds] } }],
       },
       take: parseInt(limit) * 3, // over-fetch, then rank/filter by distance in-memory
       orderBy: [{ isFeatured: "desc" }, { boostActive: "desc" }, { isVerified: "desc" }, { lastActive: "desc" }],

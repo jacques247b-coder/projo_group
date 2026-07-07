@@ -236,6 +236,7 @@ function ProfileDetail({ profile, onClose, onLike, onMessage, isPremium, onSuper
 
           {/* Badges */}
           <div style={{ position:"absolute", top:"16px", right:"16px", display:"flex", flexDirection:"column", gap:"6px", alignItems:"flex-end" }}>
+            {profile.isDemo && <div style={{ background:"rgba(107,33,168,0.9)", borderRadius:"20px", padding:"4px 12px", fontSize:"11px", fontWeight:"700", color:"#fff" }}>🧪 Test Account</div>}
             {profile.isVerified && <div style={{ background:"rgba(212,175,55,0.9)", borderRadius:"20px", padding:"4px 12px", fontSize:"11px", fontWeight:"700", color:C.dark }}>✓ Verified</div>}
             {profile.isOnline && <div style={{ background:"rgba(34,197,94,0.9)", borderRadius:"20px", padding:"4px 12px", fontSize:"11px", fontWeight:"700", color:"#fff" }}>● Online Now</div>}
           </div>
@@ -252,6 +253,12 @@ function ProfileDetail({ profile, onClose, onLike, onMessage, isPremium, onSuper
             <div style={{ fontSize:"13px", color:C.rosePale }}>📍 {profile.city}{profile._distanceKm != null ? ` · ${profile._distanceKm}km` : ""}{profile.occupation ? ` · ${profile.occupation}` : ""}</div>
           </div>
         </div>
+
+        {profile.isDemo && (
+          <div style={{ background:"rgba(107,33,168,0.15)", borderTop:"1px solid rgba(107,33,168,0.35)", borderBottom:"1px solid rgba(107,33,168,0.35)", padding:"10px 1rem", fontSize:"12px", color:"#C9A3FF", textAlign:"center" }}>
+            🧪 This is a test account used to preview the app — it'll be replaced automatically as real members join.
+          </div>
+        )}
 
         {/* Action buttons */}
         <div style={{ display:"flex", gap:"10px", padding:"1rem", background:C.midnight }}>
@@ -341,6 +348,7 @@ function ProfileCard({ profile, onLike, onPass, onOpen, onSuperLike, superLiked 
         {!photo && <div style={{ fontSize:"90px" }}>🙂</div>}
         <div style={{ position:"absolute", bottom:0, left:0, right:0, height:"140px", background:"linear-gradient(transparent, rgba(13,4,24,0.97))" }} />
         <div style={{ position:"absolute", top:"10px", left:"10px", display:"flex", gap:"5px" }}>
+          {profile.isDemo && <div style={{ background:"rgba(107,33,168,0.85)", borderRadius:"20px", padding:"3px 9px", fontSize:"9px", fontWeight:"700", color:"#fff" }}>🧪 TEST</div>}
           {profile.isVerified && <div style={{ background:"rgba(212,175,55,0.92)", borderRadius:"20px", padding:"3px 9px", fontSize:"10px", fontWeight:"700", color:C.dark }}>✓</div>}
           {profile.isOnline && <div style={{ background:"rgba(34,197,94,0.9)", borderRadius:"20px", padding:"3px 9px", fontSize:"10px", fontWeight:"700", color:"#fff" }}>●</div>}
           {profile.isPremium && <div style={{ background:`linear-gradient(135deg, ${C.gold}, #B8960C)`, borderRadius:"20px", padding:"3px 9px", fontSize:"10px", fontWeight:"700", color:C.dark }}>★</div>}
