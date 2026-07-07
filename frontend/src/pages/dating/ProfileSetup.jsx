@@ -11,9 +11,10 @@ const GOALS = ["Serious Relationship", "Marriage", "Long-Term", "Casual", "Frien
 const SUGGESTED_INTERESTS = ["Hiking", "Braai", "Travel", "Music", "Yoga", "Cooking", "Gym", "Soccer",
   "Reading", "Dancing", "Art", "Movies", "Gaming", "Photography", "Wine", "Fitness", "Nature", "Jazz"];
 
-export default function ProfileSetup({ C, FD, FB, existingProfile, onSaved, onCancel }) {
+export default function ProfileSetup({ C, FD, FB, existingProfile, currentUserName, onSaved, onCancel }) {
   const navigate = useNavigate();
   const [form, setForm] = useState({
+    displayName: existingProfile?.displayName || currentUserName || "",
     age: existingProfile?.age || "",
     gender: existingProfile?.gender || "Woman",
     interestedIn: existingProfile?.interestedIn || ["Everyone"],
@@ -79,6 +80,7 @@ export default function ProfileSetup({ C, FD, FB, existingProfile, onSaved, onCa
   }
 
   async function handleSave() {
+    if (!form.displayName.trim()) { toast.error("Add a display name — this is what others will see"); return; }
     if (!form.age || form.age < 18) { toast.error("You must be 18 or older"); return; }
     if (!form.bio.trim()) { toast.error("Add a short bio so people know who you are"); return; }
     if (form.relationshipGoals.length === 0) { toast.error("Pick at least one relationship goal"); return; }
@@ -145,6 +147,9 @@ export default function ProfileSetup({ C, FD, FB, existingProfile, onSaved, onCa
             </label>
           )}
         </div>
+
+        <label style={label}>Display Name</label>
+        <input value={form.displayName} onChange={(e) => setForm((f) => ({ ...f, displayName: e.target.value }))} style={{ ...input, marginBottom: "1.1rem" }} placeholder="What should people call you?" />
 
         <label style={label}>Age</label>
         <input type="number" min="18" max="99" value={form.age} onChange={(e) => setForm((f) => ({ ...f, age: e.target.value }))} style={{ ...input, marginBottom: "1.1rem" }} placeholder="Your age" />

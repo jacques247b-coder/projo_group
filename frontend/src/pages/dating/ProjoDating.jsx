@@ -773,6 +773,7 @@ export default function ProjoDating() {
       <ProfileSetup
         C={C} FD={FD} FB={FB}
         existingProfile={myProfile}
+        currentUserName={user?.name}
         onCancel={myProfile ? () => setShowEditProfile(false) : undefined}
         onSaved={async () => {
           setShowEditProfile(false);
