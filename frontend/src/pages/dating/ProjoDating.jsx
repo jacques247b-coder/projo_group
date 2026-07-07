@@ -15,183 +15,300 @@ const C = {
 const FD = "\'Cormorant Garamond\', \'Georgia\', serif";
 const FB = "\'Inter\', sans-serif";
 
-// ── ROMANTIC BACKGROUND SVG ─────────────────────────────────
+// ── PREMIUM ROMANTIC BACKGROUND ─────────────────────────────
 function RomanticBackground() {
-  const canvasRef = useRef(null);
+  const canvasRef = React.useRef(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     let W = canvas.width = window.innerWidth;
     let H = canvas.height = window.innerHeight;
     let frame = 0;
+    let animId;
 
-    // Particles
-    const hearts = Array.from({ length: 30 }, () => ({
-      x: Math.random() * W, y: Math.random() * H + H,
-      size: Math.random() * 12 + 4, speed: Math.random() * 0.5 + 0.15,
-      drift: (Math.random() - 0.5) * 0.4, opacity: Math.random() * 0.35 + 0.05,
+    // ── Floating love particles ──────────────────────────────
+    const makeParticles = () => Array.from({ length: 40 }, (_, i) => ({
+      x: Math.random() * W,
+      y: Math.random() * H + H,
+      type: i % 5, // 0=heart 1=petal 2=sparkle 3=ring 4=star
+      size: Math.random() * 18 + 6,
+      speed: Math.random() * 0.6 + 0.2,
+      drift: (Math.random() - 0.5) * 0.5,
+      opacity: Math.random() * 0.5 + 0.1,
+      rot: Math.random() * Math.PI * 2,
+      rotSpeed: (Math.random() - 0.5) * 0.02,
       pulse: Math.random() * Math.PI * 2,
+      hue: Math.random() > 0.5 ? 350 : Math.random() > 0.5 ? 320 : 45,
     }));
-    const stars = Array.from({ length: 60 }, () => ({
-      x: Math.random() * W, y: Math.random() * H * 0.6,
-      r: Math.random() * 1.5 + 0.3, twinkle: Math.random() * Math.PI * 2,
-    }));
+    let particles = makeParticles();
 
-    function drawHeart(x, y, size, alpha) {
-      ctx.save(); ctx.globalAlpha = alpha;
-      ctx.fillStyle = `rgba(232,20,74,${alpha})`;
+    // ── Draw heart ───────────────────────────────────────────
+    function heart(ctx, x, y, size, alpha, hue) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      const g = ctx.createRadialGradient(x, y + size*0.4, 0, x, y + size*0.5, size);
+      g.addColorStop(0, `hsla(${hue},90%,65%,${alpha})`);
+      g.addColorStop(1, `hsla(${hue},70%,45%,0)`);
+      ctx.fillStyle = g;
       ctx.beginPath();
       ctx.moveTo(x, y + size * 0.3);
       ctx.bezierCurveTo(x, y, x - size*0.5, y, x - size*0.5, y + size*0.3);
       ctx.bezierCurveTo(x - size*0.5, y + size*0.65, x, y + size*0.9, x, y + size);
       ctx.bezierCurveTo(x, y + size*0.9, x + size*0.5, y + size*0.65, x + size*0.5, y + size*0.3);
       ctx.bezierCurveTo(x + size*0.5, y, x, y, x, y + size*0.3);
-      ctx.fill(); ctx.restore();
+      ctx.fill();
+      ctx.restore();
     }
 
-    function drawLandscape() {
-      // Sky gradient
-      const sky = ctx.createLinearGradient(0, 0, 0, H * 0.65);
-      sky.addColorStop(0, "#0D0418");
-      sky.addColorStop(0.3, "#1A0535");
-      sky.addColorStop(0.6, "#3D0B2B");
-      sky.addColorStop(1, "#6B0F1A");
-      ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
-
-      // Stars
-      stars.forEach(s => {
-        s.twinkle += 0.015;
-        const alpha = 0.3 + Math.sin(s.twinkle) * 0.25;
-        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
-        ctx.fillStyle = `rgba(255,240,200,${alpha})`; ctx.fill();
-      });
-
-      // Moon
-      const moonX = W * 0.82, moonY = H * 0.12;
-      const moonGlow = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, 50);
-      moonGlow.addColorStop(0, "rgba(212,175,55,0.15)");
-      moonGlow.addColorStop(1, "transparent");
-      ctx.fillStyle = moonGlow;
-      ctx.beginPath(); ctx.arc(moonX, moonY, 50, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(moonX, moonY, 18, 0, Math.PI*2);
-      ctx.fillStyle = "#F5D76E"; ctx.fill();
-      ctx.beginPath(); ctx.arc(moonX + 6, moonY - 4, 14, 0, Math.PI*2);
-      ctx.fillStyle = "#2D0A4E"; ctx.fill();
-
-      // Magalies mountains silhouette
-      ctx.beginPath(); ctx.moveTo(0, H * 0.55);
-      ctx.lineTo(W*0.05, H*0.35); ctx.lineTo(W*0.12, H*0.42);
-      ctx.lineTo(W*0.18, H*0.28); ctx.lineTo(W*0.26, H*0.38);
-      ctx.lineTo(W*0.32, H*0.22); ctx.lineTo(W*0.40, H*0.33);
-      ctx.lineTo(W*0.48, H*0.18); ctx.lineTo(W*0.55, H*0.30);
-      ctx.lineTo(W*0.63, H*0.20); ctx.lineTo(W*0.70, H*0.32);
-      ctx.lineTo(W*0.78, H*0.15); ctx.lineTo(W*0.85, H*0.28);
-      ctx.lineTo(W*0.92, H*0.22); ctx.lineTo(W, H*0.35);
-      ctx.lineTo(W, H*0.55); ctx.closePath();
-      const mtGrad = ctx.createLinearGradient(0, H*0.15, 0, H*0.55);
-      mtGrad.addColorStop(0, "#1A0535");
-      mtGrad.addColorStop(1, "#0D0418");
-      ctx.fillStyle = mtGrad; ctx.fill();
-
-      // Horizon glow
-      const horizonGlow = ctx.createLinearGradient(0, H*0.48, 0, H*0.58);
-      horizonGlow.addColorStop(0, "rgba(232,20,74,0.25)");
-      horizonGlow.addColorStop(0.5, "rgba(212,175,55,0.12)");
-      horizonGlow.addColorStop(1, "transparent");
-      ctx.fillStyle = horizonGlow;
-      ctx.fillRect(0, H*0.48, W, H*0.1);
-
-      // Ground
-      const ground = ctx.createLinearGradient(0, H*0.55, 0, H);
-      ground.addColorStop(0, "#0D0418");
-      ground.addColorStop(1, "#050210");
-      ctx.fillStyle = ground; ctx.fillRect(0, H*0.55, W, H*0.45);
-
-      // Silhouette couple - left side
-      const cx1 = W * 0.22, cy = H * 0.56;
-      ctx.fillStyle = "#050210";
-      // Person 1 (taller)
-      ctx.beginPath(); ctx.arc(cx1, cy - 42, 9, 0, Math.PI*2); ctx.fill();
-      ctx.fillRect(cx1 - 5, cy - 33, 10, 28);
-      ctx.beginPath(); ctx.moveTo(cx1-5, cy-5); ctx.lineTo(cx1-14, cy+18);
-      ctx.lineTo(cx1-8, cy+18); ctx.lineTo(cx1, cy-5); ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(cx1+5, cy-5); ctx.lineTo(cx1+14, cy+18);
-      ctx.lineTo(cx1+8, cy+18); ctx.lineTo(cx1, cy-5); ctx.closePath(); ctx.fill();
-      // Arms reaching toward person 2
-      ctx.beginPath(); ctx.moveTo(cx1+5, cy-20); ctx.quadraticCurveTo(cx1+20, cy-28, cx1+30, cy-18);
-      ctx.strokeStyle = "#050210"; ctx.lineWidth=7; ctx.lineCap="round"; ctx.stroke();
-      // Person 2 (slightly shorter, closer)
-      const cx2 = cx1 + 30;
-      ctx.beginPath(); ctx.arc(cx2, cy-38, 8, 0, Math.PI*2); ctx.fill();
-      ctx.fillRect(cx2-4, cy-30, 9, 24);
-      ctx.beginPath(); ctx.moveTo(cx2-4, cy-6); ctx.lineTo(cx2-16, cy+18);
-      ctx.lineTo(cx2-9, cy+18); ctx.lineTo(cx2, cy-6); ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(cx2+4, cy-6); ctx.lineTo(cx2+13, cy+18);
-      ctx.lineTo(cx2+8, cy+18); ctx.lineTo(cx2, cy-6); ctx.closePath(); ctx.fill();
-      // Heart above couple
-      const heartPulse = 0.9 + Math.sin(frame * 0.04) * 0.15;
-      ctx.save(); ctx.translate(cx1+15, cy-65); ctx.scale(heartPulse, heartPulse);
-      ctx.globalAlpha = 0.8;
-      drawHeart(-6, -8, 12, 0.9);
-      ctx.restore();
-
-      // Silhouette couple 2 - right side (bench scene)
-      const bx = W * 0.74, by = H * 0.58;
-      ctx.fillStyle = "#050210";
-      // Bench
-      ctx.fillRect(bx - 28, by + 10, 56, 5);
-      ctx.fillRect(bx - 28, by + 5, 56, 5); // back rest
-      ctx.fillRect(bx - 25, by + 15, 4, 10);
-      ctx.fillRect(bx + 21, by + 15, 4, 10);
-      // Person 1 sitting
-      ctx.beginPath(); ctx.arc(bx-10, by-18, 7, 0, Math.PI*2); ctx.fill();
-      ctx.fillRect(bx-14, by-11, 9, 20);
-      ctx.beginPath(); ctx.moveTo(bx-14, by+8); ctx.lineTo(bx-22, by+22);
-      ctx.lineTo(bx-16, by+22); ctx.lineTo(bx-7, by+8); ctx.closePath(); ctx.fill();
-      // Person 2 sitting closer
-      ctx.beginPath(); ctx.arc(bx+10, by-16, 7, 0, Math.PI*2); ctx.fill();
-      ctx.fillRect(bx+5, by-9, 9, 18);
-      ctx.beginPath(); ctx.moveTo(bx+5, by+8); ctx.lineTo(bx-1, by+22);
-      ctx.lineTo(bx+5, by+22); ctx.lineTo(bx+11, by+8); ctx.closePath(); ctx.fill();
-      // Phone glow between them (texting)
+    // ── Draw rose petal ──────────────────────────────────────
+    function petal(ctx, x, y, size, alpha, rot) {
       ctx.save();
-      ctx.globalAlpha = 0.7;
-      ctx.fillStyle = "rgba(212,175,55,0.8)";
-      ctx.fillRect(bx+4, by-5, 14, 20);
+      ctx.translate(x, y);
+      ctx.rotate(rot);
+      ctx.globalAlpha = alpha;
+      const g = ctx.createRadialGradient(0, -size*0.3, 0, 0, 0, size);
+      g.addColorStop(0, `rgba(255,150,170,${alpha})`);
+      g.addColorStop(0.5, `rgba(220,60,100,${alpha*0.8})`);
+      g.addColorStop(1, `rgba(180,20,60,0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(0, -size);
+      ctx.bezierCurveTo(size*0.6, -size*0.5, size*0.5, size*0.3, 0, size*0.5);
+      ctx.bezierCurveTo(-size*0.5, size*0.3, -size*0.6, -size*0.5, 0, -size);
+      ctx.fill();
       ctx.restore();
+    }
 
-      // Bokeh orbs
-      const bokehs = [[W*0.1,H*0.4,40,"rgba(232,20,74,"],[W*0.6,H*0.25,30,"rgba(212,175,55,"],[W*0.85,H*0.5,25,"rgba(107,33,168,"],[W*0.35,H*0.6,20,"rgba(232,20,74,"]];
-      bokehs.forEach(([bx,by,br,col]) => {
-        const bg = ctx.createRadialGradient(bx,by,0,bx,by,br);
-        const alpha = 0.04 + Math.sin(frame*0.02)*0.02;
-        bg.addColorStop(0, col+alpha+")");
-        bg.addColorStop(1, "transparent");
-        ctx.fillStyle = bg;
-        ctx.beginPath(); ctx.arc(bx,by,br,0,Math.PI*2); ctx.fill();
-      });
+    // ── Draw sparkle ────────────────────────────────────────
+    function sparkle(ctx, x, y, size, alpha) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = `rgba(245,215,110,${alpha})`;
+      ctx.lineWidth = 1.5;
+      ctx.lineCap = 'round';
+      for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(x + Math.cos(a) * size * 0.15, y + Math.sin(a) * size * 0.15);
+        ctx.lineTo(x + Math.cos(a) * size, y + Math.sin(a) * size);
+        ctx.stroke();
+      }
+      ctx.beginPath();
+      ctx.arc(x, y, size * 0.12, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,240,180,${alpha})`;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // ── Draw diamond ring ────────────────────────────────────
+    function ring(ctx, x, y, size, alpha) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = `rgba(212,175,55,${alpha})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, size * 0.4, 0, Math.PI * 2);
+      ctx.stroke();
+      // Diamond top
+      ctx.fillStyle = `rgba(200,230,255,${alpha * 0.8})`;
+      ctx.beginPath();
+      ctx.moveTo(x, y - size * 0.7);
+      ctx.lineTo(x + size * 0.25, y - size * 0.35);
+      ctx.lineTo(x, y - size * 0.05);
+      ctx.lineTo(x - size * 0.25, y - size * 0.35);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = `rgba(212,175,55,${alpha * 0.6})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // ── Draw 4-point star ───────────────────────────────────
+    function star(ctx, x, y, size, alpha) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, size);
+      g.addColorStop(0, `rgba(255,220,100,${alpha})`);
+      g.addColorStop(1, `rgba(232,20,74,0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * Math.PI * 2 - Math.PI / 4;
+        const a2 = a + Math.PI / 4;
+        if (i === 0) ctx.moveTo(x + Math.cos(a) * size, y + Math.sin(a) * size);
+        else ctx.lineTo(x + Math.cos(a) * size, y + Math.sin(a) * size);
+        ctx.lineTo(x + Math.cos(a2) * size * 0.25, y + Math.sin(a2) * size * 0.25);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // ── Flower cluster positions ─────────────────────────────
+    const flowers = [
+      { cx: W * 0.08, cy: H * 0.82, r: 70, count: 8, hue: 340 },
+      { cx: W * 0.92, cy: H * 0.78, r: 55, count: 7, hue: 320 },
+      { cx: W * 0.05, cy: H * 0.15, r: 45, count: 6, hue: 350 },
+      { cx: W * 0.95, cy: H * 0.12, r: 50, count: 6, hue: 330 },
+      { cx: W * 0.5,  cy: H * 0.92, r: 60, count: 7, hue: 345 },
+    ];
+
+    function drawFlower(cx, cy, r, count, hue, phase) {
+      ctx.save();
+      // Petals
+      for (let i = 0; i < count; i++) {
+        const a = (i / count) * Math.PI * 2 + phase;
+        const px = cx + Math.cos(a) * r * 0.55;
+        const py = cy + Math.sin(a) * r * 0.55;
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(a + Math.PI / 2);
+        ctx.globalAlpha = 0.18;
+        const g = ctx.createRadialGradient(0, -r*0.25, 0, 0, 0, r*0.45);
+        g.addColorStop(0, `hsla(${hue},85%,75%,0.9)`);
+        g.addColorStop(0.6, `hsla(${hue},75%,55%,0.6)`);
+        g.addColorStop(1, `hsla(${hue},65%,40%,0)`);
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.ellipse(0, -r*0.25, r*0.18, r*0.38, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+      }
+      // Centre
+      ctx.globalAlpha = 0.22;
+      const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, r*0.18);
+      cg.addColorStop(0, `hsla(45,90%,75%,0.9)`);
+      cg.addColorStop(1, `hsla(35,80%,55%,0)`);
+      ctx.fillStyle = cg;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r*0.18, 0, Math.PI*2);
+      ctx.fill();
+      // Leaf stems
+      ctx.globalAlpha = 0.12;
+      ctx.strokeStyle = `hsla(140,60%,40%,0.5)`;
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      for (let i = 0; i < 3; i++) {
+        const a = (i / 3) * Math.PI * 2 + phase + Math.PI;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.quadraticCurveTo(
+          cx + Math.cos(a + 0.5) * r * 0.6, cy + Math.sin(a + 0.5) * r * 0.6,
+          cx + Math.cos(a) * r * 1.1, cy + Math.sin(a) * r * 1.1
+        );
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // ── Silhouette couple ───────────────────────────────────
+    function drawSilhouette(x, y, scale, alpha) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = '#0a0010';
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+      // Person 1
+      ctx.beginPath(); ctx.arc(-22, -55, 11, 0, Math.PI*2); ctx.fill();
+      ctx.fillRect(-27, -44, 14, 34);
+      // Dress flare
+      ctx.beginPath();
+      ctx.moveTo(-27, -10); ctx.lineTo(-42, 28); ctx.lineTo(-8, 28); ctx.closePath();
+      ctx.fill();
+      // Person 2
+      ctx.beginPath(); ctx.arc(18, -52, 10, 0, Math.PI*2); ctx.fill();
+      ctx.fillRect(13, -42, 12, 30);
+      ctx.beginPath();
+      ctx.moveTo(13, -12); ctx.lineTo(2, 26); ctx.lineTo(24, 26); ctx.closePath();
+      ctx.fill();
+      // Touching hands
+      ctx.beginPath();
+      ctx.arc(-5, -20, 4, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawBackground() {
+      // Deep gradient sky
+      const bg = ctx.createLinearGradient(0, 0, W, H);
+      bg.addColorStop(0, '#0D0418');
+      bg.addColorStop(0.25, '#1A0535');
+      bg.addColorStop(0.5, '#2D0A25');
+      bg.addColorStop(0.75, '#1A0535');
+      bg.addColorStop(1, '#0D0418');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+
+      // Radial rose glow top-left
+      const gl1 = ctx.createRadialGradient(W*0.1, H*0.1, 0, W*0.1, H*0.1, W*0.4);
+      gl1.addColorStop(0, 'rgba(232,20,74,0.07)');
+      gl1.addColorStop(1, 'transparent');
+      ctx.fillStyle = gl1; ctx.fillRect(0, 0, W, H);
+
+      // Radial gold glow bottom-right
+      const gl2 = ctx.createRadialGradient(W*0.9, H*0.9, 0, W*0.9, H*0.9, W*0.45);
+      gl2.addColorStop(0, 'rgba(212,175,55,0.06)');
+      gl2.addColorStop(1, 'transparent');
+      ctx.fillStyle = gl2; ctx.fillRect(0, 0, W, H);
+
+      // Radial purple center
+      const gl3 = ctx.createRadialGradient(W*0.5, H*0.5, 0, W*0.5, H*0.5, W*0.5);
+      gl3.addColorStop(0, 'rgba(107,33,168,0.05)');
+      gl3.addColorStop(1, 'transparent');
+      ctx.fillStyle = gl3; ctx.fillRect(0, 0, W, H);
     }
 
     function animate() {
       frame++;
-      drawLandscape();
-      hearts.forEach(p => {
-        p.y -= p.speed; p.x += p.drift; p.pulse += 0.025;
-        p.opacity = 0.12 + Math.sin(p.pulse) * 0.08;
-        if (p.y < -40) { p.y = H + 40; p.x = Math.random() * W; }
-        drawHeart(p.x, p.y, p.size, p.opacity);
+      ctx.clearRect(0, 0, W, H);
+      drawBackground();
+
+      // Draw flowers (slowly rotating)
+      flowers.forEach((f, i) => {
+        const phase = frame * 0.003 + i * 0.8;
+        drawFlower(f.cx, f.cy, f.r, f.count, f.hue, phase);
       });
-      requestAnimationFrame(animate);
+
+      // Silhouette couples
+      drawSilhouette(W * 0.5, H * 0.72, 1.1, 0.12);
+      drawSilhouette(W * 0.18, H * 0.88, 0.7, 0.08);
+      drawSilhouette(W * 0.82, H * 0.85, 0.75, 0.08);
+
+      // Floating love particles
+      particles.forEach(p => {
+        p.y -= p.speed;
+        p.x += p.drift;
+        p.rot += p.rotSpeed;
+        p.pulse += 0.025;
+        const alpha = p.opacity * (0.8 + Math.sin(p.pulse) * 0.2);
+        if (p.y < -60) { p.y = H + 60; p.x = Math.random() * W; }
+
+        if (p.type === 0) heart(ctx, p.x, p.y, p.size, alpha, p.hue);
+        else if (p.type === 1) petal(ctx, p.x, p.y, p.size, alpha, p.rot);
+        else if (p.type === 2) sparkle(ctx, p.x, p.y, p.size, alpha);
+        else if (p.type === 3) ring(ctx, p.x, p.y, p.size, alpha * 0.7);
+        else star(ctx, p.x, p.y, p.size, alpha);
+      });
+
+      animId = requestAnimationFrame(animate);
     }
     animate();
+    return () => cancelAnimationFrame(animId);
   }, []);
 
-  return <canvas ref={canvasRef} style={{ position:"fixed", inset:0, zIndex:0, pointerEvents:"none" }} />;
+  return (
+    <>
+      <canvas ref={canvasRef} style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none' }} />
+      {/* Frosted content overlay for readability */}
+      <div style={{ position:'fixed', inset:0, zIndex:1, background:'rgba(13,4,24,0.45)', pointerEvents:'none' }} />
+    </>
+  );
 }
 
-// ── STAR RATING ─────────────────────────────────────────────
+// ── STAR RATING ─────────────────────────────────────────────// ── STAR RATING ─────────────────────────────────────────────
 function StarRating({ profileId, currentRating, onRate }) {
   const [hovered, setHovered] = useState(0);
   const [rated, setRated] = useState(currentRating || 0);
