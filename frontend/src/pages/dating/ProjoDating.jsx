@@ -891,7 +891,10 @@ export default function ProjoDating() {
           <div>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", marginBottom:"4px" }}>
               <div style={{ fontFamily:FD, fontSize:"26px", fontWeight:"700", color:C.text }}>Find Your Match 💕</div>
-              {isPremium && <button onClick={handleUndo} style={{ background:"rgba(212,175,55,0.1)", border:`1px solid ${C.borderGold}`, borderRadius:"10px", padding:"6px 10px", color:C.goldLight, fontSize:"11px", fontWeight:"700", cursor:"pointer" }}>↩ Rewind</button>}
+              <div style={{ display:"flex", gap:"8px" }}>
+                <button onClick={() => loadDiscover()} title="Refresh profiles" style={{ background:"rgba(255,255,255,0.06)", border:`1px solid ${C.border}`, borderRadius:"10px", padding:"6px 10px", color:C.textMuted, fontSize:"11px", fontWeight:"700", cursor:"pointer" }}>↻ Refresh</button>
+                {isPremium && <button onClick={handleUndo} style={{ background:"rgba(212,175,55,0.1)", border:`1px solid ${C.borderGold}`, borderRadius:"10px", padding:"6px 10px", color:C.goldLight, fontSize:"11px", fontWeight:"700", cursor:"pointer" }}>↩ Rewind</button>}
+              </div>
             </div>
             <div style={{ fontSize:"12px", color:C.textMuted, marginBottom:"1rem" }}>
               {myProfile.city} & surrounds
