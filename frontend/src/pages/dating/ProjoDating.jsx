@@ -163,11 +163,11 @@ function StarRating({ profileId, currentRating, onRate }) {
 function PremiumModal({ onClose, onActivate }) {
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.92)", zIndex:500, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
-      <div style={{ background:`linear-gradient(160deg, #1A0F2E, #0D0418)`, borderRadius:"28px 28px 0 0", padding:"2rem 1.5rem", width:"100%", maxWidth:"500px", border:`1px solid rgba(212,175,55,0.4)`, borderBottom:"none", maxHeight:"90vh", overflowY:"auto" }}>
+      <div style={{ background:`linear-gradient(160deg, #1A0F2E, #0D0418)`, borderRadius:"28px 28px 0 0", padding:"1.5rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom, 0px))", width:"100%", maxWidth:"500px", border:`1px solid rgba(212,175,55,0.4)`, borderBottom:"none", maxHeight:"88vh", overflowY:"auto", WebkitOverflowScrolling:"touch", touchAction:"pan-y" }}>
         {/* Animated gold header */}
-        <div style={{ textAlign:"center", marginBottom:"1.5rem", position:"relative" }}>
-          <div style={{ fontSize:"52px", marginBottom:"8px" }}>👑</div>
-          <div style={{ fontFamily:FD, fontSize:"30px", fontWeight:"700", background:`linear-gradient(135deg, ${C.gold}, ${C.rose}, ${C.gold})`, backgroundSize:"200%", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", marginBottom:"4px" }}>
+        <div style={{ textAlign:"center", marginBottom:"1.1rem", position:"relative" }}>
+          <div style={{ fontSize:"44px", marginBottom:"6px" }}>👑</div>
+          <div style={{ fontFamily:FD, fontSize:"26px", fontWeight:"700", background:`linear-gradient(135deg, ${C.gold}, ${C.rose}, ${C.gold})`, backgroundSize:"200%", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", marginBottom:"4px" }}>
             PROJO Premium
           </div>
           <div style={{ fontSize:"13px", color:C.textMuted }}>Unlock your perfect connection</div>
@@ -184,23 +184,23 @@ function PremiumModal({ onClose, onActivate }) {
           ["✓","Verified Badge","Stand out with a verification checkmark"],
           ["💎","Priority Support","Get help whenever you need it"],
         ].map(([icon,title,sub]) => (
-          <div key={title} style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"14px" }}>
-            <div style={{ width:"40px", height:"40px", borderRadius:"12px", background:`linear-gradient(135deg, ${C.crimson}, ${C.purpleMid})`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"18px", flexShrink:0, boxShadow:`0 4px 12px rgba(139,0,0,0.3)` }}>{icon}</div>
+          <div key={title} style={{ display:"flex", alignItems:"center", gap:"12px", marginBottom:"10px" }}>
+            <div style={{ width:"36px", height:"36px", borderRadius:"11px", background:`linear-gradient(135deg, ${C.crimson}, ${C.purpleMid})`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"16px", flexShrink:0, boxShadow:`0 4px 12px rgba(139,0,0,0.3)` }}>{icon}</div>
             <div>
-              <div style={{ fontSize:"14px", fontWeight:"700", color:C.text }}>{title}</div>
-              <div style={{ fontSize:"11px", color:C.textMuted }}>{sub}</div>
+              <div style={{ fontSize:"13.5px", fontWeight:"700", color:C.text }}>{title}</div>
+              <div style={{ fontSize:"10.5px", color:C.textMuted }}>{sub}</div>
             </div>
           </div>
         ))}
 
         {/* Pricing */}
-        <div style={{ background:`linear-gradient(135deg, rgba(212,175,55,0.1), rgba(139,0,0,0.1))`, border:`1px solid rgba(212,175,55,0.3)`, borderRadius:"16px", padding:"16px", textAlign:"center", margin:"16px 0" }}>
+        <div style={{ background:`linear-gradient(135deg, rgba(212,175,55,0.1), rgba(139,0,0,0.1))`, border:`1px solid rgba(212,175,55,0.3)`, borderRadius:"16px", padding:"14px", textAlign:"center", margin:"12px 0" }}>
           <div style={{ fontSize:"11px", color:C.textMuted, marginBottom:"4px", textTransform:"uppercase", letterSpacing:"1px" }}>Monthly</div>
-          <div style={{ fontFamily:FD, fontSize:"38px", fontWeight:"700", color:C.gold }}>R80<span style={{ fontSize:"15px", color:C.textMuted }}>/month</span></div>
+          <div style={{ fontFamily:FD, fontSize:"34px", fontWeight:"700", color:C.gold }}>R80<span style={{ fontSize:"15px", color:C.textMuted }}>/month</span></div>
           <div style={{ fontSize:"11px", color:C.textMuted, marginTop:"4px" }}>Cancel anytime · No hidden fees · Secure payment</div>
         </div>
 
-        <button onClick={onActivate} style={{ width:"100%", background:`linear-gradient(135deg, ${C.gold}, #9A7A10)`, border:"none", borderRadius:"14px", padding:"16px", color:C.dark, fontWeight:"800", fontSize:"16px", cursor:"pointer", marginBottom:"10px", boxShadow:`0 8px 24px rgba(212,175,55,0.4)` }}>
+        <button onClick={onActivate} style={{ width:"100%", background:`linear-gradient(135deg, ${C.gold}, #9A7A10)`, border:"none", borderRadius:"14px", padding:"15px", color:C.dark, fontWeight:"800", fontSize:"15px", cursor:"pointer", marginBottom:"10px", boxShadow:`0 8px 24px rgba(212,175,55,0.4)` }}>
           👑 Activate Premium — R80/month
         </button>
         <button onClick={onClose} style={{ width:"100%", background:"none", border:`1px solid ${C.border}`, borderRadius:"14px", padding:"12px", color:C.textMuted, fontSize:"14px", cursor:"pointer" }}>
@@ -377,7 +377,7 @@ function ReportModal({ profile, onClose, onSubmit }) {
   const REASONS = ["Fake profile", "Inappropriate photos", "Harassment", "Scam / soliciting money", "Underage", "Other"];
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:300, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
-      <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px 24px 0 0", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.border}` }}>
+      <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px 24px 0 0", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.border}`, maxHeight:"85vh", overflowY:"auto", WebkitOverflowScrolling:"touch" }}>
         <div style={{ fontFamily:FD, fontSize:"20px", fontWeight:"700", color:C.text, marginBottom:"4px" }}>Report {profile.displayName}</div>
         <div style={{ fontSize:"12px", color:C.textMuted, marginBottom:"1rem" }}>Our team reviews every report.</div>
         <div style={{ display:"flex", flexDirection:"column", gap:"8px", marginBottom:"1rem" }}>
@@ -408,7 +408,7 @@ function VerifyModal({ onClose, onSubmit }) {
   }
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:300, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
-      <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px 24px 0 0", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.borderGold}` }}>
+      <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px 24px 0 0", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.borderGold}`, maxHeight:"85vh", overflowY:"auto", WebkitOverflowScrolling:"touch" }}>
         <div style={{ fontFamily:FD, fontSize:"20px", fontWeight:"700", color:C.gold, marginBottom:"4px" }}>✓ Get Verified</div>
         <div style={{ fontSize:"12px", color:C.textMuted, marginBottom:"1rem" }}>Upload a clear selfie. Our team reviews it and adds the verified badge to your profile.</div>
         <label style={{ aspectRatio:"1", maxWidth:"200px", margin:"0 auto 1rem", borderRadius:"16px", border:`1.5px dashed ${C.borderGold}`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", overflow:"hidden" }}>
@@ -430,7 +430,7 @@ function VerifyModal({ onClose, onSubmit }) {
 function BlockedListModal({ blocked, onUnblock, onClose }) {
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:300, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
-      <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px 24px 0 0", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.border}`, maxHeight:"75vh", overflowY:"auto" }}>
+      <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px 24px 0 0", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.border}`, maxHeight:"75vh", overflowY:"auto", WebkitOverflowScrolling:"touch" }}>
         <div style={{ fontFamily:FD, fontSize:"20px", fontWeight:"700", color:C.text, marginBottom:"1rem" }}>🚫 Blocked Users</div>
         {blocked.length === 0 ? (
           <div style={{ color:C.textDim, textAlign:"center", padding:"2rem 0", fontSize:"13px" }}>No one blocked.</div>
@@ -479,6 +479,16 @@ export default function ProjoDating() {
 
   const socketRef = useRef(null);
   const isPremium = !!myProfile?.isPremium;
+
+  // Lock background scrolling whenever any modal/bottom-sheet is open —
+  // otherwise on some mobile browsers a touch-scroll gesture can scroll the
+  // page behind the modal instead of the modal's own content, making
+  // buttons near the bottom of a modal seem unreachable.
+  useEffect(() => {
+    const anyModalOpen = !!(showProfile || showPremium || showFilter || showReport || showVerify || showBlockedList);
+    document.body.style.overflow = anyModalOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [showProfile, showPremium, showFilter, showReport, showVerify, showBlockedList]);
 
   // ── Load my profile on mount ──
   useEffect(() => {
@@ -1123,8 +1133,11 @@ export default function ProjoDating() {
       {/* Filter Modal */}
       {showFilter && (
         <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:200, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
-          <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px 24px 0 0", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.border}` }}>
-            <div style={{ fontFamily:FD, fontSize:"22px", fontWeight:"700", color:C.text, marginBottom:"1.25rem" }}>⚙ Filter Profiles</div>
+          <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px 24px 0 0", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.border}`, maxHeight:"85vh", overflowY:"auto", WebkitOverflowScrolling:"touch" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1.25rem" }}>
+              <div style={{ fontFamily:FD, fontSize:"22px", fontWeight:"700", color:C.text }}>⚙ Filter Profiles</div>
+              <button onClick={() => setShowFilter(false)} aria-label="Close" style={{ background:"rgba(255,255,255,0.06)", border:`1px solid ${C.border}`, borderRadius:"10px", width:"32px", height:"32px", color:C.text, fontSize:"16px", cursor:"pointer" }}>✕</button>
+            </div>
             <label style={{ fontSize:"12px", color:C.textMuted, display:"block", marginBottom:"6px" }}>Age range: {filters.ageMin} – {filters.ageMax}</label>
             <div style={{ display:"flex", gap:"10px", marginBottom:"1rem" }}>
               <input type="number" min="18" max="99" value={filters.ageMin} onChange={e => setFilters(f => ({...f, ageMin: e.target.value}))} style={{ flex:1, padding:"8px", borderRadius:"8px", background:C.cardLight, border:`1px solid ${C.border}`, color:C.text }} />
@@ -1132,7 +1145,7 @@ export default function ProjoDating() {
             </div>
             <label style={{ fontSize:"12px", color:C.textMuted, display:"block", marginBottom:"6px" }}>Max distance (km) — leave blank for no limit</label>
             <input type="number" min="1" placeholder="e.g. 25" value={filters.maxDistanceKm} onChange={e => setFilters(f => ({...f, maxDistanceKm: e.target.value}))} style={{ width:"100%", padding:"10px", borderRadius:"10px", background:C.cardLight, border:`1px solid ${C.border}`, color:C.text, marginBottom:"1rem" }} />
-            <button onClick={applyFilters} style={{ width:"100%", background:`linear-gradient(135deg, ${C.crimson}, ${C.purpleMid})`, border:"none", borderRadius:"14px", padding:"14px", color:"#fff", fontWeight:"700", fontSize:"15px", cursor:"pointer" }}>Apply Filters</button>
+            <button onClick={applyFilters} style={{ width:"100%", background:`linear-gradient(135deg, ${C.crimson}, ${C.purpleMid})`, border:"none", borderRadius:"14px", padding:"14px", color:"#fff", fontWeight:"700", fontSize:"15px", cursor:"pointer", marginBottom:"env(safe-area-inset-bottom, 0px)" }}>Apply Filters</button>
           </div>
         </div>
       )}
