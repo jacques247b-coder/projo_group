@@ -212,7 +212,7 @@ function PremiumModal({ onClose, onActivate }) {
 }
 
 // ── PROFILE DETAIL ───────────────────────────────────────────
-function ProfileDetail({ profile, onClose, onLike, onMessage, isPremium }) {
+function ProfileDetail({ profile, onClose, onLike, onMessage, isPremium, onSuperLike, superLiked }) {
   const [rating, setRating] = useState(0);
   const [showPremium, setShowPremium] = useState(false);
 
@@ -256,7 +256,7 @@ function ProfileDetail({ profile, onClose, onLike, onMessage, isPremium }) {
           <button onClick={() => isPremium ? onMessage?.(profile) : setShowPremium(true)} style={{ flex:1, background:isPremium ? `linear-gradient(135deg, ${C.purpleMid}, ${C.gold})` : "rgba(255,255,255,0.08)", border:isPremium ? "none" : `1px solid ${C.borderGold}`, borderRadius:"14px", padding:"14px", color:isPremium ? "#fff" : C.gold, fontWeight:"800", fontSize:"15px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:"8px" }}>
             {isPremium ? "💬 Message" : "🔒 Message"}
           </button>
-          <button onClick={() => toast("⭐ Super Like sent!")} style={{ width:"52px", background:`linear-gradient(135deg, rgba(212,175,55,0.2), rgba(212,175,55,0.1))`, border:`1px solid ${C.borderGold}`, borderRadius:"14px", color:C.gold, fontSize:"22px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>⭐</button>
+          <button onClick={() => onSuperLike?.(profile)} disabled={superLiked} style={{ width:"52px", background:superLiked?`linear-gradient(135deg, ${C.gold}, #B8960C)`:`linear-gradient(135deg, rgba(212,175,55,0.2), rgba(212,175,55,0.1))`, border:`1px solid ${C.borderGold}`, borderRadius:"14px", color:superLiked?C.dark:C.gold, fontSize:"22px", cursor:superLiked?"default":"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>⭐</button>
         </div>
 
         {/* Profile info */}
@@ -325,7 +325,7 @@ function ProfileDetail({ profile, onClose, onLike, onMessage, isPremium }) {
 }
 
 // ── PROFILE CARD ─────────────────────────────────────────────
-function ProfileCard({ profile, onLike, onPass, onOpen }) {
+function ProfileCard({ profile, onLike, onPass, onOpen, onSuperLike, superLiked }) {
   const [liked, setLiked] = useState(false);
   return (
     <div onClick={() => onOpen?.(profile)} style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, border:`1px solid ${C.border}`, borderRadius:"22px", overflow:"hidden", cursor:"pointer", boxShadow:`0 16px 48px rgba(139,0,0,0.25), 0 0 0 1px rgba(232,20,74,0.08)`, transition:"transform 0.2s" }}
@@ -358,7 +358,7 @@ function ProfileCard({ profile, onLike, onPass, onOpen }) {
           <button onClick={() => { setLiked(true); onLike?.(profile); }} style={{ flex:1, height:"44px", borderRadius:"22px", background:liked?`linear-gradient(135deg, ${C.rose}, ${C.roseLight})`:`linear-gradient(135deg, ${C.crimson}, ${C.rose})`, border:"none", color:"#fff", fontWeight:"800", fontSize:"15px", cursor:"pointer", boxShadow:`0 4px 16px rgba(232,20,74,0.4)` }}>
             {liked ? "♥ Liked!" : "♥ Like"}
           </button>
-          <button style={{ width:"44px", height:"44px", borderRadius:"50%", background:`linear-gradient(135deg, rgba(212,175,55,0.2), rgba(212,175,55,0.1))`, border:`1px solid ${C.borderGold}`, color:C.gold, fontSize:"18px", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>⭐</button>
+          <button onClick={() => onSuperLike?.(profile)} disabled={superLiked} style={{ width:"44px", height:"44px", borderRadius:"50%", background:superLiked?`linear-gradient(135deg, ${C.gold}, #B8960C)`:`linear-gradient(135deg, rgba(212,175,55,0.2), rgba(212,175,55,0.1))`, border:`1px solid ${C.borderGold}`, color:superLiked?C.dark:C.gold, fontSize:"18px", cursor:superLiked?"default":"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}>⭐</button>
         </div>
       </div>
     </div>
@@ -384,12 +384,36 @@ export default function ProjoDating() {
   const [showPremium, setShowPremium] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
   const [likes, setLikes] = useState([]);
+  const [superLikes, setSuperLikes] = useState([]);
+  const SUPER_LIKES_PER_DAY = 5;
   const [matches, setMatches] = useState([]);
   const [messages, setMessages] = useState({});
   const [msgInput, setMsgInput] = useState("");
   const [activeMatch, setActiveMatch] = useState(null);
   const [showFilter, setShowFilter] = useState(false);
   const [profileRatings, setProfileRatings] = useState({});
+
+  function handleSuperLike(profile) {
+    if (!isPremium) { setShowPremium(true); return; }
+    if (superLikes.includes(profile.id)) return;
+    if (superLikes.length >= SUPER_LIKES_PER_DAY) {
+      toast.error(`You've used all ${SUPER_LIKES_PER_DAY} Super Likes for today — more tomorrow!`);
+      return;
+    }
+    setSuperLikes(p => [...p, profile.id]);
+    if (!likes.includes(profile.id)) setLikes(p => [...p, profile.id]);
+    // Super Likes make a strong impression — guaranteed match
+    setTimeout(() => {
+      setMatches(p => (p.some(m => m.id === profile.id) ? p : [...p, profile]));
+      toast.custom(() => (
+        <div style={{ background:`linear-gradient(135deg, ${C.gold}, #9A7A10)`, borderRadius:"20px", padding:"20px 28px", textAlign:"center", boxShadow:"0 20px 60px rgba(212,175,55,0.5)" }}>
+          <div style={{ fontSize:"40px", marginBottom:"6px" }}>⭐</div>
+          <div style={{ fontFamily:FD, fontSize:"22px", fontWeight:"700", color:C.dark }}>Super Like Sent!</div>
+          <div style={{ fontSize:"12px", color:C.dark, marginTop:"4px" }}>{profile.name} will see you stood out 💫</div>
+        </div>
+      ), { duration: 4000 });
+    }, 500);
+  }
 
   function handleLike(profile) {
     if (likes.includes(profile.id)) return;
@@ -463,7 +487,7 @@ export default function ProjoDating() {
                 <div style={{ fontFamily:FD, fontSize:"20px", fontWeight:"700", color:C.text, marginBottom:"12px" }}>{section}</div>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px" }}>
                   {PROFILES.slice(si % 3, (si % 3) + 2).map(p => (
-                    <ProfileCard key={p.id} profile={p} onLike={handleLike} onPass={() => {}} onOpen={setShowProfile} />
+                    <ProfileCard key={p.id} profile={p} onLike={handleLike} onPass={() => {}} onOpen={setShowProfile} onSuperLike={handleSuperLike} superLiked={superLikes.includes(p.id)} />
                   ))}
                 </div>
               </div>
@@ -626,6 +650,8 @@ export default function ProjoDating() {
           onLike={handleLike}
           onMessage={handleMessage}
           isPremium={isPremium}
+          onSuperLike={handleSuperLike}
+          superLiked={superLikes.includes(showProfile.id)}
         />
       )}
 
