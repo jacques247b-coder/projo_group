@@ -5,6 +5,9 @@ const { computeCompatScore } = require("../utils/datingMatch");
 const FREE_DAILY_LIKES = 20;
 const SUPER_LIKES_PER_DAY = 5; // premium only
 const BOOST_MINUTES = 30;
+// Once this many real (non-demo) active profiles exist, demo/placeholder
+// profiles stop appearing in Discover — no manual cleanup needed.
+const DEMO_PHASEOUT_THRESHOLD = 15;
 
 function startOfToday() {
   const d = new Date();
@@ -35,6 +38,11 @@ exports.getProfiles = async (req, res) => {
 
     const { ageMin = 18, ageMax = 60, city, maxDistanceKm, limit = 20 } = req.query;
 
+    // Once enough real profiles exist, stop showing demo/placeholder ones —
+    // no manual cleanup needed, this re-checks on every request.
+    const realProfileCount = await prisma.datingProfile.count({ where: { isActive: true, isDemo: false } });
+    const includeDemoProfiles = realProfileCount < DEMO_PHASEOUT_THRESHOLD;
+
     const [likes, passes, blocksA, blocksB] = await Promise.all([
       prisma.datingLike.findMany({ where: { fromId: myProfile.id }, select: { toId: true } }),
       prisma.datingPass.findMany({ where: { fromId: myProfile.id }, select: { toId: true } }),
@@ -56,6 +64,7 @@ exports.getProfiles = async (req, res) => {
         isIncognito: false,
         age: { gte: parseInt(ageMin), lte: parseInt(ageMax) },
         ...(city ? { city } : {}),
+        ...(includeDemoProfiles ? {} : { isDemo: false }),
       },
       take: parseInt(limit) * 3, // over-fetch, then rank/filter by distance in-memory
       orderBy: [{ isFeatured: "desc" }, { boostActive: "desc" }, { isVerified: "desc" }, { lastActive: "desc" }],

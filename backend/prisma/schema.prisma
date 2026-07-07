@@ -286,6 +286,7 @@ model DatingProfile {
   profileComplete   Int      @default(0) // percentage
   isActive          Boolean  @default(true)
   isIncognito       Boolean  @default(false)
+  isDemo            Boolean  @default(false) // seeded placeholder profile — auto-hidden once enough real profiles exist
   
   // Stats
   likesReceived     Int      @default(0)
