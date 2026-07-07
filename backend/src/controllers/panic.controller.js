@@ -21,7 +21,7 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const twilioService = require("../services/twilio.service");
-const { sendWhatsAppNotification } = require("../services/whatsapp.service"); // CallMeBot fallback
+const { sendWhatsAppNotification, sendWhatsAppToContact } = require("../services/whatsapp.service"); // CallMeBot fallback + per-contact
 
 const MAX_PERSONAL_CONTACTS = 2;
 
@@ -53,20 +53,28 @@ async function dispatchAlert(alert, user) {
   // already configured for other admin notifications if not set separately.
   const projoBackupPhone = process.env.PROJO_BACKUP_WHATSAPP || process.env.CALLMEBOT_PHONE;
   const allPhones = [
-    ...personalContacts.map((c) => ({ phone: c.phone, label: c.label || "Personal contact" })),
-    ...securityContacts.map((c) => ({ phone: c.phone, label: c.companyName })),
-    ...(projoBackupPhone ? [{ phone: projoBackupPhone, label: "PROJO Group (backup)" }] : []),
+    ...personalContacts.map((c) => ({ phone: c.phone, label: c.label || "Personal contact", callmebotApiKey: c.callmebotApiKey })),
+    ...securityContacts.map((c) => ({ phone: c.phone, label: c.companyName, callmebotApiKey: c.callmebotApiKey })),
+    ...(projoBackupPhone ? [{ phone: projoBackupPhone, label: "PROJO Group (backup)", callmebotApiKey: null }] : []),
   ];
 
   const dispatchResults = [];
   for (const recipient of allPhones) {
-    const [sms, whatsapp] = await Promise.all([
+    // Twilio SMS is the backbone — works on any phone, no opt-in needed.
+    // Twilio WhatsApp is layered on top where configured.
+    // CallMeBot WhatsApp is a THIRD, independent layer for any contact who
+    // has personally opted in and given us their own API key — free, but
+    // only reaches that one contact's own number with their own key.
+    const [sms, whatsappTwilio, whatsappCallmebot] = await Promise.all([
       twilioService.sendSMS(recipient.phone, message).catch((e) => ({ success: false, error: e.message })),
       twilioService.sendWhatsApp(recipient.phone, message).catch((e) => ({ success: false, error: e.message })),
+      recipient.callmebotApiKey
+        ? sendWhatsAppToContact(recipient.phone, recipient.callmebotApiKey, message).catch((e) => ({ success: false, error: e.message }))
+        : Promise.resolve({ success: false, skipped: true }),
     ]);
-    dispatchResults.push({ to: recipient.label, phone: recipient.phone, sms, whatsapp });
+    dispatchResults.push({ to: recipient.label, phone: recipient.phone, sms, whatsappTwilio, whatsappCallmebot });
   }
-  sendWhatsAppNotification(message).catch(() => {}); // CallMeBot — intentional extra redundancy to the same PROJO backup number via a second, independent channel
+  sendWhatsAppNotification(message).catch(() => {}); // CallMeBot — intentional extra redundancy to the PROJO backup number via a second, independent channel
 
   await prisma.panicAlert.update({
     where: { id: alert.id },
@@ -151,13 +159,13 @@ exports.listMyContacts = async (req, res) => {
 // POST /api/panic/contacts  { label, phone }
 exports.addMyContact = async (req, res) => {
   try {
-    const { label, phone } = req.body;
+    const { label, phone, callmebotApiKey } = req.body;
     if (!phone) return res.status(400).json({ error: "A phone number is required" });
     const count = await prisma.panicContact.count({ where: { userId: req.user.id } });
     if (count >= MAX_PERSONAL_CONTACTS) {
       return res.status(400).json({ error: `You can only add up to ${MAX_PERSONAL_CONTACTS} emergency contacts` });
     }
-    const contact = await prisma.panicContact.create({ data: { userId: req.user.id, label: label || "", phone } });
+    const contact = await prisma.panicContact.create({ data: { userId: req.user.id, label: label || "", phone, callmebotApiKey: callmebotApiKey || null } });
     res.json({ contact });
   } catch (err) { res.status(500).json({ error: err.message }); }
 };
@@ -278,9 +286,9 @@ exports.adminListSecurityContacts = async (req, res) => {
 // POST /api/panic/security-contacts  { companyName, phone }
 exports.adminAddSecurityContact = async (req, res) => {
   try {
-    const { companyName, phone } = req.body;
+    const { companyName, phone, callmebotApiKey } = req.body;
     if (!companyName || !phone) return res.status(400).json({ error: "companyName and phone are required" });
-    const contact = await prisma.securityMonitorContact.create({ data: { companyName, phone, addedBy: req.user.id } });
+    const contact = await prisma.securityMonitorContact.create({ data: { companyName, phone, callmebotApiKey: callmebotApiKey || null, addedBy: req.user.id } });
     res.json({ contact });
   } catch (err) { res.status(500).json({ error: err.message }); }
 };

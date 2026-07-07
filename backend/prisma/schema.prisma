@@ -567,6 +567,7 @@ model PanicContact {
   user      User     @relation(fields: [userId], references: [id])
   label     String   @default("") // e.g. "Mom", "Best friend"
   phone     String              // E.164 format, e.g. +27821234567
+  callmebotApiKey String?        // optional — lets this contact receive free WhatsApp via CallMeBot
   createdAt DateTime @default(now())
   @@map("panic_contacts")
 }
@@ -575,6 +576,7 @@ model SecurityMonitorContact {
   id          String   @id @default(uuid())
   companyName String
   phone       String              // E.164 format
+  callmebotApiKey String?         // optional — lets this contact receive free WhatsApp via CallMeBot
   isActive    Boolean  @default(true)
   addedBy     String?             // admin userId
   createdAt   DateTime @default(now())

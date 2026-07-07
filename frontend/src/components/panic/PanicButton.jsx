@@ -184,6 +184,7 @@ function PanicContactsModal({ onClose }) {
   const [contacts, setContacts] = useState([]);
   const [label, setLabel] = useState("");
   const [phone, setPhone] = useState("");
+  const [callmebotKey, setCallmebotKey] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -193,9 +194,9 @@ function PanicContactsModal({ onClose }) {
   async function addContact() {
     if (!phone.trim()) { toast.error("Enter a phone number"); return; }
     try {
-      const res = await panicAPI.addContact(label.trim(), phone.trim());
+      const res = await panicAPI.addContact(label.trim(), phone.trim(), callmebotKey.trim() || undefined);
       setContacts((c) => [...c, res.contact]);
-      setLabel(""); setPhone("");
+      setLabel(""); setPhone(""); setCallmebotKey("");
     } catch (e) { toast.error(e.error || "Couldn't add contact"); }
   }
 
@@ -208,7 +209,7 @@ function PanicContactsModal({ onClose }) {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.9)", zIndex: 403, display: "flex", alignItems: "center", justifyContent: "center", padding: "1.25rem" }}>
-      <div style={{ background: "#1a0505", border: "1px solid rgba(139,0,0,0.6)", borderRadius: "18px", padding: "1.5rem", maxWidth: "380px", width: "100%" }}>
+      <div style={{ background: "#1a0505", border: "1px solid rgba(139,0,0,0.6)", borderRadius: "18px", padding: "1.5rem", maxWidth: "380px", width: "100%", maxHeight: "85vh", overflowY: "auto" }}>
         <div style={{ fontSize: "18px", fontWeight: 700, color: "#fff", marginBottom: "4px" }}>Emergency Contacts</div>
         <div style={{ fontSize: "12px", color: "#999", marginBottom: "14px" }}>Up to 2 people notified by SMS/WhatsApp when you trigger the panic button.</div>
 
@@ -220,7 +221,7 @@ function PanicContactsModal({ onClose }) {
               <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
                 <div>
                   <div style={{ fontSize: "13px", color: "#fff" }}>{c.label || "Contact"}</div>
-                  <div style={{ fontSize: "11px", color: "#999" }}>{c.phone}</div>
+                  <div style={{ fontSize: "11px", color: "#999" }}>{c.phone}{c.callmebotApiKey ? " · WhatsApp enabled" : ""}</div>
                 </div>
                 <button onClick={() => removeContact(c.id)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "8px", padding: "5px 10px", color: "#f87171", fontSize: "11px", cursor: "pointer" }}>Remove</button>
               </div>
@@ -228,7 +229,11 @@ function PanicContactsModal({ onClose }) {
             {contacts.length < 2 && (
               <div style={{ marginTop: "14px" }}>
                 <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Label (e.g. Mom)" style={{ width: "100%", padding: "9px 12px", borderRadius: "10px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", fontSize: "13px", marginBottom: "8px" }} />
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+27821234567" style={{ width: "100%", padding: "9px 12px", borderRadius: "10px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", fontSize: "13px", marginBottom: "10px" }} />
+                <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+27821234567" style={{ width: "100%", padding: "9px 12px", borderRadius: "10px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", fontSize: "13px", marginBottom: "8px" }} />
+                <input value={callmebotKey} onChange={(e) => setCallmebotKey(e.target.value)} placeholder="CallMeBot API key (optional)" style={{ width: "100%", padding: "9px 12px", borderRadius: "10px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", fontSize: "13px", marginBottom: "6px" }} />
+                <div style={{ fontSize: "10.5px", color: "#888", lineHeight: 1.5, marginBottom: "10px" }}>
+                  For free WhatsApp delivery: this contact sends "I allow callmebot to send me messages" to <b>+34 644 77 72 31</b> on WhatsApp, gets a key back, and you paste it here. Optional — SMS still goes out either way.
+                </div>
                 <button onClick={addContact} style={{ width: "100%", padding: "10px", borderRadius: "10px", background: "rgba(139,0,0,0.7)", border: "none", color: "#fff", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>Add Contact</button>
               </div>
             )}

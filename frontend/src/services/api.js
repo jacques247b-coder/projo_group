@@ -107,7 +107,7 @@ export const panicAPI = {
   trigger: (latitude, longitude) => api.post("/panic/trigger", { latitude, longitude }),
   triggerAnonymous: (latitude, longitude) => api.post("/panic/trigger-anonymous", { latitude, longitude }),
   listContacts: () => api.get("/panic/contacts"),
-  addContact: (label, phone) => api.post("/panic/contacts", { label, phone }),
+  addContact: (label, phone, callmebotApiKey) => api.post("/panic/contacts", { label, phone, callmebotApiKey }),
   removeContact: (id) => api.delete(`/panic/contacts/${id}`),
   selfCancel: (alertId) => api.post(`/panic/alerts/${alertId}/self-cancel`),
   // Admin / security monitor dashboard
@@ -115,7 +115,7 @@ export const panicAPI = {
   adminAcknowledge: (id) => api.post(`/panic/alerts/${id}/acknowledge`),
   adminResolve: (id, notes, falseAlarm) => api.post(`/panic/alerts/${id}/resolve`, { notes, falseAlarm }),
   adminListSecurityContacts: () => api.get("/panic/security-contacts"),
-  adminAddSecurityContact: (companyName, phone) => api.post("/panic/security-contacts", { companyName, phone }),
+  adminAddSecurityContact: (companyName, phone, callmebotApiKey) => api.post("/panic/security-contacts", { companyName, phone, callmebotApiKey }),
   adminToggleSecurityContact: (id) => api.post(`/panic/security-contacts/${id}/toggle`),
   adminListSecurityUsers: () => api.get("/panic/security-users"),
   adminCreateSecurityUser: (name, phone) => api.post("/panic/security-users", { name, phone }),
