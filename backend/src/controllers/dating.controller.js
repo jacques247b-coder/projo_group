@@ -83,17 +83,35 @@ exports.getProfiles = async (req, res) => {
 };
 
 // POST /api/dating/profile — create/update profile
+const ARRAY_FIELDS = ["interestedIn", "relationshipGoals", "languages", "interests", "music", "movies", "photos"];
 exports.upsertProfile = async (req, res) => {
   try {
     const data = { ...req.body };
     delete data.userId; delete data.id; // never let the client set these
+
+    // Defensive coercion — protects against a stray type mismatch turning
+    // into an opaque Prisma validation error for the user.
+    if (data.age !== undefined) {
+      const age = parseInt(data.age, 10);
+      if (Number.isNaN(age)) return res.status(400).json({ error: "Age must be a number" });
+      data.age = age;
+    }
+    for (const field of ARRAY_FIELDS) {
+      if (data[field] !== undefined && !Array.isArray(data[field])) {
+        data[field] = data[field] ? [data[field]] : [];
+      }
+    }
+
     const profile = await prisma.datingProfile.upsert({
       where: { userId: req.user.id },
       update: { ...data, updatedAt: new Date() },
       create: { ...data, userId: req.user.id },
     });
     res.json({ profile });
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) {
+    console.error("[upsertProfile] Prisma error:", err.message);
+    res.status(500).json({ error: "Couldn't save your profile — " + err.message });
+  }
 };
 
 // GET /api/dating/me — my own profile + daily usage counters

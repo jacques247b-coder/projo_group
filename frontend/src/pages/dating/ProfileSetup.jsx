@@ -1,6 +1,7 @@
 // PROJO DATING — Profile Setup / Edit
 // Handles both first-time onboarding (no profile yet) and later edits.
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { datingAPI } from "../../services/api";
 
@@ -11,6 +12,7 @@ const SUGGESTED_INTERESTS = ["Hiking", "Braai", "Travel", "Music", "Yoga", "Cook
   "Reading", "Dancing", "Art", "Movies", "Gaming", "Photography", "Wine", "Fitness", "Nature", "Jazz"];
 
 export default function ProfileSetup({ C, FD, FB, existingProfile, onSaved, onCancel }) {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     age: existingProfile?.age || "",
     gender: existingProfile?.gender || "Woman",
@@ -24,6 +26,11 @@ export default function ProfileSetup({ C, FD, FB, existingProfile, onSaved, onCa
   const [photos, setPhotos] = useState(existingProfile?.photos || []);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  // The profile row doesn't exist in the database until the first successful
+  // Save — photo upload needs a real profile to attach to, so it stays
+  // locked (with a clear reason) until that first save has happened.
+  const [profileExists, setProfileExists] = useState(!!existingProfile);
 
   function toggleInArray(field, value) {
     setForm((f) => ({
@@ -42,6 +49,7 @@ export default function ProfileSetup({ C, FD, FB, existingProfile, onSaved, onCa
   async function handlePhotoUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!profileExists) { toast.error("Save your profile details first, then add photos"); return; }
     if (file.size > 2 * 1024 * 1024) { toast.error("Photos must be under 2MB"); return; }
     if (photos.length >= 6) { toast.error("Maximum 6 photos"); return; }
     setUploadingPhoto(true);
@@ -76,11 +84,16 @@ export default function ProfileSetup({ C, FD, FB, existingProfile, onSaved, onCa
     if (form.relationshipGoals.length === 0) { toast.error("Pick at least one relationship goal"); return; }
     setSaving(true);
     try {
-      await datingAPI.upsertProfile({ ...form, age: parseInt(form.age) });
-      toast.success("Profile saved");
-      onSaved?.();
+      await datingAPI.upsertProfile({ ...form, age: parseInt(form.age, 10) });
+      setProfileExists(true);
+      if (existingProfile) {
+        toast.success("Profile saved");
+        onSaved?.();
+      } else {
+        toast.success("Profile created! Add some photos, then you're ready to go 💕");
+      }
     } catch (err) {
-      toast.error(err.error || "Couldn't save profile");
+      toast.error(err.error || "Couldn't save profile — please try again");
     } finally {
       setSaving(false);
     }
@@ -98,15 +111,24 @@ export default function ProfileSetup({ C, FD, FB, existingProfile, onSaved, onCa
   return (
     <div style={{ minHeight: "100vh", background: C.midnight, color: C.text, fontFamily: FB, padding: "1.5rem 1rem 6rem" }}>
       <div style={{ maxWidth: "500px", margin: "0 auto" }}>
-        <div style={{ fontFamily: FD, fontSize: "28px", fontWeight: "700", marginBottom: "4px", background: `linear-gradient(135deg, ${C.rose}, ${C.gold})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-          {existingProfile ? "Edit Your Profile" : "Create Your Dating Profile"}
-        </div>
-        <div style={{ fontSize: "13px", color: C.textMuted, marginBottom: "1.5rem" }}>
-          {existingProfile ? "Keep it fresh — update anytime." : "This is what other members will see. Be genuine."}
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "1rem" }}>
+          <button
+            onClick={() => (onCancel ? onCancel() : navigate("/"))}
+            aria-label="Back"
+            style={{ background: "rgba(255,255,255,0.06)", border: `1px solid ${C.border}`, borderRadius: "10px", width: "36px", height: "36px", color: C.text, fontSize: "18px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+          >←</button>
+          <div>
+            <div style={{ fontFamily: FD, fontSize: "28px", fontWeight: "700", background: `linear-gradient(135deg, ${C.rose}, ${C.gold})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              {existingProfile ? "Edit Your Profile" : "Create Your Dating Profile"}
+            </div>
+            <div style={{ fontSize: "13px", color: C.textMuted }}>
+              {existingProfile ? "Keep it fresh — update anytime." : "This is what other members will see. Be genuine."}
+            </div>
+          </div>
         </div>
 
         {/* Photos */}
-        <label style={label}>Photos ({photos.length}/6)</label>
+        <label style={label}>Photos ({photos.length}/6){!profileExists && " — save your details below first"}</label>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", marginBottom: "1.25rem" }}>
           {photos.map((url, i) => (
             <div key={i} style={{ position: "relative", aspectRatio: "1", borderRadius: "12px", overflow: "hidden", border: `1px solid ${C.border}` }}>
@@ -115,10 +137,10 @@ export default function ProfileSetup({ C, FD, FB, existingProfile, onSaved, onCa
             </div>
           ))}
           {photos.length < 6 && (
-            <label style={{ aspectRatio: "1", borderRadius: "12px", border: `1.5px dashed ${C.border}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexDirection: "column", gap: "4px" }}>
-              <input type="file" accept="image/*" onChange={handlePhotoUpload} style={{ display: "none" }} disabled={uploadingPhoto} />
+            <label style={{ aspectRatio: "1", borderRadius: "12px", border: `1.5px dashed ${profileExists ? C.border : C.textDim}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: profileExists ? "pointer" : "not-allowed", flexDirection: "column", gap: "4px", opacity: profileExists ? 1 : 0.5 }}>
+              <input type="file" accept="image/*" onChange={handlePhotoUpload} style={{ display: "none" }} disabled={uploadingPhoto || !profileExists} />
               <span style={{ fontSize: "22px" }}>{uploadingPhoto ? "…" : "+"}</span>
-              <span style={{ fontSize: "10px", color: C.textDim }}>Add photo</span>
+              <span style={{ fontSize: "10px", color: C.textDim }}>{profileExists ? "Add photo" : "Save first"}</span>
             </label>
           )}
         </div>
@@ -165,13 +187,19 @@ export default function ProfileSetup({ C, FD, FB, existingProfile, onSaved, onCa
         </div>
 
         <div style={{ display: "flex", gap: "10px" }}>
-          {onCancel && (
+          {existingProfile && onCancel && (
             <button onClick={onCancel} style={{ flex: 1, padding: "14px", borderRadius: "14px", background: "none", border: `1px solid ${C.border}`, color: C.textMuted, fontSize: "14px", cursor: "pointer" }}>Cancel</button>
           )}
           <button onClick={handleSave} disabled={saving} style={{ flex: 2, padding: "14px", borderRadius: "14px", background: `linear-gradient(135deg, ${C.crimson}, ${C.rose})`, border: "none", color: "#fff", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}>
-            {saving ? "Saving…" : existingProfile ? "Save Changes" : "Create Profile & Start Discovering 💕"}
+            {saving ? "Saving…" : existingProfile ? "Save Changes" : profileExists ? "Save Details" : "Create Profile"}
           </button>
         </div>
+
+        {!existingProfile && profileExists && (
+          <button onClick={() => onSaved?.()} style={{ width: "100%", marginTop: "10px", padding: "14px", borderRadius: "14px", background: `linear-gradient(135deg, ${C.gold}, #9A7A10)`, border: "none", color: C.dark, fontWeight: "800", fontSize: "14px", cursor: "pointer" }}>
+            Start Discovering 💕
+          </button>
+        )}
       </div>
     </div>
   );
