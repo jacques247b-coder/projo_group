@@ -437,6 +437,57 @@ function VerifyModal({ onClose, onSubmit }) {
 
 // ── BLOCKED LIST MODAL ────────────────────────────────────────
 // ── WELCOME / INFO MODAL (non-Premium members, shown each sign-in) ──
+// ── ONBOARDING TOUR (first sign-in only) ────────────────────────
+const TOUR_STEPS = [
+  { icon:"💕", title:"Welcome to PROJO Dating", text:"Let's take a quick look around so you know exactly where everything is. This only takes a minute." },
+  { icon:"💫", title:"Discover", text:"This is your home screen. Swipe through profiles — tap ✕ to pass, ♥ to Like. Free members get 20 Likes a day." },
+  { icon:"⭐", title:"Super Like", text:"The gold star sends a Super Like — it makes a stronger impression and is a Premium feature (5 a day)." },
+  { icon:"⚙", title:"Filter", text:"Tap Filter in the header to narrow Discover by age range or distance from you." },
+  { icon:"👥", title:"Dating Lounge", text:"Tap Lounge to join anonymous chat rooms with the Dating community — no profiles or photos, just conversation." },
+  { icon:"💝", title:"Matches", text:"When you and someone else both Like each other, it's a match — find them all in the Matches tab, along with anyone who's Liked you." },
+  { icon:"💬", title:"Messages", text:"Chat with your matches here. Messaging is a Premium feature, but browsing and matching are always free." },
+  { icon:"👤", title:"Your Profile", text:"Edit your details and photos, activate a visibility Boost, request Verification, and manage blocked users — all from the Profile tab." },
+  { icon:"👑", title:"Going Premium", text:"Premium unlocks messaging, seeing who liked you, Super Likes, Boost, Incognito Mode and more — R80/month, cancel anytime." },
+];
+
+function OnboardingTour({ onFinish }) {
+  const [step, setStep] = useState(0);
+  const isLast = step === TOUR_STEPS.length - 1;
+  const current = TOUR_STEPS[step];
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.95)", zIndex:700, display:"flex", alignItems:"center", justifyContent:"center", padding:"1.25rem" }}>
+      <div style={{ background:`linear-gradient(160deg, #1A0F2E, #0D0418)`, borderRadius:"24px", padding:"2rem 1.5rem 1.5rem", width:"100%", maxWidth:"460px", border:`1px solid ${C.borderGold}`, textAlign:"center" }}>
+        <div style={{ fontSize:"52px", marginBottom:"14px" }}>{current.icon}</div>
+        <div style={{ fontFamily:FD, fontSize:"22px", fontWeight:"700", color:C.text, marginBottom:"10px" }}>{current.title}</div>
+        <div style={{ fontSize:"13.5px", color:C.textMuted, lineHeight:1.6, marginBottom:"1.5rem", minHeight:"60px" }}>{current.text}</div>
+
+        {/* Dots */}
+        <div style={{ display:"flex", justifyContent:"center", gap:"6px", marginBottom:"1.5rem" }}>
+          {TOUR_STEPS.map((_, i) => (
+            <div key={i} style={{ width: i === step ? "18px" : "6px", height:"6px", borderRadius:"3px", background: i === step ? C.rose : "rgba(255,255,255,0.2)", transition:"width 0.2s" }} />
+          ))}
+        </div>
+
+        <div style={{ display:"flex", gap:"10px" }}>
+          {step > 0 && (
+            <button onClick={() => setStep(s => s - 1)} style={{ flex:1, padding:"13px", borderRadius:"14px", background:"none", border:`1px solid ${C.border}`, color:C.textMuted, fontSize:"14px", cursor:"pointer" }}>Back</button>
+          )}
+          {!isLast && (
+            <button onClick={onFinish} style={{ flex: step > 0 ? "none" : 1, padding:"13px 16px", borderRadius:"14px", background:"none", border:"none", color:C.textDim, fontSize:"13px", cursor:"pointer" }}>Skip</button>
+          )}
+          <button
+            onClick={() => (isLast ? onFinish() : setStep(s => s + 1))}
+            style={{ flex:2, padding:"13px", borderRadius:"14px", background:`linear-gradient(135deg, ${C.crimson}, ${C.rose})`, border:"none", color:"#fff", fontWeight:"700", fontSize:"14px", cursor:"pointer" }}
+          >
+            {isLast ? "Get Started 💕" : "Next"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function WelcomeInfoModal({ onClose, onUpgrade }) {
   const canDo = [
     ["💫", "Browse & discover profiles near you"],
@@ -536,6 +587,7 @@ export default function ProjoDating() {
   const [typingMatchId, setTypingMatchId] = useState(null);
   const [superLikedIds, setSuperLikedIds] = useState(new Set());
   const [showWelcomeInfo, setShowWelcomeInfo] = useState(false);
+  const [showTour, setShowTour] = useState(false);
   const [showReport, setShowReport] = useState(null);
   const [showVerify, setShowVerify] = useState(false);
   const [showBlockedList, setShowBlockedList] = useState(false);
@@ -550,10 +602,10 @@ export default function ProjoDating() {
   // page behind the modal instead of the modal's own content, making
   // buttons near the bottom of a modal seem unreachable.
   useEffect(() => {
-    const anyModalOpen = !!(showProfile || showPremium || showFilter || showReport || showVerify || showBlockedList || showWelcomeInfo);
+    const anyModalOpen = !!(showProfile || showPremium || showFilter || showReport || showVerify || showBlockedList || showWelcomeInfo || showTour);
     document.body.style.overflow = anyModalOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
-  }, [showProfile, showPremium, showFilter, showReport, showVerify, showBlockedList, showWelcomeInfo]);
+  }, [showProfile, showPremium, showFilter, showReport, showVerify, showBlockedList, showWelcomeInfo, showTour]);
 
   // ── Load my profile on mount ──
   useEffect(() => {
@@ -577,7 +629,11 @@ export default function ProjoDating() {
     loadDiscover();
     loadMatches();
     loadLikedMe();
-    if (!myProfile.isPremium) setShowWelcomeInfo(true);
+    if (!myProfile.hasSeenOnboardingTour) {
+      setShowTour(true);
+    } else if (!myProfile.isPremium) {
+      setShowWelcomeInfo(true);
+    }
 
     const sock = io(process.env.REACT_APP_API_URL?.replace("/api", "") || "http://localhost:5000", { transports: ["websocket"] });
     socketRef.current = sock;
@@ -616,6 +672,15 @@ export default function ProjoDating() {
       setMyProfile(res.profile);
       setUsage(res.usage);
     } catch {}
+  }
+
+  async function finishTour() {
+    setShowTour(false);
+    try {
+      await datingAPI.upsertProfile({ hasSeenOnboardingTour: true });
+    } catch {}
+    refreshMyProfile();
+    if (!isPremium) setShowWelcomeInfo(true);
   }
 
   async function loadDiscover(customFilters = filters) {
@@ -1207,6 +1272,11 @@ export default function ProjoDating() {
           onClose={() => setShowWelcomeInfo(false)}
           onUpgrade={() => { setShowWelcomeInfo(false); setShowPremium(true); }}
         />
+      )}
+
+      {/* Onboarding Tour — first sign-in only */}
+      {showTour && (
+        <OnboardingTour onFinish={finishTour} />
       )}
 
       {/* Filter Modal */}
