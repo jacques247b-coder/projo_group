@@ -93,7 +93,8 @@ export default function ProfileSetup({ C, FD, FB, existingProfile, onSaved, onCa
         toast.success("Profile created! Add some photos, then you're ready to go 💕");
       }
     } catch (err) {
-      toast.error(err.error || "Couldn't save profile — please try again");
+      console.error("[ProfileSetup] Save failed — full error:", err);
+      toast.error(err.error || "Couldn't save profile — please try again", { duration: Infinity });
     } finally {
       setSaving(false);
     }
