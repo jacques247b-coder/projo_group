@@ -162,8 +162,8 @@ function StarRating({ profileId, currentRating, onRate }) {
 // ── PREMIUM MODAL ─────────────────────────────────────────────
 function PremiumModal({ onClose, onActivate }) {
   return (
-    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.92)", zIndex:500, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
-      <div style={{ background:`linear-gradient(160deg, #1A0F2E, #0D0418)`, borderRadius:"28px 28px 0 0", padding:"1.5rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom, 0px))", width:"100%", maxWidth:"500px", border:`1px solid rgba(212,175,55,0.4)`, borderBottom:"none", maxHeight:"88vh", overflowY:"auto", WebkitOverflowScrolling:"touch", touchAction:"pan-y" }}>
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.92)", zIndex:500, display:"flex", alignItems:"center", justifyContent:"center", padding:"1.25rem" }}>
+      <div style={{ background:`linear-gradient(160deg, #1A0F2E, #0D0418)`, borderRadius:"28px", padding:"1.5rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom, 0px))", width:"100%", maxWidth:"620px", border:`1px solid rgba(212,175,55,0.4)`, maxHeight:"88vh", overflowY:"auto", WebkitOverflowScrolling:"touch", touchAction:"pan-y" }}>
         {/* Animated gold header */}
         <div style={{ textAlign:"center", marginBottom:"1.1rem", position:"relative" }}>
           <div style={{ fontSize:"44px", marginBottom:"6px" }}>👑</div>
@@ -1132,8 +1132,8 @@ export default function ProjoDating() {
 
       {/* Filter Modal */}
       {showFilter && (
-        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:200, display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
-          <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px 24px 0 0", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.border}`, maxHeight:"85vh", overflowY:"auto", WebkitOverflowScrolling:"touch" }}>
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center", padding:"1.25rem" }}>
+          <div style={{ background:`linear-gradient(160deg, ${C.card}, ${C.dark})`, borderRadius:"24px", padding:"1.5rem", width:"100%", maxWidth:"500px", border:`1px solid ${C.border}`, maxHeight:"85vh", overflowY:"auto", WebkitOverflowScrolling:"touch" }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1.25rem" }}>
               <div style={{ fontFamily:FD, fontSize:"22px", fontWeight:"700", color:C.text }}>⚙ Filter Profiles</div>
               <button onClick={() => setShowFilter(false)} aria-label="Close" style={{ background:"rgba(255,255,255,0.06)", border:`1px solid ${C.border}`, borderRadius:"10px", width:"32px", height:"32px", color:C.text, fontSize:"16px", cursor:"pointer" }}>✕</button>
