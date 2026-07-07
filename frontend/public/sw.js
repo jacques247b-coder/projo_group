@@ -1,6 +1,6 @@
 // PROJO GROUP — Service Worker v4 (Auto-Update)
 // ⚠️ INCREMENT THIS VERSION NUMBER WITH EVERY DEPLOY to force client updates
-const SW_VERSION = "v4.0.0";
+const SW_VERSION = "v4.0.1";
 console.log("[PROJO SW] Version:", SW_VERSION);
 
 self.addEventListener("install", () => {
