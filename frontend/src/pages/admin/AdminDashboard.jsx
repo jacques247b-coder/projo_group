@@ -3,8 +3,9 @@
 //        Service Orders tab, WhatsApp notifications, Date/Time display
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { io } from "socket.io-client";
 import Navbar from "../../components/ui/Navbar";
-import api from "../../services/api";
+import api, { panicAPI } from "../../services/api";
 import toast from "react-hot-toast";
 import { CONTACT } from "../../utils/constants";
 
@@ -72,6 +73,7 @@ export default function AdminDashboard() {
   const pushImageRef = React.useRef();
   const [pushStats, setPushStats] = useState(null);
   const [pushSending, setPushSending] = useState(false);
+  const [activePanicCount, setActivePanicCount] = useState(0);
   const [pushResult, setPushResult] = useState(null);
   const [localAds, setLocalAds] = useState([]);
   const [casinoPartners, setCasinoPartners] = useState([]);
@@ -81,6 +83,18 @@ export default function AdminDashboard() {
   const [showAdForm, setShowAdForm] = useState(false);
 
   useEffect(() => { loadAll(); }, []);
+
+  // Live panic-alert awareness — flickers the quick-access button red
+  // whenever there's an active alert, even while browsing other tabs here.
+  useEffect(() => {
+    panicAPI.adminListAlerts("ACTIVE").then(r => setActivePanicCount((r.alerts || []).length)).catch(() => {});
+
+    const sock = io(process.env.REACT_APP_API_URL?.replace("/api", "") || "http://localhost:5000", { transports: ["websocket"] });
+    sock.emit("panic:join_monitor");
+    sock.on("panic:new_alert", () => setActivePanicCount(c => c + 1));
+    sock.on("panic:alert_cancelled", () => setActivePanicCount(c => Math.max(0, c - 1)));
+    return () => { sock.emit("panic:leave_monitor"); sock.disconnect(); };
+  }, []);
 
   async function loadAll() {
     setLoading(true);
@@ -313,12 +327,22 @@ export default function AdminDashboard() {
                 fontSize: "13px", fontWeight: "700", cursor: "pointer",
                 display: "flex", alignItems: "center", gap: "8px",
               }}>✓ Dating Verification</button>
+              <style>{`
+                @keyframes panicFlicker {
+                  0%, 100% { background: rgba(139,0,0,0.15); box-shadow: 0 0 0 rgba(224,82,82,0); }
+                  50% { background: rgba(224,82,82,0.45); box-shadow: 0 0 16px rgba(224,82,82,0.6); }
+                }
+              `}</style>
               <button onClick={() => navigate("/panic-monitor")} style={{
                 background: "rgba(139,0,0,0.15)", border: "1px solid #8B0000",
                 borderRadius: "10px", padding: "10px 20px", color: "#FF6B6B",
                 fontSize: "13px", fontWeight: "700", cursor: "pointer",
                 display: "flex", alignItems: "center", gap: "8px",
-              }}>🆘 Panic Alert Monitor</button>
+                animation: activePanicCount > 0 ? "panicFlicker 1.4s ease-in-out infinite" : "none",
+              }}>
+                🆘 Panic Alert Monitor
+                {activePanicCount > 0 && <span style={{ background: "#E05252", borderRadius: "999px", padding: "1px 8px", fontSize: "11px" }}>{activePanicCount}</span>}
+              </button>
               <button onClick={() => {
                 const token = localStorage.getItem("projo_token");
                 const url = `${process.env.REACT_APP_API_URL || "http://localhost:5000/api"}/admin/export/emails`;

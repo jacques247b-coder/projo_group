@@ -597,6 +597,23 @@ model PanicAlert {
   notes          String   @default("")
   dispatchLog    String   @default("") @db.Text // JSON summary of which channels/recipients were notified and outcomes
   createdAt      DateTime @default(now())
+  sitreps        PanicSitRep[]
   @@index([status, createdAt])
   @@map("panic_alerts")
+}
+
+// Situation Report — a timestamped log entry an admin or security monitor
+// submits while responding to a live alert (status + what's happening).
+// Multiple sitreps can build up over one incident, unlike the single
+// overwritable `notes` field above.
+model PanicSitRep {
+  id          String   @id @default(uuid())
+  alertId     String
+  alert       PanicAlert @relation(fields: [alertId], references: [id])
+  submittedBy String              // userId of the admin/security staff member
+  status      String              // EN_ROUTE, ON_SCENE, RESOLVED, ESCALATED, FALSE_ALARM
+  summary     String   @default("") @db.Text
+  createdAt   DateTime @default(now())
+  @@index([alertId, createdAt])
+  @@map("panic_sitreps")
 }

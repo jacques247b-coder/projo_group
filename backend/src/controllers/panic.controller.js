@@ -244,11 +244,61 @@ exports.adminListAlerts = async (req, res) => {
     const { status } = req.query;
     const alerts = await prisma.panicAlert.findMany({
       where: status ? { status } : {},
-      include: { user: { select: { name: true, phone: true } } },
+      include: {
+        user: { select: { name: true, phone: true } },
+        sitreps: { orderBy: { createdAt: "asc" } },
+      },
       orderBy: { createdAt: "desc" },
       take: 100,
     });
-    res.json({ alerts });
+    // Attach a display name for whoever submitted each sitrep
+    const submitterIds = [...new Set(alerts.flatMap(a => a.sitreps.map(s => s.submittedBy)))];
+    const submitters = submitterIds.length
+      ? await prisma.user.findMany({ where: { id: { in: submitterIds } }, select: { id: true, name: true, role: true } })
+      : [];
+    const submitterMap = Object.fromEntries(submitters.map(s => [s.id, s]));
+    const withNames = alerts.map(a => ({
+      ...a,
+      sitreps: a.sitreps.map(s => ({ ...s, submitter: submitterMap[s.submittedBy] || null })),
+    }));
+    res.json({ alerts: withNames });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
+// POST /api/panic/alerts/:id/sitrep  { status, summary } — ADMIN or SECURITY
+const SITREP_STATUSES = ["EN_ROUTE", "ON_SCENE", "RESOLVED", "ESCALATED", "FALSE_ALARM"];
+exports.submitSitRep = async (req, res) => {
+  try {
+    const { status, summary } = req.body;
+    if (!SITREP_STATUSES.includes(status)) {
+      return res.status(400).json({ error: `status must be one of ${SITREP_STATUSES.join(", ")}` });
+    }
+    const alert = await prisma.panicAlert.findUnique({ where: { id: req.params.id } });
+    if (!alert) return res.status(404).json({ error: "Alert not found" });
+
+    const sitrep = await prisma.panicSitRep.create({
+      data: { alertId: alert.id, submittedBy: req.user.id, status, summary: summary || "" },
+    });
+
+    // A SITREP marking the incident resolved/false-alarm also closes the alert itself
+    const alertStatusMap = { RESOLVED: "RESOLVED", FALSE_ALARM: "FALSE_ALARM" };
+    if (alertStatusMap[status]) {
+      await prisma.panicAlert.update({
+        where: { id: alert.id },
+        data: { status: alertStatusMap[status], resolvedAt: new Date() },
+      });
+    } else if (alert.status === "ACTIVE") {
+      // Any other SITREP at least marks it acknowledged, so it's clear someone's on it
+      await prisma.panicAlert.update({
+        where: { id: alert.id },
+        data: { status: "ACKNOWLEDGED", acknowledgedBy: req.user.id, acknowledgedAt: new Date() },
+      });
+    }
+
+    const submitter = await prisma.user.findUnique({ where: { id: req.user.id }, select: { id: true, name: true, role: true } });
+    const outgoing = { ...sitrep, submitter };
+    req.app.get("io")?.to("panic_monitors").emit("panic:sitrep_added", { alertId: alert.id, sitrep: outgoing });
+    res.json({ sitrep: outgoing });
   } catch (err) { res.status(500).json({ error: err.message }); }
 };
 

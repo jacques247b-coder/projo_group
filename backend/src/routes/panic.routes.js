@@ -19,6 +19,7 @@ router.post("/alerts/:id/self-cancel",     authenticate, panic.selfCancelAlert);
 router.get("/alerts",                      authenticate, requireAdminOrSecurity, panic.adminListAlerts);
 router.post("/alerts/:id/acknowledge",     authenticate, requireAdminOrSecurity, panic.adminAcknowledgeAlert);
 router.post("/alerts/:id/resolve",         authenticate, requireAdminOrSecurity, panic.adminResolveAlert);
+router.post("/alerts/:id/sitrep",          authenticate, requireAdminOrSecurity, panic.submitSitRep);
 
 // Admin only — manage security company monitor phone numbers (SMS/WhatsApp recipients)
 router.get("/security-contacts",               authenticate, requireAdmin, panic.adminListSecurityContacts);

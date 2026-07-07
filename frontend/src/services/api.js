@@ -114,6 +114,7 @@ export const panicAPI = {
   adminListAlerts: (status) => api.get(`/panic/alerts${status ? `?status=${status}` : ""}`),
   adminAcknowledge: (id) => api.post(`/panic/alerts/${id}/acknowledge`),
   adminResolve: (id, notes, falseAlarm) => api.post(`/panic/alerts/${id}/resolve`, { notes, falseAlarm }),
+  submitSitRep: (id, status, summary) => api.post(`/panic/alerts/${id}/sitrep`, { status, summary }),
   adminListSecurityContacts: () => api.get("/panic/security-contacts"),
   adminAddSecurityContact: (companyName, phone, callmebotApiKey) => api.post("/panic/security-contacts", { companyName, phone, callmebotApiKey }),
   adminToggleSecurityContact: (id) => api.post(`/panic/security-contacts/${id}/toggle`),
