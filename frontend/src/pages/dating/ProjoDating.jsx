@@ -15,300 +15,180 @@ const C = {
 const FD = "\'Cormorant Garamond\', \'Georgia\', serif";
 const FB = "\'Inter\', sans-serif";
 
-// ── PREMIUM ROMANTIC BACKGROUND ─────────────────────────────
+// ── PREMIUM PHOTO BACKGROUND ────────────────────────────────
+// Real photos via Unsplash + floating love icons
+
+const PHOTO_LAYERS = [
+  // Real people — romantic couples & individuals
+  {
+    src: "https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?w=400&q=80",
+    alt: "Romantic couple",
+    style: { left:"2%", bottom:"5%", width:"220px", height:"320px", objectFit:"cover", objectPosition:"top",
+      borderRadius:"120px 120px 80px 80px", opacity:0.28, transform:"rotate(-4deg)",
+      filter:"brightness(0.75) saturate(1.2)", boxShadow:"0 30px 80px rgba(139,0,0,0.5)" }
+  },
+  {
+    src: "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=400&q=80",
+    alt: "Happy couple",
+    style: { right:"2%", bottom:"8%", width:"200px", height:"300px", objectFit:"cover", objectPosition:"top",
+      borderRadius:"100px 100px 70px 70px", opacity:0.26, transform:"rotate(5deg)",
+      filter:"brightness(0.75) saturate(1.3)", boxShadow:"0 30px 80px rgba(139,0,0,0.4)" }
+  },
+  {
+    src: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=300&q=80",
+    alt: "Couple holding hands",
+    style: { left:"50%", bottom:"3%", width:"160px", height:"260px", objectFit:"cover", objectPosition:"top",
+      transform:"translateX(-50%) rotate(2deg)", borderRadius:"80px 80px 60px 60px",
+      opacity:0.22, filter:"brightness(0.7) saturate(1.2)", boxShadow:"0 20px 60px rgba(139,0,0,0.3)" }
+  },
+  {
+    src: "https://images.unsplash.com/photo-1487700160041-bacb2b06d6e9?w=300&q=80",
+    alt: "Woman smiling",
+    style: { left:"20%", top:"12%", width:"130px", height:"200px", objectFit:"cover", objectPosition:"top",
+      borderRadius:"65px 65px 50px 50px", opacity:0.20, transform:"rotate(-6deg)",
+      filter:"brightness(0.72) saturate(1.3)", boxShadow:"0 20px 50px rgba(232,20,74,0.3)" }
+  },
+  {
+    src: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&q=80",
+    alt: "Handsome man",
+    style: { right:"18%", top:"10%", width:"120px", height:"190px", objectFit:"cover", objectPosition:"top",
+      borderRadius:"60px 60px 45px 45px", opacity:0.20, transform:"rotate(7deg)",
+      filter:"brightness(0.72) saturate(1.2)", boxShadow:"0 20px 50px rgba(107,33,168,0.3)" }
+  },
+  // Real roses & flowers
+  {
+    src: "https://images.unsplash.com/photo-1548460644-bc43d7b81d8e?w=300&q=80",
+    alt: "Red roses",
+    style: { left:"0%", top:"0%", width:"200px", height:"200px", objectFit:"cover",
+      borderRadius:"0 0 100px 0", opacity:0.25, transform:"rotate(0deg)",
+      filter:"brightness(0.65) saturate(1.5) hue-rotate(-10deg)", boxShadow:"20px 20px 60px rgba(139,0,0,0.4)" }
+  },
+  {
+    src: "https://images.unsplash.com/photo-1490750967868-88df5691cc11?w=300&q=80",
+    alt: "Pink flowers",
+    style: { right:"0%", top:"0%", width:"200px", height:"200px", objectFit:"cover",
+      borderRadius:"0 0 0 100px", opacity:0.25, transform:"rotate(0deg)",
+      filter:"brightness(0.65) saturate(1.4) hue-rotate(10deg)", boxShadow:"-20px 20px 60px rgba(139,0,0,0.3)" }
+  },
+  {
+    src: "https://images.unsplash.com/photo-1562692403-2a09a30d0d01?w=250&q=80",
+    alt: "Rose bouquet",
+    style: { left:"5%", top:"35%", width:"130px", height:"130px", objectFit:"cover",
+      borderRadius:"50%", opacity:0.22, transform:"rotate(-8deg)",
+      filter:"brightness(0.7) saturate(1.5)", boxShadow:"0 15px 40px rgba(232,20,74,0.3)" }
+  },
+  {
+    src: "https://images.unsplash.com/photo-1464983953574-0892a716854b?w=250&q=80",
+    alt: "Flowers",
+    style: { right:"5%", top:"32%", width:"120px", height:"120px", objectFit:"cover",
+      borderRadius:"50%", opacity:0.22, transform:"rotate(8deg)",
+      filter:"brightness(0.7) saturate(1.4)", boxShadow:"0 15px 40px rgba(232,20,74,0.25)" }
+  },
+];
+
+// Floating icons config
+const FLOAT_ICONS = [
+  { emoji:"💕", x:"15%",  y:"22%", size:32, delay:0,   duration:4.5 },
+  { emoji:"❤️", x:"82%",  y:"25%", size:28, delay:0.8, duration:3.8 },
+  { emoji:"💫", x:"8%",   y:"55%", size:24, delay:1.5, duration:5.0 },
+  { emoji:"✨", x:"88%",  y:"52%", size:22, delay:0.3, duration:4.2 },
+  { emoji:"💍", x:"45%",  y:"15%", size:28, delay:1.0, duration:4.8 },
+  { emoji:"🌹", x:"25%",  y:"45%", size:30, delay:0.5, duration:3.5 },
+  { emoji:"💝", x:"70%",  y:"42%", size:26, delay:1.8, duration:4.0 },
+  { emoji:"⭐", x:"55%",  y:"8%",  size:22, delay:0.2, duration:5.2 },
+  { emoji:"💗", x:"35%",  y:"30%", size:28, delay:1.2, duration:4.3 },
+  { emoji:"🦋", x:"78%",  y:"68%", size:26, delay:0.7, duration:4.7 },
+  { emoji:"💌", x:"12%",  y:"75%", size:28, delay:1.5, duration:3.9 },
+  { emoji:"✦",  x:"92%",  y:"78%", size:20, delay:0.4, duration:4.6 },
+  { emoji:"💎", x:"48%",  y:"78%", size:24, delay:2.0, duration:4.1 },
+  { emoji:"🌸", x:"62%",  y:"18%", size:30, delay:0.9, duration:5.1 },
+];
+
 function RomanticBackground() {
-  const canvasRef = React.useRef(null);
-
-  React.useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let W = canvas.width = window.innerWidth;
-    let H = canvas.height = window.innerHeight;
-    let frame = 0;
-    let animId;
-
-    // ── Floating love particles ──────────────────────────────
-    const makeParticles = () => Array.from({ length: 40 }, (_, i) => ({
-      x: Math.random() * W,
-      y: Math.random() * H + H,
-      type: i % 5, // 0=heart 1=petal 2=sparkle 3=ring 4=star
-      size: Math.random() * 18 + 6,
-      speed: Math.random() * 0.6 + 0.2,
-      drift: (Math.random() - 0.5) * 0.5,
-      opacity: Math.random() * 0.5 + 0.1,
-      rot: Math.random() * Math.PI * 2,
-      rotSpeed: (Math.random() - 0.5) * 0.02,
-      pulse: Math.random() * Math.PI * 2,
-      hue: Math.random() > 0.5 ? 350 : Math.random() > 0.5 ? 320 : 45,
-    }));
-    let particles = makeParticles();
-
-    // ── Draw heart ───────────────────────────────────────────
-    function heart(ctx, x, y, size, alpha, hue) {
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      const g = ctx.createRadialGradient(x, y + size*0.4, 0, x, y + size*0.5, size);
-      g.addColorStop(0, `hsla(${hue},90%,65%,${alpha})`);
-      g.addColorStop(1, `hsla(${hue},70%,45%,0)`);
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.moveTo(x, y + size * 0.3);
-      ctx.bezierCurveTo(x, y, x - size*0.5, y, x - size*0.5, y + size*0.3);
-      ctx.bezierCurveTo(x - size*0.5, y + size*0.65, x, y + size*0.9, x, y + size);
-      ctx.bezierCurveTo(x, y + size*0.9, x + size*0.5, y + size*0.65, x + size*0.5, y + size*0.3);
-      ctx.bezierCurveTo(x + size*0.5, y, x, y, x, y + size*0.3);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // ── Draw rose petal ──────────────────────────────────────
-    function petal(ctx, x, y, size, alpha, rot) {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(rot);
-      ctx.globalAlpha = alpha;
-      const g = ctx.createRadialGradient(0, -size*0.3, 0, 0, 0, size);
-      g.addColorStop(0, `rgba(255,150,170,${alpha})`);
-      g.addColorStop(0.5, `rgba(220,60,100,${alpha*0.8})`);
-      g.addColorStop(1, `rgba(180,20,60,0)`);
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.moveTo(0, -size);
-      ctx.bezierCurveTo(size*0.6, -size*0.5, size*0.5, size*0.3, 0, size*0.5);
-      ctx.bezierCurveTo(-size*0.5, size*0.3, -size*0.6, -size*0.5, 0, -size);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // ── Draw sparkle ────────────────────────────────────────
-    function sparkle(ctx, x, y, size, alpha) {
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.strokeStyle = `rgba(245,215,110,${alpha})`;
-      ctx.lineWidth = 1.5;
-      ctx.lineCap = 'round';
-      for (let i = 0; i < 4; i++) {
-        const a = (i / 4) * Math.PI * 2;
-        ctx.beginPath();
-        ctx.moveTo(x + Math.cos(a) * size * 0.15, y + Math.sin(a) * size * 0.15);
-        ctx.lineTo(x + Math.cos(a) * size, y + Math.sin(a) * size);
-        ctx.stroke();
-      }
-      ctx.beginPath();
-      ctx.arc(x, y, size * 0.12, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,240,180,${alpha})`;
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // ── Draw diamond ring ────────────────────────────────────
-    function ring(ctx, x, y, size, alpha) {
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.strokeStyle = `rgba(212,175,55,${alpha})`;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(x, y, size * 0.4, 0, Math.PI * 2);
-      ctx.stroke();
-      // Diamond top
-      ctx.fillStyle = `rgba(200,230,255,${alpha * 0.8})`;
-      ctx.beginPath();
-      ctx.moveTo(x, y - size * 0.7);
-      ctx.lineTo(x + size * 0.25, y - size * 0.35);
-      ctx.lineTo(x, y - size * 0.05);
-      ctx.lineTo(x - size * 0.25, y - size * 0.35);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = `rgba(212,175,55,${alpha * 0.6})`;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    // ── Draw 4-point star ───────────────────────────────────
-    function star(ctx, x, y, size, alpha) {
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      const g = ctx.createRadialGradient(x, y, 0, x, y, size);
-      g.addColorStop(0, `rgba(255,220,100,${alpha})`);
-      g.addColorStop(1, `rgba(232,20,74,0)`);
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      for (let i = 0; i < 4; i++) {
-        const a = (i / 4) * Math.PI * 2 - Math.PI / 4;
-        const a2 = a + Math.PI / 4;
-        if (i === 0) ctx.moveTo(x + Math.cos(a) * size, y + Math.sin(a) * size);
-        else ctx.lineTo(x + Math.cos(a) * size, y + Math.sin(a) * size);
-        ctx.lineTo(x + Math.cos(a2) * size * 0.25, y + Math.sin(a2) * size * 0.25);
-      }
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // ── Flower cluster positions ─────────────────────────────
-    const flowers = [
-      { cx: W * 0.08, cy: H * 0.82, r: 70, count: 8, hue: 340 },
-      { cx: W * 0.92, cy: H * 0.78, r: 55, count: 7, hue: 320 },
-      { cx: W * 0.05, cy: H * 0.15, r: 45, count: 6, hue: 350 },
-      { cx: W * 0.95, cy: H * 0.12, r: 50, count: 6, hue: 330 },
-      { cx: W * 0.5,  cy: H * 0.92, r: 60, count: 7, hue: 345 },
-    ];
-
-    function drawFlower(cx, cy, r, count, hue, phase) {
-      ctx.save();
-      // Petals
-      for (let i = 0; i < count; i++) {
-        const a = (i / count) * Math.PI * 2 + phase;
-        const px = cx + Math.cos(a) * r * 0.55;
-        const py = cy + Math.sin(a) * r * 0.55;
-        ctx.save();
-        ctx.translate(px, py);
-        ctx.rotate(a + Math.PI / 2);
-        ctx.globalAlpha = 0.18;
-        const g = ctx.createRadialGradient(0, -r*0.25, 0, 0, 0, r*0.45);
-        g.addColorStop(0, `hsla(${hue},85%,75%,0.9)`);
-        g.addColorStop(0.6, `hsla(${hue},75%,55%,0.6)`);
-        g.addColorStop(1, `hsla(${hue},65%,40%,0)`);
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.ellipse(0, -r*0.25, r*0.18, r*0.38, 0, 0, Math.PI*2);
-        ctx.fill();
-        ctx.restore();
-      }
-      // Centre
-      ctx.globalAlpha = 0.22;
-      const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, r*0.18);
-      cg.addColorStop(0, `hsla(45,90%,75%,0.9)`);
-      cg.addColorStop(1, `hsla(35,80%,55%,0)`);
-      ctx.fillStyle = cg;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r*0.18, 0, Math.PI*2);
-      ctx.fill();
-      // Leaf stems
-      ctx.globalAlpha = 0.12;
-      ctx.strokeStyle = `hsla(140,60%,40%,0.5)`;
-      ctx.lineWidth = 2;
-      ctx.lineCap = 'round';
-      for (let i = 0; i < 3; i++) {
-        const a = (i / 3) * Math.PI * 2 + phase + Math.PI;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.quadraticCurveTo(
-          cx + Math.cos(a + 0.5) * r * 0.6, cy + Math.sin(a + 0.5) * r * 0.6,
-          cx + Math.cos(a) * r * 1.1, cy + Math.sin(a) * r * 1.1
-        );
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    // ── Silhouette couple ───────────────────────────────────
-    function drawSilhouette(x, y, scale, alpha) {
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = '#0a0010';
-      ctx.translate(x, y);
-      ctx.scale(scale, scale);
-      // Person 1
-      ctx.beginPath(); ctx.arc(-22, -55, 11, 0, Math.PI*2); ctx.fill();
-      ctx.fillRect(-27, -44, 14, 34);
-      // Dress flare
-      ctx.beginPath();
-      ctx.moveTo(-27, -10); ctx.lineTo(-42, 28); ctx.lineTo(-8, 28); ctx.closePath();
-      ctx.fill();
-      // Person 2
-      ctx.beginPath(); ctx.arc(18, -52, 10, 0, Math.PI*2); ctx.fill();
-      ctx.fillRect(13, -42, 12, 30);
-      ctx.beginPath();
-      ctx.moveTo(13, -12); ctx.lineTo(2, 26); ctx.lineTo(24, 26); ctx.closePath();
-      ctx.fill();
-      // Touching hands
-      ctx.beginPath();
-      ctx.arc(-5, -20, 4, 0, Math.PI*2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    function drawBackground() {
-      // Deep gradient sky
-      const bg = ctx.createLinearGradient(0, 0, W, H);
-      bg.addColorStop(0, '#0D0418');
-      bg.addColorStop(0.25, '#1A0535');
-      bg.addColorStop(0.5, '#2D0A25');
-      bg.addColorStop(0.75, '#1A0535');
-      bg.addColorStop(1, '#0D0418');
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, W, H);
-
-      // Radial rose glow top-left
-      const gl1 = ctx.createRadialGradient(W*0.1, H*0.1, 0, W*0.1, H*0.1, W*0.4);
-      gl1.addColorStop(0, 'rgba(232,20,74,0.07)');
-      gl1.addColorStop(1, 'transparent');
-      ctx.fillStyle = gl1; ctx.fillRect(0, 0, W, H);
-
-      // Radial gold glow bottom-right
-      const gl2 = ctx.createRadialGradient(W*0.9, H*0.9, 0, W*0.9, H*0.9, W*0.45);
-      gl2.addColorStop(0, 'rgba(212,175,55,0.06)');
-      gl2.addColorStop(1, 'transparent');
-      ctx.fillStyle = gl2; ctx.fillRect(0, 0, W, H);
-
-      // Radial purple center
-      const gl3 = ctx.createRadialGradient(W*0.5, H*0.5, 0, W*0.5, H*0.5, W*0.5);
-      gl3.addColorStop(0, 'rgba(107,33,168,0.05)');
-      gl3.addColorStop(1, 'transparent');
-      ctx.fillStyle = gl3; ctx.fillRect(0, 0, W, H);
-    }
-
-    function animate() {
-      frame++;
-      ctx.clearRect(0, 0, W, H);
-      drawBackground();
-
-      // Draw flowers (slowly rotating)
-      flowers.forEach((f, i) => {
-        const phase = frame * 0.003 + i * 0.8;
-        drawFlower(f.cx, f.cy, f.r, f.count, f.hue, phase);
-      });
-
-      // Silhouette couples
-      drawSilhouette(W * 0.5, H * 0.72, 1.1, 0.12);
-      drawSilhouette(W * 0.18, H * 0.88, 0.7, 0.08);
-      drawSilhouette(W * 0.82, H * 0.85, 0.75, 0.08);
-
-      // Floating love particles
-      particles.forEach(p => {
-        p.y -= p.speed;
-        p.x += p.drift;
-        p.rot += p.rotSpeed;
-        p.pulse += 0.025;
-        const alpha = p.opacity * (0.8 + Math.sin(p.pulse) * 0.2);
-        if (p.y < -60) { p.y = H + 60; p.x = Math.random() * W; }
-
-        if (p.type === 0) heart(ctx, p.x, p.y, p.size, alpha, p.hue);
-        else if (p.type === 1) petal(ctx, p.x, p.y, p.size, alpha, p.rot);
-        else if (p.type === 2) sparkle(ctx, p.x, p.y, p.size, alpha);
-        else if (p.type === 3) ring(ctx, p.x, p.y, p.size, alpha * 0.7);
-        else star(ctx, p.x, p.y, p.size, alpha);
-      });
-
-      animId = requestAnimationFrame(animate);
-    }
-    animate();
-    return () => cancelAnimationFrame(animId);
-  }, []);
+  const [loaded, setLoaded] = React.useState({});
 
   return (
-    <>
-      <canvas ref={canvasRef} style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none' }} />
-      {/* Frosted content overlay for readability */}
-      <div style={{ position:'fixed', inset:0, zIndex:1, background:'rgba(13,4,24,0.45)', pointerEvents:'none' }} />
-    </>
+    <div style={{ position:"fixed", inset:0, zIndex:0, pointerEvents:"none", overflow:"hidden" }}>
+      {/* Deep gradient base */}
+      <div style={{ position:"absolute", inset:0,
+        background:"linear-gradient(135deg, #0D0418 0%, #1A0535 30%, #2D0A25 60%, #1A0230 80%, #0D0418 100%)" }} />
+
+      {/* Atmospheric glow orbs */}
+      <div style={{ position:"absolute", width:"500px", height:"500px", borderRadius:"50%", left:"-100px", top:"-100px",
+        background:"radial-gradient(circle, rgba(139,0,0,0.12) 0%, transparent 70%)" }} />
+      <div style={{ position:"absolute", width:"500px", height:"500px", borderRadius:"50%", right:"-100px", top:"-100px",
+        background:"radial-gradient(circle, rgba(107,33,168,0.10) 0%, transparent 70%)" }} />
+      <div style={{ position:"absolute", width:"600px", height:"300px", borderRadius:"50%", left:"50%", bottom:"-50px", transform:"translateX(-50%)",
+        background:"radial-gradient(ellipse, rgba(232,20,74,0.08) 0%, transparent 70%)" }} />
+
+      {/* Real photos */}
+      {PHOTO_LAYERS.map((photo, i) => (
+        <img
+          key={i}
+          src={photo.src}
+          alt={photo.alt}
+          loading="lazy"
+          onLoad={() => setLoaded(p => ({...p, [i]: true}))}
+          style={{
+            position:"absolute",
+            ...photo.style,
+            transition:"opacity 1.2s ease",
+            opacity: loaded[i] ? photo.style.opacity : 0,
+          }}
+        />
+      ))}
+
+      {/* Glowing border rings around photos */}
+      <div style={{ position:"absolute", left:"2%", bottom:"5%", width:"220px", height:"320px",
+        borderRadius:"120px 120px 80px 80px", border:"1px solid rgba(232,20,74,0.25)",
+        boxShadow:"0 0 30px rgba(232,20,74,0.1)", transform:"rotate(-4deg)", zIndex:1 }} />
+      <div style={{ position:"absolute", right:"2%", bottom:"8%", width:"200px", height:"300px",
+        borderRadius:"100px 100px 70px 70px", border:"1px solid rgba(212,175,55,0.2)",
+        boxShadow:"0 0 30px rgba(212,175,55,0.08)", transform:"rotate(5deg)", zIndex:1 }} />
+
+      {/* Floating love icons with CSS animation */}
+      <style>{`
+        @keyframes float1 { 0%,100%{transform:translateY(0px) rotate(0deg);} 50%{transform:translateY(-18px) rotate(8deg);} }
+        @keyframes float2 { 0%,100%{transform:translateY(0px) rotate(0deg);} 50%{transform:translateY(-14px) rotate(-6deg);} }
+        @keyframes float3 { 0%,100%{transform:translateY(0px) scale(1);} 50%{transform:translateY(-22px) scale(1.1);} }
+        @keyframes pulse  { 0%,100%{opacity:0.7;} 50%{opacity:1;} }
+        @keyframes drift  { 0%{transform:translateY(0) translateX(0) rotate(0deg);}
+                           33%{transform:translateY(-20px) translateX(8px) rotate(5deg);}
+                           66%{transform:translateY(-10px) translateX(-5px) rotate(-3deg);}
+                          100%{transform:translateY(0) translateX(0) rotate(0deg);} }
+      `}</style>
+
+      {FLOAT_ICONS.map((icon, i) => (
+        <div key={i} style={{
+          position:"absolute",
+          left:icon.x,
+          top:icon.y,
+          fontSize:`${icon.size}px`,
+          opacity:0.55,
+          zIndex:2,
+          animation:`${i%3===0?"float1":i%3===1?"float2":"drift"} ${icon.duration}s ${icon.delay}s ease-in-out infinite, pulse ${icon.duration*0.8}s ${icon.delay}s ease-in-out infinite`,
+          filter:"drop-shadow(0 4px 12px rgba(232,20,74,0.4)) drop-shadow(0 0 20px rgba(212,175,55,0.2))",
+          userSelect:"none",
+          lineHeight:1,
+        }}>
+          {icon.emoji}
+        </div>
+      ))}
+
+      {/* Subtle grain texture overlay */}
+      <div style={{ position:"absolute", inset:0,
+        background:"url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4"/><feColorMatrix type="saturate" values="0"/></filter><rect width="200" height="200" filter="url(%23n)" opacity="0.03"/></svg>')",
+        opacity:0.4, mixBlendMode:"overlay" }} />
+
+      {/* Content readability overlay — gradient darkens center */}
+      <div style={{ position:"absolute", inset:0,
+        background:"radial-gradient(ellipse 80% 60% at 50% 50%, rgba(13,4,24,0.4) 0%, rgba(13,4,24,0.75) 100%)",
+        zIndex:3 }} />
+    </div>
   );
 }
 
-// ── STAR RATING ─────────────────────────────────────────────// ── STAR RATING ─────────────────────────────────────────────
+// ── STAR RATING ─────────────────────────────────────────────// ── STAR RATING ─────────────────────────────────────────────// ── STAR RATING ─────────────────────────────────────────────
 function StarRating({ profileId, currentRating, onRate }) {
   const [hovered, setHovered] = useState(0);
   const [rated, setRated] = useState(currentRating || 0);
