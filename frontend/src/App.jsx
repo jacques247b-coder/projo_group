@@ -41,6 +41,9 @@ import ProjoDating from "./pages/dating/ProjoDating";
 import SportsHubPage from "./pages/sports/SportsHubPage";
 import PushPermissionModal from "./components/ui/PushPermissionModal";
 import DriverSignupPage from "./pages/driver/DriverSignupPage";
+import CommunityRooms from "./pages/community/CommunityRooms";
+import CommunityRoomView from "./pages/community/CommunityRoomView";
+import CommunityModerationPage from "./pages/admin/CommunityModerationPage";
 
 // Protected route wrapper
 function Protected({ children, roles }) {
@@ -124,6 +127,15 @@ function AppRoutes() {
       } />
       <Route path="/dating" element={
         <Protected><ProjoDating /></Protected>
+      } />
+      <Route path="/community" element={
+        <Protected><CommunityRooms /></Protected>
+      } />
+      <Route path="/community/:slug" element={
+        <Protected><CommunityRoomView /></Protected>
+      } />
+      <Route path="/admin/community" element={
+        <Protected roles={["ADMIN"]}><CommunityModerationPage /></Protected>
       } />
       <Route path="/" element={<Navigate to={homeRoute} replace />} />
 

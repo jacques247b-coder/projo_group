@@ -28,6 +28,7 @@ model User {
   localAds      LocalAd[]
   classifieds   Classified[]
   datingProfile  DatingProfile?
+  communityIdentity CommunityIdentity?
   @@map("users")
 }
 model Wallet {
@@ -376,4 +377,147 @@ model DatingReport {
   status      String   @default("PENDING")
   createdAt   DateTime @default(now())
   @@map("dating_reports")
+}
+
+// ══════════════════════════════════════════════════════════════
+// COMMUNITY CHAT ROOMS — anonymous, engagement-only, separate from Dating
+// ══════════════════════════════════════════════════════════════
+
+model CommunityIdentity {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  displayName String   @unique   // e.g. "BlueFox247" — never the user's dating name
+  avatarKey   String              // key into the built-in avatar library (no photos)
+  createdAt   DateTime @default(now())
+  @@map("community_identities")
+}
+
+model ChatRoom {
+  id           String   @id @default(uuid())
+  name         String
+  slug         String   @unique
+  description  String   @default("")
+  category     String   @default("General") // General, Relationships, Advice, Fun, Local, Support
+  icon         String   @default("💬")
+  isActive     Boolean  @default(true)
+  isPinnedTop  Boolean  @default(false)
+  messageCount Int      @default(0)
+  memberCount  Int      @default(0)
+  lastActivityAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  messages     ChatMessage[]
+  members      ChatRoomMember[]
+  polls        ChatPoll[]
+  @@map("chat_rooms")
+}
+
+model ChatRoomMember {
+  id         String   @id @default(uuid())
+  roomId     String
+  room       ChatRoom @relation(fields: [roomId], references: [id])
+  userId     String
+  joinedAt   DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  @@unique([roomId, userId])
+  @@map("chat_room_members")
+}
+
+model ChatMessage {
+  id          String   @id @default(uuid())
+  roomId      String
+  room        ChatRoom @relation(fields: [roomId], references: [id])
+  userId      String              // real user id — NEVER exposed to other members
+  identityId  String              // anon identity id used for this message
+  displayName String              // snapshot of anon name at send time
+  avatarKey   String              // snapshot of anon avatar at send time
+  type        String   @default("text") // text, emoji, gif, image, voice, poll, announcement
+  content     String   @default("") @db.Text
+  mediaUrl    String?  @db.Text
+  pollId      String?
+  status      String   @default("VISIBLE") // VISIBLE, HELD_FOR_REVIEW, REMOVED
+  isFlagged   Boolean  @default(false)
+  flagReason  String?
+  isPinned    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  reactions   ChatReaction[]
+  reports     ChatReport[]
+  @@index([roomId, createdAt])
+  @@map("chat_messages")
+}
+
+model ChatReaction {
+  id        String   @id @default(uuid())
+  messageId String
+  message   ChatMessage @relation(fields: [messageId], references: [id])
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+  @@unique([messageId, userId])
+  @@map("chat_reactions")
+}
+
+model ChatPoll {
+  id        String   @id @default(uuid())
+  roomId    String
+  room      ChatRoom @relation(fields: [roomId], references: [id])
+  question  String
+  options   String[]
+  createdBy String
+  closesAt  DateTime?
+  createdAt DateTime @default(now())
+  votes     ChatPollVote[]
+  @@map("chat_polls")
+}
+
+model ChatPollVote {
+  id          String   @id @default(uuid())
+  pollId      String
+  poll        ChatPoll @relation(fields: [pollId], references: [id])
+  userId      String
+  optionIndex Int
+  createdAt   DateTime @default(now())
+  @@unique([pollId, userId])
+  @@map("chat_poll_votes")
+}
+
+model ChatReport {
+  id         String   @id @default(uuid())
+  reporterId String
+  messageId  String?
+  message    ChatMessage? @relation(fields: [messageId], references: [id])
+  roomId     String?
+  reason     String
+  details    String   @default("")
+  status     String   @default("PENDING") // PENDING, REVIEWED, DISMISSED, ACTIONED
+  createdAt  DateTime @default(now())
+  @@map("chat_reports")
+}
+
+// Full audit trail for every automated or manual moderation action
+model ChatModerationEvent {
+  id        String   @id @default(uuid())
+  userId    String?
+  roomId    String?
+  messageId String?
+  action    String   // BLOCKED_CONTACT_INFO, BLOCKED_PROFANITY, MASKED_PROFANITY, FLOOD_BLOCKED, MUTED, BANNED, UNBANNED, MESSAGE_REMOVED
+  reason    String   @default("")
+  detail    String   @default("") @db.Text
+  createdAt DateTime @default(now())
+  @@map("chat_moderation_events")
+}
+
+model ChatSanction {
+  id        String    @id @default(uuid())
+  userId    String
+  roomId    String?             // null = applies to all rooms
+  type      String              // MUTE, BAN
+  reason    String   @default("")
+  issuedBy  String?             // admin userId; null = automated system action
+  expiresAt DateTime?           // null = permanent
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  @@index([userId, isActive])
+  @@map("chat_sanctions")
 }

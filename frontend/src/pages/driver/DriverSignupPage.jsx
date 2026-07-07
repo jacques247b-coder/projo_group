@@ -580,11 +580,4 @@ export default function DriverSignupPage() {
       </div>
     </div>
   );
-
-  function formatPhone(raw) {
-    const digits = raw.replace(/\D/g, "");
-    if (digits.startsWith("27")) return "+" + digits;
-    if (digits.startsWith("0"))  return "+27" + digits.slice(1);
-    return "+27" + digits;
-  }
 }

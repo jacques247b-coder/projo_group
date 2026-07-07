@@ -37,12 +37,16 @@ app.use("/api/services",   require("./routes/service.routes")); // ← NEW
 app.use("/api/entertainment", require("./routes/entertainment.routes"));
 app.use("/api/dating",       require("./routes/dating.routes"));
 app.use("/api/news", require("./routes/news.routes"));
+app.use("/api/community",    require("./routes/community.routes"));
 
 app.use((req, res) => res.status(404).json({ error: "Route not found", app: "PROJO GROUP" }));
 app.use((err, req, res, next) => {
   console.error("Error:", err);
   res.status(500).json({ error: err.message || "Internal server error" });
 });
+
+const { registerCommunitySocket } = require("./sockets/community.socket");
+registerCommunitySocket(io);
 
 io.on("connection", (socket) => {
   // Driver joins their room

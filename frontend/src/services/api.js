@@ -69,7 +69,6 @@ export const rideAPI = {
   getSharedRide: (token) => api.get(`/rides/share/${token}`),
   cancelRide: (id, reason) => api.post(`/rides/${id}/cancel`, { reason }),
   rateRide: (id, stars, comment) => api.post(`/rides/${id}/rate`, { stars, comment }),
-  acceptRide: (id) => api.post(`/rides/${id}/accept`),
   updateStatus: (id, status) => api.post(`/rides/${id}/status`, { status }),
   acceptRide: (id) => api.post(`/driver/rides/${id}/accept`),
 };
@@ -102,6 +101,43 @@ export const adminAPI = {
   updateSurgeZone: (id, data) => api.put(`/admin/surge-zones/${id}`, data),
   getUsers: (page = 1) => api.get(`/admin/users?page=${page}`),
   getLiveRides: () => api.get("/admin/rides/live"),
+};
+
+export const communityAPI = {
+  // Identity
+  getIdentity: () => api.get("/community/identity"),
+  rerollIdentity: () => api.post("/community/identity/reroll"),
+  setAvatar: (avatarKey) => api.post("/community/identity/avatar", { avatarKey }),
+  getAvatars: () => api.get("/community/avatars"),
+  // Rooms
+  listRooms: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return api.get(`/community/rooms${qs ? `?${qs}` : ""}`);
+  },
+  getRoom: (slug, params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return api.get(`/community/rooms/${slug}${qs ? `?${qs}` : ""}`);
+  },
+  joinRoom: (slug) => api.post(`/community/rooms/${slug}/join`),
+  // Reactions
+  react: (messageId, emoji) => api.post(`/community/messages/${messageId}/react`, { emoji }),
+  // Polls
+  createPoll: (slug, data) => api.post(`/community/rooms/${slug}/polls`, data),
+  getPoll: (id) => api.get(`/community/polls/${id}`),
+  voteOnPoll: (id, optionIndex) => api.post(`/community/polls/${id}/vote`, { optionIndex }),
+  // Reports
+  report: (data) => api.post("/community/report", data),
+  // Moderator dashboard
+  modListReports: (status = "PENDING") => api.get(`/community/mod/reports?status=${status}`),
+  modHeldMessages: () => api.get("/community/mod/held-messages"),
+  modEvents: () => api.get("/community/mod/events"),
+  modApproveMessage: (id) => api.post(`/community/mod/messages/${id}/approve`),
+  modRemoveMessage: (id) => api.post(`/community/mod/messages/${id}/remove`),
+  modPinMessage: (id) => api.post(`/community/mod/messages/${id}/pin`),
+  modMuteUser: (userId, data) => api.post(`/community/mod/users/${userId}/mute`, data),
+  modBanUser: (userId, data) => api.post(`/community/mod/users/${userId}/ban`, data),
+  modUnbanUser: (userId) => api.post(`/community/mod/users/${userId}/unban`),
+  modCreateRoom: (data) => api.post("/community/mod/rooms", data),
 };
 
 export const driverAPI = {
