@@ -24,4 +24,19 @@ const requireAdmin = (req, res, next) => {
   next();
 };
 
-module.exports = { requireAdmin };
+/**
+ * requireAdminOrSecurity
+ * For panic-monitoring routes only: allows ADMIN or the dedicated SECURITY
+ * role (security company staff created by an admin) to view/acknowledge/
+ * resolve alerts, without granting them the rest of the admin panel.
+ */
+const requireAdminOrSecurity = (req, res, next) => {
+  if (!req.user) return res.status(401).json({ error: "Authentication required" });
+  if (req.user.role !== "ADMIN" && req.user.role !== "SECURITY") {
+    console.warn(`[PROJO SECURITY] Blocked non-admin/security access to ${req.method} ${req.originalUrl} — user ${req.user.id} (role: ${req.user.role})`);
+    return res.status(403).json({ error: "Access denied." });
+  }
+  next();
+};
+
+module.exports = { requireAdmin, requireAdminOrSecurity };

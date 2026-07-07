@@ -103,6 +103,25 @@ export const adminAPI = {
   getLiveRides: () => api.get("/admin/rides/live"),
 };
 
+export const panicAPI = {
+  trigger: (latitude, longitude) => api.post("/panic/trigger", { latitude, longitude }),
+  triggerAnonymous: (latitude, longitude) => api.post("/panic/trigger-anonymous", { latitude, longitude }),
+  listContacts: () => api.get("/panic/contacts"),
+  addContact: (label, phone) => api.post("/panic/contacts", { label, phone }),
+  removeContact: (id) => api.delete(`/panic/contacts/${id}`),
+  selfCancel: (alertId) => api.post(`/panic/alerts/${alertId}/self-cancel`),
+  // Admin / security monitor dashboard
+  adminListAlerts: (status) => api.get(`/panic/alerts${status ? `?status=${status}` : ""}`),
+  adminAcknowledge: (id) => api.post(`/panic/alerts/${id}/acknowledge`),
+  adminResolve: (id, notes, falseAlarm) => api.post(`/panic/alerts/${id}/resolve`, { notes, falseAlarm }),
+  adminListSecurityContacts: () => api.get("/panic/security-contacts"),
+  adminAddSecurityContact: (companyName, phone) => api.post("/panic/security-contacts", { companyName, phone }),
+  adminToggleSecurityContact: (id) => api.post(`/panic/security-contacts/${id}/toggle`),
+  adminListSecurityUsers: () => api.get("/panic/security-users"),
+  adminCreateSecurityUser: (name, phone) => api.post("/panic/security-users", { name, phone }),
+  adminRemoveSecurityUser: (id) => api.delete(`/panic/security-users/${id}`),
+};
+
 export const datingAPI = {
   // Profile
   getProfiles: (params = {}) => {

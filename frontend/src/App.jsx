@@ -45,6 +45,7 @@ import CommunityRooms from "./pages/community/CommunityRooms";
 import CommunityRoomView from "./pages/community/CommunityRoomView";
 import CommunityModerationPage from "./pages/admin/CommunityModerationPage";
 import DatingVerificationPage from "./pages/admin/DatingVerificationPage";
+import PanicMonitorPage from "./pages/admin/PanicMonitorPage";
 
 // Protected route wrapper
 function Protected({ children, roles }) {
@@ -101,6 +102,7 @@ function AppRoutes() {
   const homeRoute = !user ? "/home"
     : user.role === "DRIVER" ? "/driver"
     : user.role === "ADMIN" ? "/admin"
+    : user.role === "SECURITY" ? "/panic-monitor"
     : "/book";
 
   return (
@@ -146,6 +148,9 @@ function AppRoutes() {
       } />
       <Route path="/admin/dating-verification" element={
         <Protected roles={["ADMIN"]}><DatingVerificationPage /></Protected>
+      } />
+      <Route path="/panic-monitor" element={
+        <Protected roles={["ADMIN", "SECURITY"]}><PanicMonitorPage /></Protected>
       } />
       <Route path="/" element={<Navigate to={homeRoute} replace />} />
 

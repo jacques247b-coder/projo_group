@@ -38,6 +38,7 @@ app.use("/api/entertainment", require("./routes/entertainment.routes"));
 app.use("/api/dating",       require("./routes/dating.routes"));
 app.use("/api/news", require("./routes/news.routes"));
 app.use("/api/community",    require("./routes/community.routes"));
+app.use("/api/panic",        require("./routes/panic.routes"));
 
 app.use((req, res) => res.status(404).json({ error: "Route not found", app: "PROJO GROUP" }));
 app.use((err, req, res, next) => {
@@ -49,6 +50,8 @@ const { registerCommunitySocket } = require("./sockets/community.socket");
 registerCommunitySocket(io);
 const { registerDatingSocket } = require("./sockets/dating.socket");
 registerDatingSocket(io);
+const { registerPanicSocket } = require("./sockets/panic.socket");
+registerPanicSocket(io);
 
 io.on("connection", (socket) => {
   // Driver joins their room

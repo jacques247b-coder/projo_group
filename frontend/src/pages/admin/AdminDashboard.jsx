@@ -313,6 +313,12 @@ export default function AdminDashboard() {
                 fontSize: "13px", fontWeight: "700", cursor: "pointer",
                 display: "flex", alignItems: "center", gap: "8px",
               }}>✓ Dating Verification</button>
+              <button onClick={() => navigate("/panic-monitor")} style={{
+                background: "rgba(139,0,0,0.15)", border: "1px solid #8B0000",
+                borderRadius: "10px", padding: "10px 20px", color: "#FF6B6B",
+                fontSize: "13px", fontWeight: "700", cursor: "pointer",
+                display: "flex", alignItems: "center", gap: "8px",
+              }}>🆘 Panic Alert Monitor</button>
               <button onClick={() => {
                 const token = localStorage.getItem("projo_token");
                 const url = `${process.env.REACT_APP_API_URL || "http://localhost:5000/api"}/admin/export/emails`;

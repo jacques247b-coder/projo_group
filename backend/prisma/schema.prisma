@@ -29,6 +29,8 @@ model User {
   classifieds   Classified[]
   datingProfile  DatingProfile?
   communityIdentity CommunityIdentity?
+  panicContacts  PanicContact[]
+  panicAlerts    PanicAlert[]
   @@map("users")
 }
 model Wallet {
@@ -553,4 +555,46 @@ model ChatSanction {
   createdAt DateTime @default(now())
   @@index([userId, isActive])
   @@map("chat_sanctions")
+}
+
+// ══════════════════════════════════════════════════════════════
+// PANIC / EMERGENCY ALERT SYSTEM
+// ══════════════════════════════════════════════════════════════
+
+model PanicContact {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  label     String   @default("") // e.g. "Mom", "Best friend"
+  phone     String              // E.164 format, e.g. +27821234567
+  createdAt DateTime @default(now())
+  @@map("panic_contacts")
+}
+
+model SecurityMonitorContact {
+  id          String   @id @default(uuid())
+  companyName String
+  phone       String              // E.164 format
+  isActive    Boolean  @default(true)
+  addedBy     String?             // admin userId
+  createdAt   DateTime @default(now())
+  @@map("security_monitor_contacts")
+}
+
+model PanicAlert {
+  id             String   @id @default(uuid())
+  userId         String?
+  user           User?    @relation(fields: [userId], references: [id])
+  anonymousPhone String?             // optional, only if we somehow have a contact for a non-logged-in trigger
+  latitude       Float?
+  longitude      Float?
+  status         String   @default("ACTIVE") // ACTIVE, ACKNOWLEDGED, RESOLVED, FALSE_ALARM
+  acknowledgedBy String?
+  acknowledgedAt DateTime?
+  resolvedAt     DateTime?
+  notes          String   @default("")
+  dispatchLog    String   @default("") @db.Text // JSON summary of which channels/recipients were notified and outcomes
+  createdAt      DateTime @default(now())
+  @@index([status, createdAt])
+  @@map("panic_alerts")
 }

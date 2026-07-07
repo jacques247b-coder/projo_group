@@ -77,4 +77,54 @@ async function sendSMS(phone, message) {
   }
 }
 
-module.exports = { sendOTP, sendSMS };
+/**
+ * Send a WhatsApp message via Twilio's WhatsApp API.
+ * Requires TWILIO_WHATSAPP_FROM to be set (e.g. "whatsapp:+14155238886" for
+ * the Twilio Sandbox, or your approved WhatsApp Business sender number).
+ * The recipient must have opted in (sandbox: sent the join code once;
+ * production: standard WhatsApp Business opt-in rules apply).
+ */
+async function sendWhatsApp(phone, message) {
+  const from = process.env.TWILIO_WHATSAPP_FROM;
+  if (!twilioClient || !from) {
+    console.log(`[PROJO DEV WHATSAPP] To: ${phone}\n${message}`);
+    return { success: true, dev: true };
+  }
+  try {
+    const result = await twilioClient.messages.create({
+      body: message,
+      from: from.startsWith("whatsapp:") ? from : `whatsapp:${from}`,
+      to: phone.startsWith("whatsapp:") ? phone : `whatsapp:${phone}`,
+    });
+    return { success: true, sid: result.sid };
+  } catch (err) {
+    console.error(`[PROJO] WhatsApp failed to ${phone}:`, err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Make an actual voice call reading out a message — the most attention-
+ * grabbing channel available, used for panic alerts. Requires a public
+ * TwiML Bin or endpoint URL (TWILIO_VOICE_TWIML_URL) that returns TwiML
+ * for Twilio to read; if not configured, this is skipped gracefully.
+ */
+async function makeVoiceCall(phone, twimlUrl) {
+  if (!twilioClient || !twimlUrl) {
+    console.log(`[PROJO DEV VOICE CALL] Would call: ${phone}`);
+    return { success: true, dev: true };
+  }
+  try {
+    const call = await twilioClient.calls.create({
+      url: twimlUrl,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: phone,
+    });
+    return { success: true, sid: call.sid };
+  } catch (err) {
+    console.error(`[PROJO] Voice call failed to ${phone}:`, err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+module.exports = { sendOTP, sendSMS, sendWhatsApp, makeVoiceCall };

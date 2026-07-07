@@ -11,6 +11,7 @@ import { rideAPI, deliveryAPI } from "../../services/api";
 import { VEHICLE_INFO, formatFare, CONTACT } from "../../utils/constants";
 import toast from "react-hot-toast";
 import Navbar from "../../components/ui/Navbar";
+import PanicButton from "../../components/panic/PanicButton";
 
 const G      = "#e8b84b";
 const BG     = "#0d0505";
@@ -215,6 +216,7 @@ export default function BookRidePage() {
   return (
     <div style={{ background: BG, minHeight: "100vh", fontFamily: "'DM Sans',sans-serif" }}>
       <Navbar />
+      <PanicButton top="78px" />
       <div style={{ maxWidth: "600px", margin: "0 auto", padding: "84px 1rem 2rem" }}>
 
         {/* ── Page header ── */}

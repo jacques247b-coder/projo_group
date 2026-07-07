@@ -13,6 +13,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { CONTACT, BRAND, VEHICLE_INFO, formatFare, ACTIVE_ZONES, FUTURE_ZONES } from "../utils/constants";
 import { useAuth } from "../context/AuthContext";
+import PanicButton from "../components/panic/PanicButton";
 
 const G   = "#e8b84b";
 const RED = "#8B1A1A";
@@ -241,11 +242,12 @@ export default function LandingPage() {
 
   const sec  = (bg) => ({ background:bg, padding:"4rem 1rem", borderTop:"1px solid rgba(232,184,75,0.08)" });
   const inner = { maxWidth:"1100px", margin:"0 auto" };
-  const homeRoute = !user ? "/login" : user.role==="DRIVER" ? "/driver" : user.role==="ADMIN" ? "/admin" : "/book";
+  const homeRoute = !user ? "/login" : user.role==="DRIVER" ? "/driver" : user.role==="ADMIN" ? "/admin" : user.role==="SECURITY" ? "/panic-monitor" : "/book";
 
   return (
     <div style={{ background:"#0d0505", color:"#f5ede8", fontFamily:"'DM Sans',sans-serif", minHeight:"100vh", overflowX:"hidden", position:"relative" }}>
       <CollageBackground />
+      <PanicButton top="78px" />
 
       {/* ── NAV ── */}
       <nav style={{
