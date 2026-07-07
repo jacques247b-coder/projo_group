@@ -436,6 +436,60 @@ function VerifyModal({ onClose, onSubmit }) {
 }
 
 // ── BLOCKED LIST MODAL ────────────────────────────────────────
+// ── WELCOME / INFO MODAL (non-Premium members, shown each sign-in) ──
+function WelcomeInfoModal({ onClose, onUpgrade }) {
+  const canDo = [
+    ["💫", "Browse & discover profiles near you"],
+    ["♥", "Like up to 20 profiles a day"],
+    ["💝", "Match when someone likes you back"],
+    ["👥", "Join the anonymous Dating Lounge chat"],
+    ["⭐", "Rate profiles to improve your matches"],
+  ];
+  const cannotDo = [
+    ["💬", "Message your matches"],
+    ["👁️", "See who already liked you"],
+    ["⭐", "Send Super Likes"],
+    ["🚀", "Boost your profile's visibility"],
+    ["🔒", "Browse privately in Incognito Mode"],
+  ];
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.92)", zIndex:600, display:"flex", alignItems:"center", justifyContent:"center", padding:"1.25rem" }}>
+      <div style={{ background:`linear-gradient(160deg, #1A0F2E, #0D0418)`, borderRadius:"24px", padding:"1.5rem", width:"100%", maxWidth:"560px", border:`1px solid ${C.border}`, maxHeight:"85vh", overflowY:"auto", WebkitOverflowScrolling:"touch", position:"relative" }}>
+        <button onClick={onClose} aria-label="Close" style={{ position:"absolute", top:"1.25rem", right:"1.25rem", background:"rgba(255,255,255,0.06)", border:`1px solid ${C.border}`, borderRadius:"10px", width:"32px", height:"32px", color:C.text, fontSize:"16px", cursor:"pointer" }}>✕</button>
+
+        <div style={{ fontFamily:FD, fontSize:"22px", fontWeight:"700", color:C.text, marginBottom:"4px", paddingRight:"2.5rem" }}>Welcome to PROJO Dating 💕</div>
+        <div style={{ fontSize:"12.5px", color:C.textMuted, marginBottom:"1.1rem" }}>Here's what you can do on a free account — and what Premium unlocks.</div>
+
+        <div style={{ fontSize:"12px", fontWeight:"700", color:"#4ADE80", textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:"8px" }}>✓ You can</div>
+        {canDo.map(([icon, text]) => (
+          <div key={text} style={{ display:"flex", alignItems:"center", gap:"10px", marginBottom:"8px" }}>
+            <span style={{ fontSize:"15px", width:"22px", textAlign:"center" }}>{icon}</span>
+            <span style={{ fontSize:"13px", color:C.text }}>{text}</span>
+          </div>
+        ))}
+
+        <div style={{ fontSize:"12px", fontWeight:"700", color:"#F87171", textTransform:"uppercase", letterSpacing:"0.5px", margin:"14px 0 8px" }}>✕ Free accounts can't</div>
+        {cannotDo.map(([icon, text]) => (
+          <div key={text} style={{ display:"flex", alignItems:"center", gap:"10px", marginBottom:"8px" }}>
+            <span style={{ fontSize:"15px", width:"22px", textAlign:"center", opacity:0.6 }}>{icon}</span>
+            <span style={{ fontSize:"13px", color:C.textMuted }}>{text}</span>
+          </div>
+        ))}
+
+        <div style={{ background:`linear-gradient(135deg, rgba(212,175,55,0.12), rgba(139,0,0,0.12))`, border:`1px solid ${C.borderGold}`, borderRadius:"14px", padding:"12px 14px", margin:"14px 0" }}>
+          <div style={{ fontSize:"13px", fontWeight:"700", color:C.gold, marginBottom:"2px" }}>👑 Go Premium — R80/month</div>
+          <div style={{ fontSize:"11.5px", color:C.textMuted }}>Unlock everything above. Cancel anytime.</div>
+        </div>
+
+        <div style={{ display:"flex", gap:"10px" }}>
+          <button onClick={onClose} style={{ flex:1, padding:"13px", borderRadius:"14px", background:"none", border:`1px solid ${C.border}`, color:C.textMuted, fontSize:"14px", cursor:"pointer" }}>Maybe later</button>
+          <button onClick={onUpgrade} style={{ flex:1, padding:"13px", borderRadius:"14px", background:`linear-gradient(135deg, ${C.gold}, #9A7A10)`, border:"none", color:C.dark, fontWeight:"800", fontSize:"14px", cursor:"pointer" }}>See Premium</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function BlockedListModal({ blocked, onUnblock, onClose }) {
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.9)", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:"1.25rem" }}>
@@ -480,6 +534,8 @@ export default function ProjoDating() {
   const [showFilter, setShowFilter] = useState(false);
   const [filters, setFilters] = useState({ ageMin: 18, ageMax: 60, maxDistanceKm: "" });
   const [typingMatchId, setTypingMatchId] = useState(null);
+  const [superLikedIds, setSuperLikedIds] = useState(new Set());
+  const [showWelcomeInfo, setShowWelcomeInfo] = useState(false);
   const [showReport, setShowReport] = useState(null);
   const [showVerify, setShowVerify] = useState(false);
   const [showBlockedList, setShowBlockedList] = useState(false);
@@ -494,10 +550,10 @@ export default function ProjoDating() {
   // page behind the modal instead of the modal's own content, making
   // buttons near the bottom of a modal seem unreachable.
   useEffect(() => {
-    const anyModalOpen = !!(showProfile || showPremium || showFilter || showReport || showVerify || showBlockedList);
+    const anyModalOpen = !!(showProfile || showPremium || showFilter || showReport || showVerify || showBlockedList || showWelcomeInfo);
     document.body.style.overflow = anyModalOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
-  }, [showProfile, showPremium, showFilter, showReport, showVerify, showBlockedList]);
+  }, [showProfile, showPremium, showFilter, showReport, showVerify, showBlockedList, showWelcomeInfo]);
 
   // ── Load my profile on mount ──
   useEffect(() => {
@@ -521,6 +577,7 @@ export default function ProjoDating() {
     loadDiscover();
     loadMatches();
     loadLikedMe();
+    if (!myProfile.isPremium) setShowWelcomeInfo(true);
 
     const sock = io(process.env.REACT_APP_API_URL?.replace("/api", "") || "http://localhost:5000", { transports: ["websocket"] });
     socketRef.current = sock;
@@ -597,6 +654,7 @@ export default function ProjoDating() {
   async function handleLike(profile, isSuperLike = false) {
     try {
       const res = await datingAPI.like(profile.id, isSuperLike);
+      if (isSuperLike) setSuperLikedIds(prev => new Set(prev).add(profile.id));
       setDiscoverProfiles(prev => prev.filter(p => p.id !== profile.id));
       setShowProfile(null);
       if (res.matched) {
@@ -619,6 +677,7 @@ export default function ProjoDating() {
   }
 
   async function handleSuperLike(profile) {
+    if (superLikedIds.has(profile.id)) return; // already sent, star should be disabled anyway
     if (!isPremium) { setShowPremium(true); return; }
     if ((usage?.superLikesUsedToday || 0) >= (usage?.superLikesLimit || 0)) {
       toast.error(`You've used all ${usage?.superLikesLimit} Super Likes for today — more tomorrow!`);
@@ -854,7 +913,7 @@ export default function ProjoDating() {
             ) : (
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px" }}>
                 {discoverProfiles.map(p => (
-                  <ProfileCard key={p.id} profile={p} onLike={(pr) => handleLike(pr, false)} onPass={handlePass} onOpen={setShowProfile} onSuperLike={handleSuperLike} superLiked={false} />
+                  <ProfileCard key={p.id} profile={p} onLike={(pr) => handleLike(pr, false)} onPass={handlePass} onOpen={setShowProfile} onSuperLike={handleSuperLike} superLiked={superLikedIds.has(p.id)} />
                 ))}
               </div>
             )}
@@ -1103,7 +1162,7 @@ export default function ProjoDating() {
           onMessage={(pr) => { const m = matches.find(mm => otherProfileInMatch(mm).id === pr.id); if (m) openMatch(m); }}
           isPremium={isPremium}
           onSuperLike={handleSuperLike}
-          superLiked={false}
+          superLiked={superLikedIds.has(showProfile.id)}
           onBlock={handleBlock}
           onReport={setShowReport}
         />
@@ -1137,6 +1196,14 @@ export default function ProjoDating() {
       {/* Blocked List Modal */}
       {showBlockedList && (
         <BlockedListModal blocked={blockedProfiles} onUnblock={handleUnblock} onClose={() => setShowBlockedList(false)} />
+      )}
+
+      {/* Welcome / Non-Member Info Modal */}
+      {showWelcomeInfo && (
+        <WelcomeInfoModal
+          onClose={() => setShowWelcomeInfo(false)}
+          onUpgrade={() => { setShowWelcomeInfo(false); setShowPremium(true); }}
+        />
       )}
 
       {/* Filter Modal */}
