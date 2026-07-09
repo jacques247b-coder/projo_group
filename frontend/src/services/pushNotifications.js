@@ -33,14 +33,16 @@ export async function subscribeToPush() {
     }
 
     const registration = await navigator.serviceWorker.ready;
-    let subscription = await registration.pushManager.getSubscription();
-
-    if (!subscription) {
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey),
-      });
-    }
+    // Always start fresh rather than trusting a cached subscription — if
+    // VAPID keys were ever regenerated after the original subscribe, the
+    // browser would otherwise keep silently reusing the old (now invalid)
+    // subscription instead of creating one that matches the current key.
+    const existing = await registration.pushManager.getSubscription();
+    if (existing) await existing.unsubscribe().catch(() => {});
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
+    });
 
     await api.post("/push/subscribe", { subscription });
     console.log("[PROJO Push] ✅ Subscribed to push notifications");

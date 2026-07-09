@@ -7,6 +7,7 @@ import ProductsShopPage from "./pages/shop/ProductsShopPage";
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import { subscribeToPush } from "./services/pushNotifications";
 import "leaflet/dist/leaflet.css";
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -78,6 +79,14 @@ function AppRoutes() {
       const permission = window.Notification?.permission;
       if (permission === "granted") {
         localStorage.setItem("projo_push_accepted", "true");
+        // Permission being granted at the browser level does NOT guarantee
+        // a currently-valid subscription is saved server-side — e.g. if
+        // VAPID keys were regenerated after the original subscribe, or the
+        // subscription simply expired. Silently refresh it in the
+        // background (no modal shown, permission's already granted so
+        // there's no prompt to interrupt) so it stays valid without
+        // making the user go through the UI again.
+        subscribeToPush().catch(() => {});
         return;
       }
       // Show modal after 3 seconds to let the page load
