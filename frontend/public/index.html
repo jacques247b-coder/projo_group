@@ -159,24 +159,23 @@
     <div id="root"></div>
 
     <script>
-      // Hide splash
-      window.addEventListener('load', function() {
-        setTimeout(function() {
-          var splash = document.getElementById('splash');
-          if (splash) {
-            splash.classList.add('hidden');
-            setTimeout(function() { splash.remove(); }, 500);
-          }
-        }, 1800);
-      });
+      // Hide splash after 2s regardless — don't wait for the window 'load'
+      // event, which can hang indefinitely (e.g. a slow/stuck resource,
+      // service worker interference) and leave the user stuck on a
+      // perpetual loading screen.
+      setTimeout(function() {
+        var splash = document.getElementById('splash');
+        if (splash) {
+          splash.classList.add('hidden');
+          setTimeout(function() { splash.remove(); }, 500);
+        }
+      }, 2000);
 
       // Register service worker
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-          navigator.serviceWorker.register('/sw.js')
-            .then(function(reg) { console.log('PROJO SW registered'); })
-            .catch(function(err) { console.log('SW error:', err); });
-        });
+        navigator.serviceWorker.register('/sw.js')
+          .then(function(reg) { console.log('PROJO SW registered'); })
+          .catch(function(err) { console.log('SW error:', err); });
       }
 
       // PWA install prompt
