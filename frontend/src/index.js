@@ -61,7 +61,12 @@ root.render(
 );
 
 // ── Service Worker Auto-Update ──────────────────────────────
-// Registers the SW and automatically reloads when a new version is deployed
+// Registers the SW and automatically reloads when a new version is deployed.
+// IMPORTANT: guarded to only ever auto-reload ONCE per browser session — 
+// without this, if the SW looks "updated" on every single load (which can
+// happen from caching quirks, especially right after manually clearing
+// site data or bumping the version repeatedly), this becomes an infinite
+// reload loop with the page never actually finishing loading.
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/sw.js").then((registration) => {
@@ -72,14 +77,19 @@ if ("serviceWorker" in navigator) {
         registration.update();
       }, 60 * 1000);
 
-      // When a new SW is found and installed, force reload all clients
+      // When a new SW is found and installed, reload — but only once per
+      // session, so a caching quirk can't trap the user in a reload loop.
       registration.addEventListener("updatefound", () => {
         const newWorker = registration.installing;
         if (!newWorker) return;
         newWorker.addEventListener("statechange", () => {
           if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+            if (sessionStorage.getItem("projo_sw_auto_reloaded")) {
+              console.log("[PROJO SW] New version detected again, but already auto-reloaded once this session — not reloading again to avoid a loop.");
+              return;
+            }
             console.log("[PROJO SW] New version available — reloading...");
-            // Auto-reload silently for seamless update
+            sessionStorage.setItem("projo_sw_auto_reloaded", "true");
             window.location.reload();
           }
         });
@@ -89,13 +99,12 @@ if ("serviceWorker" in navigator) {
       console.error("[PROJO SW] Registration failed:", err);
     });
 
-    // Also reload if the SW controller changes (another tab updated it)
-    let refreshing = false;
+    // Also reload if the SW controller changes (another tab updated it) —
+    // same one-per-session guard applies here too.
     navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (!refreshing) {
-        refreshing = true;
-        window.location.reload();
-      }
+      if (sessionStorage.getItem("projo_sw_auto_reloaded")) return;
+      sessionStorage.setItem("projo_sw_auto_reloaded", "true");
+      window.location.reload();
     });
   });
 }
