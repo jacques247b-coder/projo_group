@@ -19,17 +19,17 @@ export async function requestNotificationPermission() {
 export async function subscribeToPush() {
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
     console.log("[PROJO Push] Push not supported on this browser");
-    return false;
+    return { success: false, reason: "UNSUPPORTED" };
   }
 
   const granted = await requestNotificationPermission();
-  if (!granted) return false;
+  if (!granted) return { success: false, reason: "BROWSER_DENIED" };
 
   try {
     const { publicKey } = await api.get("/push/vapid-key");
     if (!publicKey) {
       console.log("[PROJO Push] No VAPID key configured on server");
-      return false;
+      return { success: false, reason: "SERVER_NOT_CONFIGURED" };
     }
 
     const registration = await navigator.serviceWorker.ready;
@@ -44,10 +44,10 @@ export async function subscribeToPush() {
 
     await api.post("/push/subscribe", { subscription });
     console.log("[PROJO Push] ✅ Subscribed to push notifications");
-    return true;
+    return { success: true };
   } catch (err) {
     console.error("[PROJO Push] Subscribe error:", err);
-    return false;
+    return { success: false, reason: "SUBSCRIBE_FAILED", error: err.message };
   }
 }
 

@@ -102,10 +102,12 @@ export default function WalletPage() {
   }
 
   async function enableNotifications() {
-    const success = await subscribeToPush();
-    if (success) {
+    const result = await subscribeToPush();
+    if (result.success) {
       setNotifEnabled(true);
       toast.success("Notifications enabled! You'll get ride and order updates.");
+    } else if (result.reason === "SERVER_NOT_CONFIGURED") {
+      toast.error("Notifications aren't set up on the server yet — try again shortly.");
     } else {
       toast.error("Could not enable notifications. Check browser permissions.");
     }

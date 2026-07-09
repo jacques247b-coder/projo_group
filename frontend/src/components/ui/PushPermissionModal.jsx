@@ -21,19 +21,21 @@ const BENEFITS = [
 
 export default function PushPermissionModal({ onClose }) {
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState("prompt"); // prompt | denied | success
+  const [step, setStep] = useState("prompt"); // prompt | denied | not_configured | success
 
   async function handleAllow() {
     setLoading(true);
     try {
       const result = await subscribeToPush();
-      if (result) {
+      if (result.success) {
         setStep("success");
         localStorage.setItem("projo_push_accepted", "true");
         localStorage.removeItem("projo_push_dismissed_at");
         setTimeout(() => onClose(), 2000);
+      } else if (result.reason === "SERVER_NOT_CONFIGURED") {
+        setStep("not_configured");
       } else {
-        // Browser denied
+        // Browser denied, unsupported, or subscribe failed
         setStep("denied");
       }
     } catch {
@@ -80,6 +82,23 @@ export default function PushPermissionModal({ onClose }) {
             <div style={{ fontSize: "13px", color: "#6b6760" }}>
               You'll now receive real-time updates from PROJO GROUP
             </div>
+          </div>
+        )}
+
+        {step === "not_configured" && (
+          <div style={{ textAlign: "center", padding: "1rem 0" }}>
+            <div style={{ fontSize: "48px", marginBottom: "12px" }}>⚙️</div>
+            <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "18px", fontWeight: "800", color: G, marginBottom: "8px" }}>
+              Notifications Aren't Set Up Yet
+            </div>
+            <div style={{ fontSize: "13px", color: "#b8a09a", lineHeight: 1.6, marginBottom: "1.5rem" }}>
+              This isn't your browser blocking anything — the app itself hasn't finished setting up notifications yet. Try again shortly.
+            </div>
+            <button onClick={onClose} style={{
+              width: "100%", background: BG, border: `1px solid ${BORDER}`,
+              borderRadius: "12px", padding: "14px", color: "#a8a49e",
+              fontWeight: "700", fontSize: "14px", cursor: "pointer",
+            }}>Close</button>
           </div>
         )}
 
