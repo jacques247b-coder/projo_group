@@ -297,14 +297,23 @@ exports.broadcastPush = async (req, res) => {
     };
 
     let sent = 0, failed = 0;
+    let vapidNotConfigured = false;
     for (const user of users) {
       try {
         const subscription = JSON.parse(user.pushSubscription);
-        await sendPushNotification(subscription, payload);
-        sent++;
+        const result = await sendPushNotification(subscription, payload);
+        if (result.success) {
+          sent++;
+        } else {
+          failed++;
+          if (result.reason === "VAPID_NOT_CONFIGURED") vapidNotConfigured = true;
+          if (result.reason === "SUBSCRIPTION_EXPIRED") {
+            await prisma.user.update({ where: { id: user.id }, data: { pushSubscription: null } }).catch(() => {});
+          }
+        }
       } catch {
         failed++;
-        // Remove expired subscriptions
+        // Malformed subscription JSON — remove it
         await prisma.user.update({
           where: { id: user.id },
           data: { pushSubscription: null },
@@ -323,9 +332,21 @@ exports.broadcastPush = async (req, res) => {
       skipDuplicates: true,
     }).catch(() => {});
 
-    console.log(`[PROJO Push] Broadcast: ${sent} sent, ${failed} failed`);
+    console.log(`[PROJO Push] Broadcast: ${sent} sent, ${failed} failed${vapidNotConfigured ? " (VAPID keys not configured!)" : ""}`);
+
+    if (vapidNotConfigured) {
+      return res.status(500).json({
+        error: "Push notifications aren't configured on the server yet — VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY are missing from the backend environment variables. Nothing was actually sent.",
+        sent: 0, failed, total: users.length,
+      });
+    }
+
     res.json({
-      message: `Notification sent to ${sent} device${sent !== 1 ? "s" : ""}`,
+      message: users.length === 0
+        ? "No devices are subscribed to push notifications yet — nothing to send to."
+        : sent > 0
+          ? `Notification sent to ${sent} device${sent !== 1 ? "s" : ""}${failed > 0 ? ` (${failed} failed — likely expired subscriptions, already removed)` : ""}`
+          : `Nothing was actually delivered — all ${failed} attempt${failed !== 1 ? "s" : ""} failed. Check server logs for details.`,
       sent, failed, total: users.length,
     });
   } catch (err) {

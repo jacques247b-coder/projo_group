@@ -43,7 +43,13 @@ exports.notifyUser = async (userId, payload) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user?.pushSubscription) return;
     const subscription = JSON.parse(user.pushSubscription);
-    await sendPushNotification(subscription, payload);
+    const result = await sendPushNotification(subscription, payload);
+    if (!result.success) {
+      console.log(`[PROJO Push] notifyUser(${userId}) did not deliver: ${result.reason}`);
+      if (result.reason === "SUBSCRIPTION_EXPIRED") {
+        await prisma.user.update({ where: { id: userId }, data: { pushSubscription: null } }).catch(() => {});
+      }
+    }
   } catch (err) {
     console.error("[PROJO Push] notifyUser error:", err.message);
   }

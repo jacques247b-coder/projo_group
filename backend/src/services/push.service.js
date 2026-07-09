@@ -16,24 +16,31 @@ if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
 }
 
 /**
- * Send a push notification to a subscribed device
+ * Send a push notification to a subscribed device.
+ * IMPORTANT: always returns a real result — never silently swallows a
+ * failure. Callers (e.g. the admin broadcast endpoint) rely on this to
+ * report an honest sent/failed count instead of claiming success for
+ * every attempt regardless of what actually happened.
  * @param {Object} subscription - Push subscription object stored from frontend
  * @param {Object} payload - { title, body, icon, data }
+ * @returns {Promise<{success: boolean, reason?: string, statusCode?: number}>}
  */
 async function sendPushNotification(subscription, payload) {
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
-    console.log("[PROJO Push] VAPID keys not configured — skipping push");
-    return;
+    console.log("[PROJO Push] VAPID keys not configured — cannot send");
+    return { success: false, reason: "VAPID_NOT_CONFIGURED" };
   }
   try {
     await webpush.sendNotification(subscription, JSON.stringify(payload));
     console.log("[PROJO Push] ✅ Notification sent:", payload.title);
+    return { success: true };
   } catch (err) {
     console.error("[PROJO Push] ❌ Failed:", err.message);
-    // 410 Gone means subscription expired — should be removed from DB
-    if (err.statusCode === 410) {
-      console.log("[PROJO Push] Subscription expired, should be removed");
-    }
+    // 410 Gone / 404 mean the subscription is dead (browser unsubscribed,
+    // cleared site data, etc) — the caller should delete it from the user.
+    const expired = err.statusCode === 410 || err.statusCode === 404;
+    if (expired) console.log("[PROJO Push] Subscription expired/invalid, should be removed");
+    return { success: false, reason: expired ? "SUBSCRIPTION_EXPIRED" : "SEND_FAILED", statusCode: err.statusCode, error: err.message };
   }
 }
 
