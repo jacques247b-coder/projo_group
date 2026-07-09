@@ -46,6 +46,7 @@ import CommunityRoomView from "./pages/community/CommunityRoomView";
 import CommunityModerationPage from "./pages/admin/CommunityModerationPage";
 import DatingVerificationPage from "./pages/admin/DatingVerificationPage";
 import PanicMonitorPage from "./pages/admin/PanicMonitorPage";
+import PanicWatchPage from "./pages/PanicWatchPage";
 
 // Protected route wrapper
 function Protected({ children, roles }) {
@@ -149,6 +150,7 @@ function AppRoutes() {
       <Route path="/admin/dating-verification" element={
         <Protected roles={["ADMIN"]}><DatingVerificationPage /></Protected>
       } />
+      <Route path="/panic-watch/:alertId" element={<PanicWatchPage />} />
       <Route path="/panic-monitor" element={
         <Protected roles={["ADMIN", "SECURITY"]}><PanicMonitorPage /></Protected>
       } />

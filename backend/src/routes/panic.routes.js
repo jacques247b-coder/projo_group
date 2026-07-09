@@ -6,6 +6,10 @@ const panic = require("../controllers/panic.controller");
 
 // Trigger (any authenticated user)
 router.post("/trigger",                    authenticate, panic.triggerAlert);
+router.get("/subscription-status",         authenticate, panic.getSubscriptionStatus);
+router.post("/activate-subscription",      authenticate, panic.activateSubscription);
+router.get("/safety-profile",              authenticate, panic.getSafetyProfile);
+router.post("/safety-profile",             authenticate, panic.updateSafetyProfile);
 // Trigger from the public landing page — no login required
 router.post("/trigger-anonymous",          panic.triggerAnonymousAlert);
 
@@ -14,6 +18,8 @@ router.get("/contacts",                    authenticate, panic.listMyContacts);
 router.post("/contacts",                   authenticate, panic.addMyContact);
 router.delete("/contacts/:id",             authenticate, panic.removeMyContact);
 router.post("/alerts/:id/self-cancel",     authenticate, panic.selfCancelAlert);
+router.post("/alerts/:id/update-location", panic.updateAlertLocation);
+router.get("/watch/:id", panic.getWatchAlert);
 
 // Monitor dashboard — ADMIN or SECURITY company staff can view/act on alerts
 router.get("/alerts",                      authenticate, requireAdminOrSecurity, panic.adminListAlerts);
@@ -25,6 +31,7 @@ router.post("/alerts/:id/sitrep",          authenticate, requireAdminOrSecurity,
 router.get("/security-contacts",               authenticate, requireAdmin, panic.adminListSecurityContacts);
 router.post("/security-contacts",              authenticate, requireAdmin, panic.adminAddSecurityContact);
 router.post("/security-contacts/:id/toggle",   authenticate, requireAdmin, panic.adminToggleSecurityContact);
+router.post("/security-contacts/:id/toggle-primary", authenticate, requireAdmin, panic.adminTogglePrimaryContact);
 
 // Admin only — manage SECURITY-role login accounts (so their staff can log
 // into the Panic Monitor dashboard itself, not just receive SMS/WhatsApp)

@@ -31,6 +31,19 @@ model User {
   communityIdentity CommunityIdentity?
   panicContacts  PanicContact[]
   panicAlerts    PanicAlert[]
+
+  // PROJO Panic — paid subscription (R37/month, Rustenburg & surrounds only)
+  hasPanicSubscription        Boolean   @default(false)
+  panicSubscriptionActivatedAt DateTime?
+
+  // Safety/medical profile — shown to security/CPF responders and family
+  // monitors only when a panic alert is actually triggered, never otherwise.
+  homeAddress          String?
+  bloodGroup           String?
+  medicalNotes         String?  @db.Text // allergies, conditions, medication, etc.
+  insuranceProvider    String?
+  insurancePolicyNumber String?
+
   @@map("users")
 }
 model Wallet {
@@ -576,6 +589,8 @@ model SecurityMonitorContact {
   id          String   @id @default(uuid())
   companyName String
   phone       String              // E.164 format
+  type        String   @default("SECURITY") // SECURITY | CPF
+  isPrimary   Boolean  @default(false)       // dispatched to on FREE anonymous alerts too (the "nearest" company)
   callmebotApiKey String?         // optional — lets this contact receive free WhatsApp via CallMeBot
   isActive    Boolean  @default(true)
   addedBy     String?             // admin userId
@@ -588,8 +603,11 @@ model PanicAlert {
   userId         String?
   user           User?    @relation(fields: [userId], references: [id])
   anonymousPhone String?             // optional, only if we somehow have a contact for a non-logged-in trigger
-  latitude       Float?
+  latitude       Float?              // live pin — updated continuously while the alert is active, not just at trigger time
   longitude      Float?
+  lastLocationAt DateTime?           // when the pin was last updated, so monitors can tell if it's gone stale
+  rideId         String?             // set if the user was in an active PROJO Ride when they triggered
+  rideContext    String?  @db.Text   // JSON snapshot: pickup/dropoff, ride status, driver/passenger name, at trigger time
   status         String   @default("ACTIVE") // ACTIVE, ACKNOWLEDGED, RESOLVED, FALSE_ALARM
   acknowledgedBy String?
   acknowledgedAt DateTime?

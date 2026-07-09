@@ -6,6 +6,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { panicAPI } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 import toast from "react-hot-toast";
@@ -15,6 +18,11 @@ const C = {
   text: "#F1F3F5", muted: "#8A93A0", danger: "#E05252", warn: "#D4AF37", good: "#2ED9B4",
 };
 const FB = "'Inter', sans-serif";
+
+const panicIcon = new L.DivIcon({
+  html: `<div style="width:18px;height:18px;background:#E05252;border-radius:50%;border:3px solid #fff;box-shadow:0 0 12px rgba(224,82,82,0.9);"></div>`,
+  iconSize: [18, 18], iconAnchor: [9, 9], className: "",
+});
 
 const SITREP_OPTIONS = [
   { value: "EN_ROUTE",   label: "En Route",     color: "#D4AF37" },
@@ -30,6 +38,12 @@ function timeAgo(dateStr) {
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return new Date(dateStr).toLocaleString();
+}
+
+function tierBadge(tier) {
+  if (tier === "SUBSCRIBED") return { label: "👑 Subscribed", color: "#D4AF37" };
+  if (tier === "FREE_SIGNUP") return { label: "🆓 Free Signup", color: "#3B9EFF" };
+  return { label: "🌐 Anonymous", color: "#8A93A0" };
 }
 
 function statusColor(status) {
@@ -76,6 +90,8 @@ export default function PanicMonitorPage() {
   const [companyName, setCompanyName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [contactCallmebotKey, setContactCallmebotKey] = useState("");
+  const [contactType, setContactType] = useState("SECURITY");
+  const [contactIsPrimary, setContactIsPrimary] = useState(false);
   const [securityUsers, setSecurityUsers] = useState([]);
   const [suName, setSuName] = useState("");
   const [suPhone, setSuPhone] = useState("");
@@ -119,7 +135,12 @@ export default function PanicMonitorPage() {
     sock.emit("panic:join_monitor");
 
     sock.on("panic:new_alert", (alert) => {
-      setAlerts(prev => [{ ...alert, sitreps: [] }, ...prev]);
+      const normalized = {
+        ...alert,
+        sitreps: [],
+        user: { name: alert.userName, phone: alert.userPhone, ...(alert.safetyProfile || {}) },
+      };
+      setAlerts(prev => [normalized, ...prev]);
       playAlarmTone();
       toast.custom(() => (
         <div style={{ background: "#7A0000", color: "#fff", padding: "16px 22px", borderRadius: "14px", fontWeight: 700, boxShadow: "0 10px 40px rgba(139,0,0,0.6)" }}>
@@ -132,6 +153,9 @@ export default function PanicMonitorPage() {
     });
     sock.on("panic:sitrep_added", ({ alertId, sitrep }) => {
       setAlerts(prev => prev.map(a => a.id === alertId ? { ...a, sitreps: [...(a.sitreps || []), sitrep] } : a));
+    });
+    sock.on("panic:location_update", ({ id, latitude, longitude, lastLocationAt }) => {
+      setAlerts(prev => prev.map(a => a.id === id ? { ...a, latitude, longitude, lastLocationAt } : a));
     });
 
     return () => { sock.emit("panic:leave_monitor"); sock.disconnect(); };
@@ -161,11 +185,15 @@ export default function PanicMonitorPage() {
   async function addSecurityContact() {
     if (!companyName.trim() || !contactPhone.trim()) { toast.error("Company name and phone required"); return; }
     try {
-      await panicAPI.adminAddSecurityContact(companyName.trim(), contactPhone.trim(), contactCallmebotKey.trim() || undefined);
-      setCompanyName(""); setContactPhone(""); setContactCallmebotKey("");
+      await panicAPI.adminAddSecurityContact(companyName.trim(), contactPhone.trim(), contactCallmebotKey.trim() || undefined, contactType, contactIsPrimary);
+      setCompanyName(""); setContactPhone(""); setContactCallmebotKey(""); setContactType("SECURITY"); setContactIsPrimary(false);
       loadSecurityContacts();
       toast.success("Security contact added");
     } catch (e) { toast.error(e.error || "Failed to add"); }
+  }
+  async function togglePrimaryContact(id) {
+    try { await panicAPI.adminTogglePrimaryContact(id); loadSecurityContacts(); }
+    catch { toast.error("Failed"); }
   }
   async function toggleSecurityContact(id) {
     try { await panicAPI.adminToggleSecurityContact(id); loadSecurityContacts(); }
@@ -225,13 +253,51 @@ export default function PanicMonitorPage() {
                       <div style={{ fontWeight: 700, fontSize: "14px" }}>{a.user?.name || a.userName || "Anonymous visitor"}</div>
                       <div style={{ fontSize: "12px", color: C.muted }}>{a.user?.phone || a.userPhone || "Unknown"}</div>
                     </div>
-                    <span style={{ background: statusColor(a.status) + "22", color: statusColor(a.status), border: `1px solid ${statusColor(a.status)}55`, borderRadius: "999px", padding: "3px 10px", fontSize: "11px", fontWeight: 700, flexShrink: 0 }}>{a.status}</span>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", flexShrink: 0 }}>
+                      <span style={{ background: statusColor(a.status) + "22", color: statusColor(a.status), border: `1px solid ${statusColor(a.status)}55`, borderRadius: "999px", padding: "3px 10px", fontSize: "11px", fontWeight: 700 }}>{a.status}</span>
+                      <span style={{ background: tierBadge(a.tier).color + "1a", color: tierBadge(a.tier).color, border: `1px solid ${tierBadge(a.tier).color}44`, borderRadius: "999px", padding: "2px 9px", fontSize: "10px", fontWeight: 600 }}>{tierBadge(a.tier).label}</span>
+                    </div>
                   </div>
                   <div style={{ fontSize: "11px", color: C.muted, margin: "6px 0" }}>{timeAgo(a.createdAt)}</div>
+
+                  {a.rideContext && (() => {
+                    let rc; try { rc = JSON.parse(a.rideContext); } catch { rc = null; }
+                    return rc ? (
+                      <div style={{ background: "rgba(59,158,255,0.12)", border: "1px solid rgba(59,158,255,0.35)", borderRadius: "8px", padding: "8px 10px", marginBottom: "8px", fontSize: "12px" }}>
+                        <div style={{ color: "#3B9EFF", fontWeight: 700, marginBottom: "2px" }}>🚗 IN TRANSIT — PROJO Ride ({rc.status})</div>
+                        <div style={{ color: C.muted }}>{rc.pickupAddress} → {rc.dropoffAddress}</div>
+                        {rc.driverName && <div style={{ color: C.muted }}>Driver: {rc.driverName}{rc.driverPhone ? ` (${rc.driverPhone})` : ""}</div>}
+                      </div>
+                    ) : null;
+                  })()}
+
+                  {(a.user?.homeAddress || a.user?.bloodGroup || a.user?.medicalNotes || a.user?.insuranceProvider) && (
+                    <div style={{ background: "rgba(224,82,82,0.08)", border: `1px solid ${C.danger}44`, borderRadius: "8px", padding: "8px 10px", marginBottom: "8px", fontSize: "12px" }}>
+                      <div style={{ color: C.danger, fontWeight: 700, marginBottom: "3px" }}>🩺 Safety & Medical Info</div>
+                      {a.user.homeAddress && <div style={{ color: C.text }}>📍 {a.user.homeAddress}</div>}
+                      {a.user.bloodGroup && <div style={{ color: C.text }}>🩸 Blood group: {a.user.bloodGroup}</div>}
+                      {a.user.medicalNotes && <div style={{ color: C.text }}>⚕️ {a.user.medicalNotes}</div>}
+                      {a.user.insuranceProvider && <div style={{ color: C.text }}>🏥 {a.user.insuranceProvider}{a.user.insurancePolicyNumber ? ` — ${a.user.insurancePolicyNumber}` : ""}</div>}
+                    </div>
+                  )}
+
                   {a.latitude && a.longitude ? (
-                    <a href={`https://maps.google.com/?q=${a.latitude},${a.longitude}`} target="_blank" rel="noreferrer" style={{ fontSize: "12.5px", color: C.good }}>📍 View location on map</a>
+                    <div style={{ marginBottom: "8px" }}>
+                      <div style={{ height: "180px", borderRadius: "10px", overflow: "hidden", border: `1px solid ${C.border}` }}>
+                        <MapContainer center={[a.latitude, a.longitude]} zoom={15} style={{ height: "100%", width: "100%" }} scrollWheelZoom={false}>
+                          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="" />
+                          <Marker position={[a.latitude, a.longitude]} icon={panicIcon}>
+                            <Popup>{a.user?.name || "Panic alert"}</Popup>
+                          </Marker>
+                        </MapContainer>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px" }}>
+                        <a href={`https://maps.google.com/?q=${a.latitude},${a.longitude}`} target="_blank" rel="noreferrer" style={{ fontSize: "11.5px", color: C.good }}>Open in Google Maps ↗</a>
+                        <span style={{ fontSize: "11px", color: C.muted }}>{a.lastLocationAt ? `Pin updated ${timeAgo(a.lastLocationAt)}` : ""}</span>
+                      </div>
+                    </div>
                   ) : (
-                    <div style={{ fontSize: "12px", color: C.muted }}>📍 Location not available</div>
+                    <div style={{ fontSize: "12px", color: C.muted, marginBottom: "8px" }}>📍 Location not available</div>
                   )}
 
                   {/* SITREP timeline */}
@@ -287,14 +353,24 @@ export default function PanicMonitorPage() {
         ) : (
           <div>
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: "12px", padding: "16px", marginBottom: "1rem" }}>
-              <div style={{ fontSize: "13px", fontWeight: 700, marginBottom: "10px" }}>Add Security Company Contact</div>
+              <div style={{ fontSize: "13px", fontWeight: 700, marginBottom: "10px" }}>Add Security Company / CPF Contact</div>
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                <input value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="Company name" style={{ flex: 1, minWidth: "160px", padding: "9px 12px", borderRadius: "8px", background: "#0000002a", border: `1px solid ${C.border}`, color: C.text, fontSize: "13px" }} />
+                <input value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="Company / CPF name" style={{ flex: 1, minWidth: "160px", padding: "9px 12px", borderRadius: "8px", background: "#0000002a", border: `1px solid ${C.border}`, color: C.text, fontSize: "13px" }} />
                 <input value={contactPhone} onChange={e => setContactPhone(e.target.value)} placeholder="+27821234567" style={{ flex: 1, minWidth: "160px", padding: "9px 12px", borderRadius: "8px", background: "#0000002a", border: `1px solid ${C.border}`, color: C.text, fontSize: "13px" }} />
               </div>
-              <input value={contactCallmebotKey} onChange={e => setContactCallmebotKey(e.target.value)} placeholder="CallMeBot API key (optional, for free WhatsApp)" style={{ width: "100%", marginTop: "8px", padding: "9px 12px", borderRadius: "8px", background: "#0000002a", border: `1px solid ${C.border}`, color: C.text, fontSize: "13px", boxSizing: "border-box" }} />
+              <div style={{ display: "flex", gap: "10px", alignItems: "center", margin: "8px 0" }}>
+                <select value={contactType} onChange={e => setContactType(e.target.value)} style={{ padding: "8px 10px", borderRadius: "8px", background: "#0000002a", border: `1px solid ${C.border}`, color: C.text, fontSize: "12.5px" }}>
+                  <option value="SECURITY">Security Company</option>
+                  <option value="CPF">CPF</option>
+                </select>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12.5px", color: C.muted, cursor: "pointer" }}>
+                  <input type="checkbox" checked={contactIsPrimary} onChange={e => setContactIsPrimary(e.target.checked)} />
+                  Primary / nearest (used for free anonymous alerts)
+                </label>
+              </div>
+              <input value={contactCallmebotKey} onChange={e => setContactCallmebotKey(e.target.value)} placeholder="CallMeBot API key (optional, for free WhatsApp)" style={{ width: "100%", marginTop: "4px", padding: "9px 12px", borderRadius: "8px", background: "#0000002a", border: `1px solid ${C.border}`, color: C.text, fontSize: "13px", boxSizing: "border-box" }} />
               <div style={{ fontSize: "10.5px", color: C.muted, lineHeight: 1.5, margin: "6px 0 10px" }}>
-                For free WhatsApp delivery: this number sends "I allow callmebot to send me messages" to <b>+34 644 77 72 31</b> on WhatsApp, gets a key back, paste it here. Optional — SMS goes out regardless.
+                For free WhatsApp delivery: this number sends "I allow callmebot to send me messages" to <b>+34 644 86 70 49</b> on WhatsApp, gets a key back, paste it here. Optional — SMS goes out regardless.
               </div>
               <button onClick={addSecurityContact} style={{ background: C.good, border: "none", borderRadius: "8px", padding: "9px 18px", color: "#04211b", fontWeight: 700, fontSize: "13px", cursor: "pointer" }}>Add</button>
             </div>
@@ -302,14 +378,19 @@ export default function PanicMonitorPage() {
               {securityContacts.length === 0 ? (
                 <div style={{ color: C.muted, textAlign: "center", padding: "1.5rem 0" }}>No security contacts added yet.</div>
               ) : securityContacts.map(c => (
-                <div key={c.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: "10px", padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div key={c.id} style={{ background: C.card, border: `1px solid ${c.isPrimary ? C.warn : C.border}`, borderRadius: "10px", padding: "12px 14px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                   <div>
-                    <div style={{ fontSize: "13.5px", fontWeight: 600 }}>{c.companyName}</div>
+                    <div style={{ fontSize: "13.5px", fontWeight: 600 }}>{c.companyName} {c.type === "CPF" && <span style={{ color: "#3B9EFF", fontSize: "11px" }}>(CPF)</span>} {c.isPrimary && <span style={{ color: C.warn, fontSize: "11px" }}>★ Primary</span>}</div>
                     <div style={{ fontSize: "12px", color: C.muted }}>{c.phone}{c.callmebotApiKey ? " · WhatsApp enabled" : ""}</div>
                   </div>
-                  <button onClick={() => toggleSecurityContact(c.id)} style={{ background: "transparent", border: `1px solid ${c.isActive ? C.good : C.muted}66`, color: c.isActive ? C.good : C.muted, borderRadius: "6px", padding: "6px 12px", fontSize: "12px", cursor: "pointer" }}>
-                    {c.isActive ? "Active" : "Inactive"}
-                  </button>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <button onClick={() => togglePrimaryContact(c.id)} style={{ background: "transparent", border: `1px solid ${c.isPrimary ? C.warn : C.border}`, color: c.isPrimary ? C.warn : C.muted, borderRadius: "6px", padding: "6px 10px", fontSize: "11.5px", cursor: "pointer" }}>
+                      {c.isPrimary ? "★ Primary" : "Set Primary"}
+                    </button>
+                    <button onClick={() => toggleSecurityContact(c.id)} style={{ background: "transparent", border: `1px solid ${c.isActive ? C.good : C.muted}66`, color: c.isActive ? C.good : C.muted, borderRadius: "6px", padding: "6px 12px", fontSize: "12px", cursor: "pointer" }}>
+                      {c.isActive ? "Active" : "Inactive"}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

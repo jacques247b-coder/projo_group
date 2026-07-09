@@ -25,26 +25,95 @@ const { sendWhatsAppNotification, sendWhatsAppToContact } = require("../services
 
 const MAX_PERSONAL_CONTACTS = 2;
 
-function buildAlertMessage(user, alert) {
+const ACTIVE_RIDE_STATUSES = ["REQUESTED", "DRIVER_ASSIGNED", "DRIVER_EN_ROUTE", "ARRIVED_AT_PICKUP", "IN_PROGRESS"];
+
+async function findActiveRideContext(userId) {
+  const ride = await prisma.ride.findFirst({
+    where: {
+      status: { in: ACTIVE_RIDE_STATUSES },
+      OR: [{ passengerId: userId }, { driverId: userId }],
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  if (!ride) return null;
+
+  const [passenger, driver] = await Promise.all([
+    prisma.user.findUnique({ where: { id: ride.passengerId }, select: { name: true, phone: true } }),
+    ride.driverId ? prisma.user.findUnique({ where: { id: ride.driverId }, select: { name: true, phone: true } }) : Promise.resolve(null),
+  ]);
+
+  return {
+    rideId: ride.id,
+    rideContext: JSON.stringify({
+      status: ride.status,
+      pickupAddress: ride.pickupAddress,
+      dropoffAddress: ride.dropoffAddress,
+      passengerName: passenger?.name || null,
+      driverName: driver?.name || null,
+      driverPhone: driver?.phone || null,
+    }),
+  };
+}
+
+function buildAlertMessage(user, alert, tier) {
   const mapsLink = (alert.latitude && alert.longitude)
     ? `https://maps.google.com/?q=${alert.latitude},${alert.longitude}`
     : "Location not available";
+  let rideLine = "";
+  if (alert.rideContext) {
+    try {
+      const rc = JSON.parse(alert.rideContext);
+      rideLine = `\n🚗 IN TRANSIT — PROJO Ride from "${rc.pickupAddress}" to "${rc.dropoffAddress}"` +
+        (rc.driverName ? ` · Driver: ${rc.driverName}${rc.driverPhone ? ` (${rc.driverPhone})` : ""}` : "");
+    } catch {}
+  }
+  let medicalLine = "";
+  if (tier === "SUBSCRIBED" && (user.homeAddress || user.bloodGroup || user.medicalNotes)) {
+    medicalLine = "\n🩺 " + [
+      user.homeAddress && `Address: ${user.homeAddress}`,
+      user.bloodGroup && `Blood group: ${user.bloodGroup}`,
+      user.medicalNotes && `Medical: ${user.medicalNotes}`,
+    ].filter(Boolean).join(" · ");
+  }
+  let watchLine = "";
+  if (tier === "SUBSCRIBED") {
+    const base = process.env.PROJO_APP_BASE_URL || "https://app.projogroup.co.za";
+    watchLine = `\n👀 Live tracking: ${base}/panic-watch/${alert.id}`;
+  }
   return (
     `🚨 PROJO PANIC ALERT 🚨\n` +
     `${user.name} (${user.phone}) has triggered an emergency alert.\n` +
     `Time: ${alert.createdAt.toLocaleString ? alert.createdAt.toLocaleString() : new Date(alert.createdAt).toLocaleString()}\n` +
-    `Location: ${mapsLink}\n` +
+    `Location: ${mapsLink}${rideLine}${medicalLine}${watchLine}\n` +
     `Please respond immediately.`
   );
 }
 
-async function dispatchAlert(alert, user) {
-  const message = buildAlertMessage(user, alert);
+async function dispatchAlert(alert, user, tier) {
+  const message = buildAlertMessage(user, alert, tier);
 
-  const [personalContacts, securityContacts] = await Promise.all([
-    user ? prisma.panicContact.findMany({ where: { userId: user.id } }) : Promise.resolve([]),
-    prisma.securityMonitorContact.findMany({ where: { isActive: true } }),
-  ]);
+  // Tiered dispatch audience:
+  // - ANONYMOUS (free, no account): only the nearest/primary security company —
+  //   never the full network, and never CPF (that's a signed-up perk).
+  // - FREE_SIGNUP (has an account, not subscribed): every active security
+  //   company AND every CPF contact — the full cooperative network.
+  // - SUBSCRIBED (R37/month): everything FREE_SIGNUP gets, PLUS the user's
+  //   own personal emergency contacts.
+  let securityContacts;
+  if (tier === "ANONYMOUS") {
+    securityContacts = await prisma.securityMonitorContact.findMany({ where: { isActive: true, isPrimary: true } });
+    if (securityContacts.length === 0) {
+      // No company marked as primary/nearest yet — fall back to the first
+      // active one so a free anonymous alert is never dispatched to nobody.
+      securityContacts = await prisma.securityMonitorContact.findMany({ where: { isActive: true }, take: 1 });
+    }
+  } else {
+    securityContacts = await prisma.securityMonitorContact.findMany({ where: { isActive: true } });
+  }
+
+  const personalContacts = (tier === "SUBSCRIBED" && user?.id)
+    ? await prisma.panicContact.findMany({ where: { userId: user.id } })
+    : [];
 
   // PROJO Group's own number always gets notified too — a guaranteed backup
   // so someone at PROJO can personally forward/escalate even if every other
@@ -54,7 +123,7 @@ async function dispatchAlert(alert, user) {
   const projoBackupPhone = process.env.PROJO_BACKUP_WHATSAPP || process.env.CALLMEBOT_PHONE;
   const allPhones = [
     ...personalContacts.map((c) => ({ phone: c.phone, label: c.label || "Personal contact", callmebotApiKey: c.callmebotApiKey })),
-    ...securityContacts.map((c) => ({ phone: c.phone, label: c.companyName, callmebotApiKey: c.callmebotApiKey })),
+    ...securityContacts.map((c) => ({ phone: c.phone, label: `${c.companyName}${c.type === "CPF" ? " (CPF)" : ""}`, callmebotApiKey: c.callmebotApiKey })),
     ...(projoBackupPhone ? [{ phone: projoBackupPhone, label: "PROJO Group (backup)", callmebotApiKey: null }] : []),
   ];
 
@@ -85,23 +154,83 @@ async function dispatchAlert(alert, user) {
 }
 
 // POST /api/panic/trigger  { latitude, longitude }  — authenticated user
+const PANIC_SUBSCRIPTION_PRICE_ZAR = 37;
+
 exports.triggerAlert = async (req, res) => {
   try {
     const { latitude, longitude } = req.body;
     const user = await prisma.user.findUnique({ where: { id: req.user.id } });
     if (!user) return res.status(404).json({ error: "User not found" });
 
+    const tier = user.hasPanicSubscription ? "SUBSCRIBED" : "FREE_SIGNUP";
+    const rideInfo = await findActiveRideContext(user.id).catch(() => null);
+
     const alert = await prisma.panicAlert.create({
-      data: { userId: user.id, latitude: latitude ?? null, longitude: longitude ?? null },
+      data: {
+        userId: user.id, latitude: latitude ?? null, longitude: longitude ?? null,
+        lastLocationAt: latitude ? new Date() : null,
+        rideId: rideInfo?.rideId || null, rideContext: rideInfo?.rideContext || null,
+      },
     });
 
-    const notifiedCount = await dispatchAlert(alert, user);
+    const notifiedCount = await dispatchAlert(alert, user, tier);
 
     req.app.get("io")?.to("panic_monitors").emit("panic:new_alert", {
-      ...alert, userName: user.name, userPhone: user.phone,
+      ...alert, userName: user.name, userPhone: user.phone, tier,
+      // Medical/safety details are only ever shared with monitors for
+      // subscribed members — a signed-up-but-free trigger still reaches
+      // every security company + CPF contact, just without this data.
+      safetyProfile: tier === "SUBSCRIBED" ? {
+        homeAddress: user.homeAddress, bloodGroup: user.bloodGroup, medicalNotes: user.medicalNotes,
+        insuranceProvider: user.insuranceProvider, insurancePolicyNumber: user.insurancePolicyNumber,
+      } : null,
     });
 
-    res.json({ triggered: true, alertId: alert.id, notifiedCount });
+    res.json({ triggered: true, alertId: alert.id, notifiedCount, tier });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
+// GET /api/panic/subscription-status
+exports.getSubscriptionStatus = async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { hasPanicSubscription: true, panicSubscriptionActivatedAt: true } });
+    res.json({ subscribed: !!user?.hasPanicSubscription, activatedAt: user?.panicSubscriptionActivatedAt, priceZar: PANIC_SUBSCRIPTION_PRICE_ZAR });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
+// POST /api/panic/activate-subscription — no payment gateway wired in yet;
+// flips the flag the same way Dating Premium activation does. Ready to
+// plug in real billing once a gateway (e.g. PayFast) is integrated.
+exports.activateSubscription = async (req, res) => {
+  try {
+    const user = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { hasPanicSubscription: true, panicSubscriptionActivatedAt: new Date() },
+    });
+    res.json({ subscribed: true, activatedAt: user.panicSubscriptionActivatedAt });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
+// GET /api/panic/safety-profile
+exports.getSafetyProfile = async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { homeAddress: true, bloodGroup: true, medicalNotes: true, insuranceProvider: true, insurancePolicyNumber: true },
+    });
+    res.json({ profile: user });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
+// POST /api/panic/safety-profile
+exports.updateSafetyProfile = async (req, res) => {
+  try {
+    const { homeAddress, bloodGroup, medicalNotes, insuranceProvider, insurancePolicyNumber } = req.body;
+    const user = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { homeAddress, bloodGroup, medicalNotes, insuranceProvider, insurancePolicyNumber },
+    });
+    res.json({ profile: user });
   } catch (err) { res.status(500).json({ error: err.message }); }
 };
 
@@ -137,10 +266,10 @@ exports.triggerAnonymousAlert = async (req, res) => {
       data: { userId: null, latitude: latitude ?? null, longitude: longitude ?? null },
     });
 
-    const notifiedCount = await dispatchAlert(alert, { name: "Anonymous visitor (not signed in)", phone: "Unknown" });
+    const notifiedCount = await dispatchAlert(alert, { name: "Anonymous visitor (not signed in)", phone: "Unknown" }, "ANONYMOUS");
 
     req.app.get("io")?.to("panic_monitors").emit("panic:new_alert", {
-      ...alert, userName: "Anonymous visitor", userPhone: "Unknown",
+      ...alert, userName: "Anonymous visitor", userPhone: "Unknown", tier: "ANONYMOUS", safetyProfile: null,
     });
 
     res.json({ triggered: true, alertId: alert.id, notifiedCount });
@@ -191,6 +320,49 @@ exports.selfCancelAlert = async (req, res) => {
     });
     req.app.get("io")?.to("panic_monitors").emit("panic:alert_cancelled", { id: req.params.id });
     res.json({ alert: updated });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
+// POST /api/panic/alerts/:id/update-location  { latitude, longitude } — no
+// auth required (matches trigger-anonymous), since a person mid-emergency
+// may not have a valid session, and the alertId itself (a UUID) is the only
+// thing needed. Only updates alerts that are still ACTIVE/ACKNOWLEDGED, so a
+// resolved/false-alarm alert's pin can't be tampered with afterwards.
+exports.updateAlertLocation = async (req, res) => {
+  try {
+    const { latitude, longitude } = req.body;
+    if (latitude === undefined || longitude === undefined) return res.status(400).json({ error: "latitude and longitude required" });
+    const alert = await prisma.panicAlert.findUnique({ where: { id: req.params.id } });
+    if (!alert) return res.status(404).json({ error: "Alert not found" });
+    if (!["ACTIVE", "ACKNOWLEDGED"].includes(alert.status)) {
+      return res.json({ updated: false, reason: "Alert is no longer active" });
+    }
+    const updated = await prisma.panicAlert.update({
+      where: { id: req.params.id },
+      data: { latitude, longitude, lastLocationAt: new Date() },
+    });
+    req.app.get("io")?.to("panic_monitors").emit("panic:location_update", { id: alert.id, latitude, longitude, lastLocationAt: updated.lastLocationAt });
+    req.app.get("io")?.to(`panic_alert:${alert.id}`).emit("panic:location_update", { id: alert.id, latitude, longitude, lastLocationAt: updated.lastLocationAt });
+    res.json({ updated: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
+// GET /api/panic/watch/:id — PUBLIC, no auth. The unguessable alert UUID is
+// the only thing needed to view it — this is what the private link sent to
+// a subscriber's family/friends opens. Deliberately limited: live location
+// and status only, never medical info, address, or phone number.
+exports.getWatchAlert = async (req, res) => {
+  try {
+    const alert = await prisma.panicAlert.findUnique({
+      where: { id: req.params.id },
+      select: {
+        id: true, status: true, latitude: true, longitude: true,
+        lastLocationAt: true, createdAt: true, resolvedAt: true,
+        user: { select: { name: true } },
+      },
+    });
+    if (!alert) return res.status(404).json({ error: "Alert not found" });
+    res.json({ alert: { ...alert, firstName: alert.user?.name?.split(" ")[0] || "Someone" } });
   } catch (err) { res.status(500).json({ error: err.message }); }
 };
 
@@ -245,7 +417,7 @@ exports.adminListAlerts = async (req, res) => {
     const alerts = await prisma.panicAlert.findMany({
       where: status ? { status } : {},
       include: {
-        user: { select: { name: true, phone: true } },
+        user: { select: { name: true, phone: true, homeAddress: true, bloodGroup: true, medicalNotes: true, insuranceProvider: true, insurancePolicyNumber: true } },
         sitreps: { orderBy: { createdAt: "asc" } },
       },
       orderBy: { createdAt: "desc" },
@@ -336,9 +508,16 @@ exports.adminListSecurityContacts = async (req, res) => {
 // POST /api/panic/security-contacts  { companyName, phone }
 exports.adminAddSecurityContact = async (req, res) => {
   try {
-    const { companyName, phone, callmebotApiKey } = req.body;
+    const { companyName, phone, callmebotApiKey, type, isPrimary } = req.body;
     if (!companyName || !phone) return res.status(400).json({ error: "companyName and phone are required" });
-    const contact = await prisma.securityMonitorContact.create({ data: { companyName, phone, callmebotApiKey: callmebotApiKey || null, addedBy: req.user.id } });
+    const contact = await prisma.securityMonitorContact.create({
+      data: {
+        companyName, phone, callmebotApiKey: callmebotApiKey || null,
+        type: type === "CPF" ? "CPF" : "SECURITY",
+        isPrimary: !!isPrimary,
+        addedBy: req.user.id,
+      },
+    });
     res.json({ contact });
   } catch (err) { res.status(500).json({ error: err.message }); }
 };
@@ -349,6 +528,17 @@ exports.adminToggleSecurityContact = async (req, res) => {
     const existing = await prisma.securityMonitorContact.findUnique({ where: { id: req.params.id } });
     if (!existing) return res.status(404).json({ error: "Not found" });
     const contact = await prisma.securityMonitorContact.update({ where: { id: req.params.id }, data: { isActive: !existing.isActive } });
+    res.json({ contact });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
+// POST /api/panic/security-contacts/:id/toggle-primary — mark as the
+// "nearest" company that free anonymous alerts get dispatched to
+exports.adminTogglePrimaryContact = async (req, res) => {
+  try {
+    const existing = await prisma.securityMonitorContact.findUnique({ where: { id: req.params.id } });
+    if (!existing) return res.status(404).json({ error: "Not found" });
+    const contact = await prisma.securityMonitorContact.update({ where: { id: req.params.id }, data: { isPrimary: !existing.isPrimary } });
     res.json({ contact });
   } catch (err) { res.status(500).json({ error: err.message }); }
 };
