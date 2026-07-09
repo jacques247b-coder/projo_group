@@ -100,8 +100,19 @@ if ("serviceWorker" in navigator) {
     });
 
     // Also reload if the SW controller changes (another tab updated it) —
-    // same one-per-session guard applies here too.
+    // BUT NOT on the very first activation. clients.claim() in sw.js makes
+    // a freshly-installed worker take control immediately, which fires
+    // this exact same 'controllerchange' event on a completely fresh
+    // profile/cleared cache — with nothing actually having "updated". If
+    // we reload for that too, every fresh visit gets an automatic reload
+    // shortly after load, which can land mid-flight during something like
+    // the notification subscribe flow and kill it partway through.
+    const hadControllerAtLoad = !!navigator.serviceWorker.controller;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!hadControllerAtLoad) {
+        console.log("[PROJO SW] First-ever activation (clients.claim) — not reloading, nothing was actually updated.");
+        return;
+      }
       if (sessionStorage.getItem("projo_sw_auto_reloaded")) return;
       sessionStorage.setItem("projo_sw_auto_reloaded", "true");
       window.location.reload();
