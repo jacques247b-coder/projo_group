@@ -1,6 +1,6 @@
 // PROJO GROUP — Service Worker v4 (Auto-Update)
 // ⚠️ INCREMENT THIS VERSION NUMBER WITH EVERY DEPLOY to force client updates
-const SW_VERSION = "v4.0.3";
+const SW_VERSION = "v4.0.4";
 console.log("[PROJO SW] Version:", SW_VERSION);
 
 self.addEventListener("install", () => {
@@ -26,7 +26,23 @@ self.addEventListener("fetch", (e) => {
   ) {
     return;
   }
-  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+  e.respondWith(
+    fetch(e.request).catch(() =>
+      caches.match(e.request).then((cached) =>
+        // caches.match() resolves to undefined if nothing is cached — and
+        // since activate() wipes every cache on every version bump, that's
+        // very often the case. respondWith() requires a real Response; handing
+        // it undefined throws "Failed to convert value to 'Response'", which
+        // was breaking CSS/JS/page-navigation requests during any brief
+        // network hiccup. Always fall back to a real (if unhelpful) Response.
+        cached || new Response("Network error — please check your connection and try again.", {
+          status: 503,
+          statusText: "Service Unavailable",
+          headers: { "Content-Type": "text/plain" },
+        })
+      )
+    )
+  );
 });
 
 // ── Push Notifications ──────────────────────────────────────
