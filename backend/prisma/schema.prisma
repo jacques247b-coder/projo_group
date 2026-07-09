@@ -11,7 +11,8 @@ model User {
   id           String    @id @default(uuid())
   email        String?   @unique
   phone        String    @unique
-  pushSubscription String?
+  pushSubscription String?           // DEPRECATED — kept only so existing data isn't lost; superseded by pushSubscriptions[] below, which supports multiple devices per account (this single field could only ever remember one device, silently overwriting itself when a user subscribed on a second device)
+  pushSubscriptions PushSubscription[]
   name         String
   role         String    @default("PASSENGER")
   status       String    @default("PENDING_VERIFICATION")
@@ -46,6 +47,22 @@ model User {
 
   @@map("users")
 }
+// One row per subscribed device/browser — replaces the old single
+// User.pushSubscription field, which could only ever remember one device
+// at a time and silently overwrote itself whenever the same account
+// subscribed on a second device (e.g. PC then mobile).
+model PushSubscription {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
+  endpoint         String   @unique // uniquely identifies this specific device/browser subscription
+  subscriptionJson String   @db.Text
+  createdAt        DateTime @default(now())
+  lastUsedAt       DateTime @default(now())
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
 model Wallet {
   id            String        @id @default(uuid())
   userId        String        @unique

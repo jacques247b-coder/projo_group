@@ -28,7 +28,7 @@ async function runClassifiedsJob() {
       // Notify users their ad expired
       const expiredAds = await prisma.classified.findMany({
         where: { status: "EXPIRED", expiresAt: { gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) } },
-        include: { user: { select: { email: true, name: true, pushSubscription: true } } },
+        include: { user: { select: { id: true, email: true, name: true } } },
       });
 
       for (const ad of expiredAds) {
@@ -61,7 +61,7 @@ async function runClassifiedsJob() {
         // Only notify once — check renewedAt isn't recent
         renewedAt: { lt: new Date(now.getTime() - 50 * 24 * 60 * 60 * 1000) },
       },
-      include: { user: { select: { email: true, name: true, pushSubscription: true } } },
+      include: { user: { select: { id: true, email: true, name: true } } },
     });
 
     for (const ad of aboutToExpire) {
@@ -106,19 +106,22 @@ async function sendNotification(user, { subject, html, pushTitle, pushBody }) {
     } catch (e) { console.log("[PROJO Classifieds] Email failed:", e.message); }
   }
 
-  // Push notification
-  if (user.pushSubscription) {
-    try {
-      const { sendPushNotification } = require("./push.service");
-      const sub = JSON.parse(user.pushSubscription);
-      await sendPushNotification(sub, {
-        title: pushTitle,
-        body: pushBody,
-        icon: "/assets/logo/PROJO_LOGO.png",
-        data: { url: "/entertainment" },
-      });
-    } catch (e) { console.log("[PROJO Classifieds] Push failed:", e.message); }
-  }
+  // Push notification — sent to every device this user has subscribed on
+  try {
+    const { sendPushNotification } = require("./push.service");
+    const subs = await prisma.pushSubscription.findMany({ where: { userId: user.id } });
+    for (const sub of subs) {
+      try {
+        const parsed = JSON.parse(sub.subscriptionJson);
+        await sendPushNotification(parsed, {
+          title: pushTitle,
+          body: pushBody,
+          icon: "/assets/logo/PROJO_LOGO.png",
+          data: { url: "/entertainment" },
+        });
+      } catch (e) { console.log("[PROJO Classifieds] Push failed:", e.message); }
+    }
+  } catch (e) { console.log("[PROJO Classifieds] Push lookup failed:", e.message); }
 }
 
 module.exports = { runClassifiedsJob };

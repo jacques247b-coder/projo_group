@@ -1,17 +1,21 @@
 // PROJO GROUP — Push Notification Controller
-// Manages subscription storage and sending
+// Manages subscription storage and sending. Each device/browser gets its
+// own PushSubscription row (keyed by its unique endpoint) — a user can be
+// subscribed on any number of devices at once (PC, phone, etc), unlike the
+// old single User.pushSubscription field which could only remember one.
 const { PrismaClient } = require("@prisma/client");
 const { sendPushNotification } = require("../services/push.service");
 const prisma = new PrismaClient();
 
-// POST /api/push/subscribe — save a user's push subscription
+// POST /api/push/subscribe — save one device's push subscription
 exports.subscribe = async (req, res) => {
   const { subscription } = req.body;
-  if (!subscription) return res.status(400).json({ error: "Subscription required" });
+  if (!subscription?.endpoint) return res.status(400).json({ error: "Subscription (with endpoint) required" });
   try {
-    await prisma.user.update({
-      where: { id: req.user.id },
-      data: { pushSubscription: JSON.stringify(subscription) },
+    await prisma.pushSubscription.upsert({
+      where: { endpoint: subscription.endpoint },
+      update: { userId: req.user.id, subscriptionJson: JSON.stringify(subscription), lastUsedAt: new Date() },
+      create: { userId: req.user.id, endpoint: subscription.endpoint, subscriptionJson: JSON.stringify(subscription) },
     });
     res.json({ message: "Subscribed to push notifications" });
   } catch (err) {
@@ -19,13 +23,13 @@ exports.subscribe = async (req, res) => {
   }
 };
 
-// POST /api/push/unsubscribe
+// POST /api/push/unsubscribe — removes ALL of this user's devices (matches
+// the existing "opt out entirely" behavior; the client doesn't currently
+// send which specific device, so this errs toward doing what "unsubscribe"
+// implies rather than guessing which single device to remove).
 exports.unsubscribe = async (req, res) => {
   try {
-    await prisma.user.update({
-      where: { id: req.user.id },
-      data: { pushSubscription: null },
-    });
+    await prisma.pushSubscription.deleteMany({ where: { userId: req.user.id } });
     res.json({ message: "Unsubscribed" });
   } catch (err) {
     res.status(500).json({ error: "Could not unsubscribe" });
@@ -37,18 +41,22 @@ exports.getVapidKey = async (req, res) => {
   res.json({ publicKey: process.env.VAPID_PUBLIC_KEY || null });
 };
 
-// Helper — call this from other controllers to notify a user
+// Helper — call this from other controllers to notify a user on EVERY one
+// of their subscribed devices, not just one.
 exports.notifyUser = async (userId, payload) => {
   try {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user?.pushSubscription) return;
-    const subscription = JSON.parse(user.pushSubscription);
-    const result = await sendPushNotification(subscription, payload);
-    if (!result.success) {
-      console.log(`[PROJO Push] notifyUser(${userId}) did not deliver: ${result.reason}`);
-      if (result.reason === "SUBSCRIPTION_EXPIRED") {
-        await prisma.user.update({ where: { id: userId }, data: { pushSubscription: null } }).catch(() => {});
-      }
+    const subs = await prisma.pushSubscription.findMany({ where: { userId } });
+    for (const sub of subs) {
+      try {
+        const subscription = JSON.parse(sub.subscriptionJson);
+        const result = await sendPushNotification(subscription, payload);
+        if (!result.success) {
+          console.log(`[PROJO Push] notifyUser(${userId}) device ${sub.id} did not deliver: ${result.reason}`);
+          if (result.reason === "SUBSCRIPTION_EXPIRED") {
+            await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
+          }
+        }
+      } catch {}
     }
   } catch (err) {
     console.error("[PROJO Push] notifyUser error:", err.message);

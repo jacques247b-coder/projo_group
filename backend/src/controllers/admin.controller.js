@@ -277,15 +277,17 @@ exports.broadcastPush = async (req, res) => {
 
     const { sendPushNotification } = require("../services/push.service");
 
-    // Filter users based on target
-    let whereClause = { pushSubscription: { not: null } };
-    if (target === "passengers") whereClause.role = "PASSENGER";
-    if (target === "drivers")    whereClause.role = "DRIVER";
+    // Filter by the SUBSCRIPTION's owning user's role — each row here is one
+    // device, so a user with 2 devices produces 2 rows, and both get sent to.
+    let userWhere = {};
+    if (target === "passengers") userWhere.role = "PASSENGER";
+    if (target === "drivers")    userWhere.role = "DRIVER";
 
-    const users = await prisma.user.findMany({
-      where: whereClause,
-      select: { id: true, name: true, pushSubscription: true },
+    const subs = await prisma.pushSubscription.findMany({
+      where: { user: userWhere },
+      select: { id: true, userId: true, subscriptionJson: true },
     });
+    const userIds = [...new Set(subs.map(s => s.userId))];
 
     // Push payloads have a hard ~4096-byte limit enforced by the push
     // service (FCM/Mozilla/etc) — this is what "binary data passed in the
@@ -324,9 +326,9 @@ exports.broadcastPush = async (req, res) => {
 
     let sent = 0, failed = 0;
     let vapidNotConfigured = false;
-    for (const user of users) {
+    for (const sub of subs) {
       try {
-        const subscription = JSON.parse(user.pushSubscription);
+        const subscription = JSON.parse(sub.subscriptionJson);
         const result = await sendPushNotification(subscription, finalPayload);
         if (result.success) {
           sent++;
@@ -334,23 +336,20 @@ exports.broadcastPush = async (req, res) => {
           failed++;
           if (result.reason === "VAPID_NOT_CONFIGURED") vapidNotConfigured = true;
           if (result.reason === "SUBSCRIPTION_EXPIRED") {
-            await prisma.user.update({ where: { id: user.id }, data: { pushSubscription: null } }).catch(() => {});
+            await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
           }
         }
       } catch {
         failed++;
-        // Malformed subscription JSON — remove it
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { pushSubscription: null },
-        }).catch(() => {});
+        // Malformed subscription JSON — remove this specific device's row
+        await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
       }
     }
 
-    // Log notification in DB
+    // Log notification in DB — once per user, not once per device
     await prisma.notification.createMany({
-      data: users.map(u => ({
-        userId: u.id,
+      data: userIds.map(uid => ({
+        userId: uid,
         title,
         body,
         type: "BROADCAST",
@@ -363,18 +362,18 @@ exports.broadcastPush = async (req, res) => {
     if (vapidNotConfigured) {
       return res.status(500).json({
         error: "Push notifications aren't configured on the server yet — VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY are missing from the backend environment variables. Nothing was actually sent.",
-        sent: 0, failed, total: users.length,
+        sent: 0, failed, total: subs.length,
       });
     }
 
     res.json({
-      message: (users.length === 0
+      message: (subs.length === 0
         ? "No devices are subscribed to push notifications yet — nothing to send to."
         : sent > 0
           ? `Notification sent to ${sent} device${sent !== 1 ? "s" : ""}${failed > 0 ? ` (${failed} failed — likely expired subscriptions, already removed)` : ""}`
           : `Nothing was actually delivered — all ${failed} attempt${failed !== 1 ? "s" : ""} failed. Check server logs for details.`
       ) + (isBase64Image ? " (Note: the attached image was too large for a push notification and was left out — use an image URL instead of an upload.)" : imageStrippedForSize ? " (Note: image was dropped to fit the notification size limit.)" : ""),
-      sent, failed, total: users.length,
+      sent, failed, total: subs.length,
     });
   } catch (err) {
     console.error("[PROJO Push] Broadcast error:", err.message);
@@ -382,12 +381,14 @@ exports.broadcastPush = async (req, res) => {
   }
 };
 
-// GET /api/admin/push/stats — get push subscription stats
+// GET /api/admin/push/stats — get push subscription stats (counts distinct
+// USERS reachable, not raw device rows — a user with 2 devices still
+// counts once here, matching the original meaning of this stat)
 exports.pushStats = async (req, res) => {
   try {
-    const total = await prisma.user.count({ where: { pushSubscription: { not: null } } });
-    const passengers = await prisma.user.count({ where: { pushSubscription: { not: null }, role: "PASSENGER" } });
-    const drivers = await prisma.user.count({ where: { pushSubscription: { not: null }, role: "DRIVER" } });
+    const total = await prisma.user.count({ where: { pushSubscriptions: { some: {} } } });
+    const passengers = await prisma.user.count({ where: { pushSubscriptions: { some: {} }, role: "PASSENGER" } });
+    const drivers = await prisma.user.count({ where: { pushSubscriptions: { some: {} }, role: "DRIVER" } });
     res.json({ total, passengers, drivers });
   } catch {
     res.status(500).json({ error: "Could not get stats" });

@@ -112,20 +112,17 @@ async function checkAndNotifyMatches() {
 async function broadcastSportsNotification({ title, body, url }) {
   try {
     // Only notify users who opted in to sports notifications
-    // We use pushSubscription field — send to all subscribed users
-    const users = await prisma.user.findMany({
-      where: {
-        pushSubscription: { not: null },
-        // Future: add sportsNotifications boolean field to User model
-      },
-      select: { pushSubscription: true },
+    // Send to every subscribed device (not one-per-user — a user can have
+    // multiple devices subscribed now, each gets its own row)
+    const subs = await prisma.pushSubscription.findMany({
+      select: { subscriptionJson: true },
     });
 
     let sent = 0;
-    for (const user of users) {
+    for (const sub of subs) {
       try {
-        const sub = JSON.parse(user.pushSubscription);
-        await sendPushNotification(sub, {
+        const parsed = JSON.parse(sub.subscriptionJson);
+        await sendPushNotification(parsed, {
           title,
           body,
           icon: "/assets/logo/PROJO_LOGO.png",
