@@ -249,10 +249,18 @@ export default function AdminDashboard() {
     try {
       const res = await api.post("/admin/push/broadcast", pushForm);
       setPushResult(res);
-      toast.success(`✅ Sent to ${res.sent} device${res.sent !== 1 ? "s" : ""}!`);
-      setPushForm({ title: "", body: "", url: "", target: "all" });
-    } catch { toast.error("Could not send notification"); }
-    finally { setPushSending(false); }
+      if (res.sent > 0) {
+        toast.success(`✅ ${res.message || `Sent to ${res.sent} device${res.sent !== 1 ? "s" : ""}!`}`);
+        setPushForm({ title: "", body: "", url: "", target: "all" });
+      } else {
+        // 0 sent is still a real, informative result — not an error, but
+        // don't pretend it worked either
+        toast.error(res.message || "Nothing was actually delivered.", { duration: 6000 });
+      }
+    } catch (err) {
+      console.error("[Push broadcast] failed:", err);
+      toast.error(err?.error || "Could not send notification — check console for details", { duration: 6000 });
+    } finally { setPushSending(false); }
   }
 
   async function updateServiceOrder(id, status) {
