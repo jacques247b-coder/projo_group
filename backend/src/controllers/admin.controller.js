@@ -287,21 +287,47 @@ exports.broadcastPush = async (req, res) => {
       select: { id: true, name: true, pushSubscription: true },
     });
 
+    // Push payloads have a hard ~4096-byte limit enforced by the push
+    // service (FCM/Mozilla/etc) — this is what "binary data passed in the
+    // request must be less than 4096 bytes" means. A base64 image easily
+    // blows past that (even a small photo can be 5-50KB as base64), so we
+    // never embed one directly — only a real URL is safe here, since the
+    // browser fetches the actual image bytes separately when it displays
+    // the notification; the payload itself just needs the short URL string.
+    const rawImage = req.body.image || null;
+    const isBase64Image = rawImage && rawImage.startsWith("data:");
+    if (isBase64Image) {
+      console.warn("[PROJO Push] Ignoring base64 image on broadcast — push payloads must stay under 4096 bytes. Use an uploaded image URL instead.");
+    }
+    const safeImage = isBase64Image ? null : rawImage;
+
     const payload = {
       title,
       body,
       icon: icon || "/assets/logo/PROJO_LOGO.png",
       badge: "/assets/logo/PROJO_LOGO.png",
-      image: req.body.image || null,  // base64 or URL
-      data: { url: url || "/home", image: req.body.image || null },
+      image: safeImage,
+      data: { url: url || "/home", image: safeImage },
     };
+
+    // Final safety net regardless of what caused it — if the payload is
+    // still too big for any reason, strip anything non-essential rather
+    // than letting every single send fail with 0 delivered.
+    const payloadSize = Buffer.byteLength(JSON.stringify(payload), "utf8");
+    let finalPayload = payload;
+    let imageStrippedForSize = false;
+    if (payloadSize > 3500) {
+      finalPayload = { title, body, icon: payload.icon, badge: payload.badge, data: { url: payload.data.url } };
+      imageStrippedForSize = true;
+      console.warn(`[PROJO Push] Payload was ${payloadSize} bytes (limit ~4096) — stripped image/extra data to guarantee delivery.`);
+    }
 
     let sent = 0, failed = 0;
     let vapidNotConfigured = false;
     for (const user of users) {
       try {
         const subscription = JSON.parse(user.pushSubscription);
-        const result = await sendPushNotification(subscription, payload);
+        const result = await sendPushNotification(subscription, finalPayload);
         if (result.success) {
           sent++;
         } else {
@@ -342,11 +368,12 @@ exports.broadcastPush = async (req, res) => {
     }
 
     res.json({
-      message: users.length === 0
+      message: (users.length === 0
         ? "No devices are subscribed to push notifications yet — nothing to send to."
         : sent > 0
           ? `Notification sent to ${sent} device${sent !== 1 ? "s" : ""}${failed > 0 ? ` (${failed} failed — likely expired subscriptions, already removed)` : ""}`
-          : `Nothing was actually delivered — all ${failed} attempt${failed !== 1 ? "s" : ""} failed. Check server logs for details.`,
+          : `Nothing was actually delivered — all ${failed} attempt${failed !== 1 ? "s" : ""} failed. Check server logs for details.`
+      ) + (isBase64Image ? " (Note: the attached image was too large for a push notification and was left out — use an image URL instead of an upload.)" : imageStrippedForSize ? " (Note: image was dropped to fit the notification size limit.)" : ""),
       sent, failed, total: users.length,
     });
   } catch (err) {
