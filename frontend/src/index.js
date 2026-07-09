@@ -60,62 +60,21 @@ root.render(
   </React.StrictMode>
 );
 
-// ── Service Worker Auto-Update ──────────────────────────────
-// Registers the SW and automatically reloads when a new version is deployed.
-// IMPORTANT: guarded to only ever auto-reload ONCE per browser session — 
-// without this, if the SW looks "updated" on every single load (which can
-// happen from caching quirks, especially right after manually clearing
-// site data or bumping the version repeatedly), this becomes an infinite
-// reload loop with the page never actually finishing loading.
+// ── Service Worker ───────────────────────────────────────────
+// Just register it. No automatic reload-on-update logic — that
+// mechanism caused real problems (reload loops interrupting the app,
+// including mid-flight during the notification permission/subscribe
+// process) and has been removed entirely rather than patched further.
+// New deployed code simply takes effect the next time someone naturally
+// reloads or reopens the app — no forced reload behavior at all.
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").then((registration) => {
-      console.log("[PROJO SW] Registered:", registration.scope);
-
-      // Check for updates every 60 seconds
-      setInterval(() => {
-        registration.update();
-      }, 60 * 1000);
-
-      // When a new SW is found and installed, reload — but only once per
-      // session, so a caching quirk can't trap the user in a reload loop.
-      registration.addEventListener("updatefound", () => {
-        const newWorker = registration.installing;
-        if (!newWorker) return;
-        newWorker.addEventListener("statechange", () => {
-          if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-            if (sessionStorage.getItem("projo_sw_auto_reloaded")) {
-              console.log("[PROJO SW] New version detected again, but already auto-reloaded once this session — not reloading again to avoid a loop.");
-              return;
-            }
-            console.log("[PROJO SW] New version available — reloading...");
-            sessionStorage.setItem("projo_sw_auto_reloaded", "true");
-            window.location.reload();
-          }
-        });
+    navigator.serviceWorker.register("/sw.js")
+      .then((registration) => {
+        console.log("[PROJO SW] Registered:", registration.scope);
+      })
+      .catch((err) => {
+        console.error("[PROJO SW] Registration failed:", err);
       });
-
-    }).catch((err) => {
-      console.error("[PROJO SW] Registration failed:", err);
-    });
-
-    // Also reload if the SW controller changes (another tab updated it) —
-    // BUT NOT on the very first activation. clients.claim() in sw.js makes
-    // a freshly-installed worker take control immediately, which fires
-    // this exact same 'controllerchange' event on a completely fresh
-    // profile/cleared cache — with nothing actually having "updated". If
-    // we reload for that too, every fresh visit gets an automatic reload
-    // shortly after load, which can land mid-flight during something like
-    // the notification subscribe flow and kill it partway through.
-    const hadControllerAtLoad = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (!hadControllerAtLoad) {
-        console.log("[PROJO SW] First-ever activation (clients.claim) — not reloading, nothing was actually updated.");
-        return;
-      }
-      if (sessionStorage.getItem("projo_sw_auto_reloaded")) return;
-      sessionStorage.setItem("projo_sw_auto_reloaded", "true");
-      window.location.reload();
-    });
   });
 }
