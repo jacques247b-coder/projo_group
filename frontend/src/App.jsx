@@ -70,6 +70,7 @@ function Protected({ children, roles }) {
 }
 
 function AppRoutes() {
+  const { user } = useAuth();
   const [showPushModal, setShowPushModal] = React.useState(false);
 
   React.useEffect(() => {
@@ -98,13 +99,16 @@ function AppRoutes() {
         }
         return;
       }
+      // Notifications require being logged in (the subscription has to be
+      // saved against a real account) — showing this on public pages like
+      // /login would only ever fail. Only prompt once actually signed in.
+      if (!localStorage.getItem("projo_token")) return;
       // Show modal after 3 seconds to let the page load
       setTimeout(() => setShowPushModal(true), 3000);
     };
 
     checkPushModal();
-  }, []);
-  const { user } = useAuth();
+  }, [user]);
 
   const homeRoute = !user ? "/home"
     : user.role === "DRIVER" ? "/driver"
