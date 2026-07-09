@@ -45,8 +45,17 @@ async function sendPushNotification(subscription, payload) {
       "| endpoint:", subscription?.endpoint?.slice(0, 60));
     // 410 Gone / 404 mean the subscription is dead (browser unsubscribed,
     // cleared site data, etc) — the caller should delete it from the user.
-    const expired = err.statusCode === 410 || err.statusCode === 404;
-    if (expired) console.log("[PROJO Push] Subscription expired/invalid, should be removed");
+    // 410/404 = browser says the subscription is genuinely gone (user
+    // unsubscribed, cleared site data, etc). A 403 specifically about VAPID
+    // credentials means this subscription was created under DIFFERENT
+    // VAPID keys than we're now signing with (e.g. before a key rotation)
+    // — this is just as unrecoverable server-side; the only real fix is
+    // the client creating a fresh subscription (which our resubscribe flow
+    // already does automatically next time that device loads the app), so
+    // there's no point keeping the old one around failing forever.
+    const isVapidMismatch = err.statusCode === 403 && /vapid/i.test(err.body || "");
+    const expired = err.statusCode === 410 || err.statusCode === 404 || isVapidMismatch;
+    if (expired) console.log("[PROJO Push] Subscription expired/invalid" + (isVapidMismatch ? " (stale VAPID key)" : "") + ", should be removed");
     return { success: false, reason: expired ? "SUBSCRIPTION_EXPIRED" : "SEND_FAILED", statusCode: err.statusCode, error: err.body || err.message };
   }
 }
