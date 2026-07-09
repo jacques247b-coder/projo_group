@@ -21,7 +21,7 @@ const BENEFITS = [
 
 export default function PushPermissionModal({ onClose }) {
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState("prompt"); // prompt | denied | not_configured | success
+  const [step, setStep] = useState("prompt"); // prompt | denied | not_configured | subscribe_failed | success
 
   async function handleAllow() {
     setLoading(true);
@@ -34,8 +34,15 @@ export default function PushPermissionModal({ onClose }) {
         setTimeout(() => onClose(), 2000);
       } else if (result.reason === "SERVER_NOT_CONFIGURED") {
         setStep("not_configured");
+      } else if (result.reason === "SUBSCRIBE_FAILED") {
+        // This is NOT the browser blocking anything — permission was
+        // granted, but creating/saving the subscription itself failed.
+        // Telling someone to check browser settings here is actively
+        // wrong and won't fix anything.
+        console.error("[PROJO Push] Subscribe failed after permission was granted:", result.error);
+        setStep("subscribe_failed");
       } else {
-        // Browser denied, unsupported, or subscribe failed
+        // Genuinely BROWSER_DENIED or UNSUPPORTED
         setStep("denied");
       }
     } catch {
@@ -69,6 +76,28 @@ export default function PushPermissionModal({ onClose }) {
             <div style={{ fontSize: "13px", color: "#6b6760" }}>
               You'll now receive real-time updates from PROJO GROUP
             </div>
+          </div>
+        )}
+
+        {step === "subscribe_failed" && (
+          <div style={{ textAlign: "center", padding: "1rem 0" }}>
+            <div style={{ fontSize: "48px", marginBottom: "12px" }}>⚠️</div>
+            <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "18px", fontWeight: "800", color: G, marginBottom: "8px" }}>
+              Couldn't Finish Setting Up
+            </div>
+            <div style={{ fontSize: "13px", color: "#b8a09a", lineHeight: 1.6, marginBottom: "1.5rem" }}>
+              You allowed notifications, but something went wrong saving that on our end. This isn't a browser setting to fix — please try again, and if it keeps happening, let support know.
+            </div>
+            <button onClick={handleAllow} style={{
+              width: "100%", background: G, border: "none",
+              borderRadius: "12px", padding: "14px", color: "#0a0a0a",
+              fontWeight: "800", fontSize: "14px", cursor: "pointer", marginBottom: "10px",
+            }}>Try Again</button>
+            <button onClick={onClose} style={{
+              width: "100%", background: BG, border: `1px solid ${BORDER}`,
+              borderRadius: "12px", padding: "14px", color: "#a8a49e",
+              fontWeight: "700", fontSize: "14px", cursor: "pointer",
+            }}>Close</button>
           </div>
         )}
 
