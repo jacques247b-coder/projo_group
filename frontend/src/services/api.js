@@ -38,7 +38,14 @@ api.interceptors.response.use(
           localStorage.removeItem("projo_token");
           localStorage.removeItem("projo_refresh_token");
           localStorage.removeItem("projo_user");
-          window.location.href = "/login";
+          // Don't redirect if we're already on /login — doing so anyway
+          // triggers a real page reload even though the path doesn't
+          // change, which re-runs everything on the page again, and if
+          // whatever caused this 401 fires again on load, becomes an
+          // infinite reload loop (exactly what happened here).
+          if (window.location.pathname !== "/login") {
+            window.location.href = "/login";
+          }
         }
         // Otherwise silently fail — user stays logged in with cached data
       }

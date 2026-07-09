@@ -86,7 +86,16 @@ function AppRoutes() {
         // background (no modal shown, permission's already granted so
         // there's no prompt to interrupt) so it stays valid without
         // making the user go through the UI again.
-        subscribeToPush().catch(() => {});
+        // Only attempt this if actually logged in — subscribeToPush() posts
+        // to an authenticated endpoint. Running this unconditionally meant
+        // it also fired on the public /login page whenever notification
+        // permission was already granted, hit a 401 with no token, and the
+        // app's own 'session expired, redirect to login' handler sent it to
+        // /login — which it was already on, reloading the page, which ran
+        // this same effect again: an infinite reload loop.
+        if (localStorage.getItem("projo_token")) {
+          subscribeToPush().catch(() => {});
+        }
         return;
       }
       // Show modal after 3 seconds to let the page load
