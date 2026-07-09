@@ -35,12 +35,19 @@ async function sendPushNotification(subscription, payload) {
     console.log("[PROJO Push] ✅ Notification sent:", payload.title);
     return { success: true };
   } catch (err) {
-    console.error("[PROJO Push] ❌ Failed:", err.message);
+    // web-push's err.message is a generic wrapper ("Received unexpected
+    // response code") — the actually useful detail is on err.statusCode
+    // and err.body (the real response from FCM/Mozilla/etc), which the
+    // generic message hides entirely.
+    console.error("[PROJO Push] ❌ Failed:", err.message,
+      "| statusCode:", err.statusCode,
+      "| body:", err.body,
+      "| endpoint:", subscription?.endpoint?.slice(0, 60));
     // 410 Gone / 404 mean the subscription is dead (browser unsubscribed,
     // cleared site data, etc) — the caller should delete it from the user.
     const expired = err.statusCode === 410 || err.statusCode === 404;
     if (expired) console.log("[PROJO Push] Subscription expired/invalid, should be removed");
-    return { success: false, reason: expired ? "SUBSCRIPTION_EXPIRED" : "SEND_FAILED", statusCode: err.statusCode, error: err.message };
+    return { success: false, reason: expired ? "SUBSCRIPTION_EXPIRED" : "SEND_FAILED", statusCode: err.statusCode, error: err.body || err.message };
   }
 }
 
