@@ -45,19 +45,6 @@ export default function PushPermissionModal({ onClose }) {
     }
   }
 
-  function handleLater() {
-    // Record dismissal time — remind again next login
-    localStorage.setItem("projo_push_dismissed_at", Date.now().toString());
-    onClose();
-  }
-
-  function handleNever() {
-    // Record permanent dismissal — still remind every 7 days
-    localStorage.setItem("projo_push_dismissed_at", Date.now().toString());
-    localStorage.setItem("projo_push_remind_days", "7");
-    onClose();
-  }
-
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 9999,
@@ -160,23 +147,8 @@ export default function PushPermissionModal({ onClose }) {
               {loading ? "⏳ Enabling..." : "🔔 Enable Notifications"}
             </button>
 
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button onClick={handleLater} style={{
-                flex: 1, background: "transparent",
-                border: `1px solid ${BORDER}`, borderRadius: "10px",
-                padding: "12px", color: "#6b6760", fontWeight: "600",
-                fontSize: "13px", cursor: "pointer",
-              }}>Remind Me Later</button>
-              <button onClick={handleNever} style={{
-                flex: 1, background: "transparent",
-                border: `1px solid ${BORDER}`, borderRadius: "10px",
-                padding: "12px", color: "#4a3030", fontWeight: "600",
-                fontSize: "13px", cursor: "pointer",
-              }}>Not Now</button>
-            </div>
-
-            <div style={{ textAlign: "center", marginTop: "12px", fontSize: "10px", color: "#3a2020" }}>
-              You can change this anytime in your device settings
+            <div style={{ textAlign: "center", marginTop: "4px", fontSize: "11px", color: "#8a7a70", lineHeight: 1.5 }}>
+              Notifications are required to use PROJO GROUP — this is how we keep you updated on rides, deliveries, and safety alerts.
             </div>
           </>
         )}
