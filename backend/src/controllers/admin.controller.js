@@ -45,6 +45,30 @@ exports.getStats = async (req, res) => {
 };
 
 // GET /api/admin/users
+// GET /api/admin/classifieds — list every classified regardless of status,
+// for moderation (the public endpoint only shows ACTIVE + not-yet-expired)
+exports.getClassifieds = async (req, res) => {
+  try {
+    const classifieds = await prisma.classified.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { user: { select: { name: true, phone: true } } },
+    });
+    res.json({ classifieds });
+  } catch (err) {
+    res.status(500).json({ error: "Could not load classifieds" });
+  }
+};
+
+// DELETE /api/admin/classifieds/:id — remove any classified (moderation)
+exports.deleteClassifiedAdmin = async (req, res) => {
+  try {
+    await prisma.classified.delete({ where: { id: req.params.id } });
+    res.json({ message: "Classified removed" });
+  } catch (err) {
+    res.status(500).json({ error: "Could not remove classified" });
+  }
+};
+
 exports.getUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;

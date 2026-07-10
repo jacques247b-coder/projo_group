@@ -11,6 +11,8 @@ router.use(authenticate, requireRole("ADMIN"));
 
 router.get("/stats", admin.getStats);
 router.get("/users", admin.getUsers);
+router.get("/classifieds", admin.getClassifieds);
+router.delete("/classifieds/:id", admin.deleteClassifiedAdmin);
 router.get("/drivers", admin.getDrivers);
 router.get("/rides", admin.getAllRides);
 router.get("/deliveries", admin.getAllDeliveries);

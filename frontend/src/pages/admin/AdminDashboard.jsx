@@ -35,6 +35,7 @@ const TABS = [
   { key: "drivers",    label: "🚘 Drivers" },
   { key: "push",       label: "📣 Broadcast" },
   { key: "ads",        label: "🏪 Local Ads" },
+  { key: "classifieds", label: "📋 Classifieds" },
   { key: "casino",     label: "🎰 Casino Offers" },
   { key: "reading",    label: "📚 Reading Hub" },
 ];
@@ -81,6 +82,7 @@ export default function AdminDashboard() {
   const [pushSubs, setPushSubs] = useState(null);
   const [showPushSubs, setShowPushSubs] = useState(false);
   const [localAds, setLocalAds] = useState([]);
+  const [classifieds, setClassifieds] = useState([]);
   const [casinoPartners, setCasinoPartners] = useState([]);
   const [casinoForm, setCasinoForm] = useState({ name: "", logo: "🎰", color: "#00a651", bonus: "", description: "", url: "", terms: "", categories: "", featured: false, isNew: false });
   const [showCasinoForm, setShowCasinoForm] = useState(false);
@@ -133,7 +135,7 @@ export default function AdminDashboard() {
   async function loadAll() {
     setLoading(true);
     try {
-      const [s, u, r, d, p, dr, so, ps, la] = await Promise.all([
+      const [s, u, r, d, p, dr, so, ps, la, cl] = await Promise.all([
         getWithRetry("/admin/stats", { stats: null }),
         getWithRetry("/admin/users", { users: [] }),
         getWithRetry("/admin/rides", { rides: [] }),
@@ -143,6 +145,7 @@ export default function AdminDashboard() {
         getWithRetry("/admin/service-orders", { orders: [] }),
         getWithRetry("/admin/push/stats", null),
         getWithRetry("/admin/entertainment/ads", { ads: [] }),
+        getWithRetry("/admin/classifieds", { classifieds: [] }),
       ]);
       setStats(s.stats);
       setUsers(u.users || []);
@@ -152,6 +155,7 @@ export default function AdminDashboard() {
       setServiceOrders(so.orders || []);
       if (ps) setPushStats(ps);
       setLocalAds(la?.ads || []);
+      setClassifieds(cl?.classifieds || []);
       const drivers = dr.drivers || [];
       setPendingDrivers(drivers.filter(d => d.status === "PENDING_VERIFICATION"));
       setAllDrivers(drivers);
@@ -265,6 +269,15 @@ export default function AdminDashboard() {
       toast.success("Deleted");
       loadAll();
     } catch { toast.error("Could not delete"); }
+  }
+
+  async function deleteClassifiedAdmin(id) {
+    if (!window.confirm("Remove this classified ad?")) return;
+    try {
+      await api.delete(`/admin/classifieds/${id}`);
+      toast.success("Removed");
+      loadAll();
+    } catch { toast.error("Could not remove"); }
   }
 
   async function createAd() {
@@ -1066,6 +1079,62 @@ export default function AdminDashboard() {
             )}
           </div>
         )}
+
+        {/* ── CLASSIFIEDS ADMIN ── */}
+        {!loading && tab === "classifieds" && (() => {
+          const activeCls = classifieds.filter(c => c.status === "ACTIVE");
+          const expiredCls = classifieds.filter(c => c.status === "EXPIRED");
+          const soldCls = classifieds.filter(c => c.status === "SOLD");
+          return (
+            <div>
+              <div style={{ marginBottom: "1rem" }}>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "15px", fontWeight: "800", color: G }}>📋 Free Classifieds</div>
+                <div style={{ fontSize: "12px", color: "#6b6760" }}>User-posted classified ads from the Entertainment Hub — moderate or remove as needed</div>
+              </div>
+
+              {/* Stats */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "8px", marginBottom: "1rem" }}>
+                {[
+                  { label: "Active", value: activeCls.length, color: "#4ade80" },
+                  { label: "Expired", value: expiredCls.length, color: "#6b6760" },
+                  { label: "Sold", value: soldCls.length, color: "#3b9eff" },
+                  { label: "Total", value: classifieds.length, color: G },
+                ].map(s => (
+                  <div key={s.label} style={{ ...card, textAlign: "center", padding: "10px" }}>
+                    <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "20px", fontWeight: "800", color: s.color }}>{s.value}</div>
+                    <div style={{ fontSize: "11px", color: "#6b6760" }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ fontSize: "11px", color: "#6b6760", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>All Classifieds</div>
+              {classifieds.map(c => (
+                <div key={c.id} style={{ ...card, marginBottom: "8px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "13px" }}>{c.title}</div>
+                      {c.price && <div style={{ fontSize: "12px", color: G, marginTop: "2px" }}>{c.price}</div>}
+                      <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "2px" }}>
+                        {c.category} · {c.user?.name} · {c.phone || c.user?.phone}
+                      </div>
+                      <div style={{ fontSize: "10px", color: "#6b6760", marginTop: "2px" }}>
+                        Posted {new Date(c.createdAt).toLocaleDateString()} · Expires {new Date(c.expiresAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                      <span style={{ fontSize: "11px", fontWeight: "700", color: c.status === "ACTIVE" ? "#4ade80" : c.status === "SOLD" ? "#3b9eff" : "#6b6760" }}>{c.status}</span>
+                      <button onClick={() => deleteClassifiedAdmin(c.id)} style={{ background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: "6px", padding: "3px 8px", color: "#f87171", fontSize: "10px", cursor: "pointer" }}>Del</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {classifieds.length === 0 && (
+                <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>No classifieds posted yet</div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* ── CASINO OFFERS ADMIN ── */}
         {!loading && tab === "casino" && (
