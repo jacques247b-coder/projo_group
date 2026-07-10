@@ -101,19 +101,38 @@ export default function AdminDashboard() {
     return () => { sock.emit("panic:leave_monitor"); sock.disconnect(); };
   }, []);
 
+  // A burst of ~9 simultaneous requests can occasionally hit Render's
+  // concurrent-stream limit right after a fresh deploy/restart
+  // (ERR_HTTP2_SERVER_REFUSED_STREAM) — a transient infra hiccup, not a
+  // real failure. Retry once after a short pause before giving up.
+  async function getWithRetry(url, fallback) {
+    try {
+      return await api.get(url);
+    } catch (e) {
+      console.warn(`[Admin] ${url} failed once, retrying...`, e.message);
+      await new Promise((r) => setTimeout(r, 800));
+      try {
+        return await api.get(url);
+      } catch (e2) {
+        console.error(`[Admin] ${url} failed again:`, e2);
+        return fallback;
+      }
+    }
+  }
+
   async function loadAll() {
     setLoading(true);
     try {
       const [s, u, r, d, p, dr, so, ps, la] = await Promise.all([
-        api.get("/admin/stats").catch((e) => { console.error("[Admin] /stats failed:", e); return { stats: null }; }),
-        api.get("/admin/users").catch((e) => { console.error("[Admin] /users failed:", e); return { users: [] }; }),
-        api.get("/admin/rides").catch((e) => { console.error("[Admin] /rides failed:", e); return { rides: [] }; }),
-        api.get("/admin/deliveries").catch((e) => { console.error("[Admin] /deliveries failed:", e); return { deliveries: [] }; }),
-        api.get("/admin/products").catch((e) => { console.error("[Admin] /products failed:", e); return { products: [] }; }),
-        api.get("/admin/drivers").catch((e) => { console.error("[Admin] /drivers failed:", e); return { drivers: [] }; }),
-        api.get("/admin/service-orders").catch((e) => { console.error("[Admin] /service-orders failed:", e); return { orders: [] }; }),
-        api.get("/admin/push/stats").catch(() => null),
-        api.get("/admin/entertainment/ads").catch((e) => { console.error("[Admin] /entertainment/ads failed:", e); return { ads: [] }; }),
+        getWithRetry("/admin/stats", { stats: null }),
+        getWithRetry("/admin/users", { users: [] }),
+        getWithRetry("/admin/rides", { rides: [] }),
+        getWithRetry("/admin/deliveries", { deliveries: [] }),
+        getWithRetry("/admin/products", { products: [] }),
+        getWithRetry("/admin/drivers", { drivers: [] }),
+        getWithRetry("/admin/service-orders", { orders: [] }),
+        getWithRetry("/admin/push/stats", null),
+        getWithRetry("/admin/entertainment/ads", { ads: [] }),
       ]);
       setStats(s.stats);
       setUsers(u.users || []);
