@@ -60,6 +60,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [userSearch, setUserSearch] = useState("");
   const [userRoleFilter, setUserRoleFilter] = useState("ALL");
+  const [hideDemoUsers, setHideDemoUsers] = useState(true);
   const [rides, setRides] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
   const [products, setProducts] = useState([]);
@@ -597,6 +598,7 @@ export default function AdminDashboard() {
         {/* ── DRIVERS ── */}
         {!loading && tab === "users" && (() => {
           const filtered = users.filter(u => {
+            if (hideDemoUsers && u.isDemoAccount) return false;
             if (userRoleFilter !== "ALL" && u.role !== userRoleFilter) return false;
             if (userSearch.trim()) {
               const q = userSearch.trim().toLowerCase();
@@ -604,6 +606,7 @@ export default function AdminDashboard() {
             }
             return true;
           });
+          const demoCount = users.filter(u => u.isDemoAccount).length;
           const roles = ["ALL", "PASSENGER", "DRIVER", "ADMIN", "SECURITY"];
           return (
             <div>
@@ -622,7 +625,15 @@ export default function AdminDashboard() {
                     color: userRoleFilter === r ? G : "#a8a49e", fontWeight: userRoleFilter === r ? "700" : "400",
                   }}>{r === "ALL" ? "All" : r.charAt(0) + r.slice(1).toLowerCase()}</button>
                 ))}
-                <div style={{ marginLeft: "auto", fontSize: "12px", color: "#6b6760", alignSelf: "center" }}>{filtered.length} of {users.length}</div>
+                <div style={{ marginLeft: "auto", fontSize: "12px", color: "#6b6760", alignSelf: "center", display: "flex", alignItems: "center", gap: "10px" }}>
+                  {demoCount > 0 && (
+                    <label style={{ display: "flex", alignItems: "center", gap: "5px", cursor: "pointer" }}>
+                      <input type="checkbox" checked={hideDemoUsers} onChange={(e) => setHideDemoUsers(e.target.checked)} />
+                      Hide {demoCount} demo dating account{demoCount !== 1 ? "s" : ""}
+                    </label>
+                  )}
+                  <span>{filtered.length} of {users.length}</span>
+                </div>
               </div>
 
               {filtered.length === 0 ? (
@@ -631,7 +642,10 @@ export default function AdminDashboard() {
                 <div key={u.id} style={{ ...card, marginBottom: "8px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "10px" }}>
                     <div>
-                      <div style={{ fontWeight: "700", color: "#f0ede8" }}>{u.name}</div>
+                      <div style={{ fontWeight: "700", color: "#f0ede8" }}>
+                        {u.name}
+                        {u.isDemoAccount && <span style={{ marginLeft: "8px", background: "rgba(167,139,250,0.15)", color: "#a78bfa", border: "1px solid rgba(167,139,250,0.4)", borderRadius: "999px", padding: "2px 8px", fontSize: "10px", fontWeight: "700" }}>DEMO — Dating Profile</span>}
+                      </div>
                       <div style={{ fontSize: "12px", color: "#6b6760" }}>{u.phone}{u.email ? ` · ${u.email}` : ""}</div>
                       <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "2px" }}>
                         {u.role} · Joined {fmt(u.createdAt)}{u.wallet ? ` · Wallet: R${(u.wallet.balanceZar || 0).toFixed(2)}` : ""}

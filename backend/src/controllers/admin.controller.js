@@ -56,7 +56,11 @@ exports.getUsers = async (req, res) => {
       include: { wallet: true },
     });
     const total = await prisma.user.count();
-    res.json({ users, total, page, pages: Math.ceil(total / limit) });
+    // Demo dating profile seed data uses placeholder phones 0000000001-012 —
+    // flag these so the admin panel can visually distinguish them from real
+    // customers instead of them just looking like unrecognized signups.
+    const tagged = users.map(u => ({ ...u, isDemoAccount: /^0000000\d{3}$/.test(u.phone) }));
+    res.json({ users: tagged, total, page, pages: Math.ceil(total / limit) });
   } catch (err) {
     res.status(500).json({ error: "Could not load users" });
   }
