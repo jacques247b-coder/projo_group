@@ -95,6 +95,7 @@ export default function PanicMonitorPage() {
   const [securityUsers, setSecurityUsers] = useState([]);
   const [suName, setSuName] = useState("");
   const [suPhone, setSuPhone] = useState("");
+  const [suEmail, setSuEmail] = useState("");
   const [sitrepOpenFor, setSitrepOpenFor] = useState(null);
   const [sitrepStatus, setSitrepStatus] = useState("EN_ROUTE");
   const [sitrepSummary, setSitrepSummary] = useState("");
@@ -201,12 +202,12 @@ export default function PanicMonitorPage() {
   }
 
   async function createSecurityUser() {
-    if (!suName.trim() || !suPhone.trim()) { toast.error("Name and phone required"); return; }
+    if (!suName.trim() || !suPhone.trim() || !suEmail.trim()) { toast.error("Name, phone, and email are all required"); return; }
     try {
-      await panicAPI.adminCreateSecurityUser(suName.trim(), suPhone.trim());
-      setSuName(""); setSuPhone("");
+      await panicAPI.adminCreateSecurityUser(suName.trim(), suPhone.trim(), suEmail.trim());
+      setSuName(""); setSuPhone(""); setSuEmail("");
       loadSecurityUsers();
-      toast.success("Security login account created — they can now log in with this phone number");
+      toast.success("Security login created — they'll log in with their phone, OTP sent to email");
     } catch (e) { toast.error(e.error || "Failed to create account"); }
   }
 
@@ -405,8 +406,12 @@ export default function PanicMonitorPage() {
                   <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                     <input value={suName} onChange={e => setSuName(e.target.value)} placeholder="Staff / company name" style={{ flex: 1, minWidth: "160px", padding: "9px 12px", borderRadius: "8px", background: "#0000002a", border: `1px solid ${C.border}`, color: C.text, fontSize: "13px" }} />
                     <input value={suPhone} onChange={e => setSuPhone(e.target.value)} placeholder="+27821234567" style={{ flex: 1, minWidth: "160px", padding: "9px 12px", borderRadius: "8px", background: "#0000002a", border: `1px solid ${C.border}`, color: C.text, fontSize: "13px" }} />
-                    <button onClick={createSecurityUser} style={{ background: C.warn, border: "none", borderRadius: "8px", padding: "9px 18px", color: "#241a00", fontWeight: 700, fontSize: "13px", cursor: "pointer" }}>Create Login</button>
                   </div>
+                  <input value={suEmail} onChange={e => setSuEmail(e.target.value)} placeholder="Email (required — see note below)" style={{ width: "100%", marginTop: "8px", padding: "9px 12px", borderRadius: "8px", background: "#0000002a", border: `1px solid ${C.border}`, color: C.text, fontSize: "13px", boxSizing: "border-box" }} />
+                  <div style={{ fontSize: "10.5px", color: C.muted, lineHeight: 1.5, margin: "6px 0 10px" }}>
+                    Email is required for now — their login code arrives by email (reliable today), same as every other account type in the app. SMS/WhatsApp login can be added as an option later once SMS is fully set up.
+                  </div>
+                  <button onClick={createSecurityUser} style={{ background: C.warn, border: "none", borderRadius: "8px", padding: "9px 18px", color: "#241a00", fontWeight: 700, fontSize: "13px", cursor: "pointer" }}>Create Login</button>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   {securityUsers.length === 0 ? (

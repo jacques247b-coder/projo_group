@@ -373,17 +373,19 @@ exports.getWatchAlert = async (req, res) => {
 // POST /api/panic/security-users  { name, phone }
 exports.adminCreateSecurityUser = async (req, res) => {
   try {
-    const { name, phone } = req.body;
-    if (!name || !phone) return res.status(400).json({ error: "name and phone are required" });
+    const { name, phone, email } = req.body;
+    if (!name || !phone || !email) return res.status(400).json({ error: "name, phone, and email are all required" });
     const existing = await prisma.user.findUnique({ where: { phone } });
     if (existing) {
       if (existing.role === "SECURITY") return res.status(400).json({ error: "This phone already has a security account" });
       return res.status(409).json({ error: "This phone number is already registered with a different role" });
     }
+    const emailOwner = await prisma.user.findUnique({ where: { email } });
+    if (emailOwner) return res.status(409).json({ error: "That email is already registered to another account" });
     const user = await prisma.user.create({
-      data: { phone, name, role: "SECURITY", status: "ACTIVE" },
+      data: { phone, name, email, role: "SECURITY", status: "ACTIVE" },
     });
-    res.json({ user: { id: user.id, name: user.name, phone: user.phone, role: user.role } });
+    res.json({ user: { id: user.id, name: user.name, phone: user.phone, email: user.email, role: user.role } });
   } catch (err) { res.status(500).json({ error: err.message }); }
 };
 
