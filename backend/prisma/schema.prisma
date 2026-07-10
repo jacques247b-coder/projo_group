@@ -11,6 +11,7 @@ model User {
   id           String    @id @default(uuid())
   email        String?   @unique
   phone        String    @unique
+  driverStatus String?   @default("OFFLINE") // ONLINE | OFFLINE | ON_RIDE | ON_DELIVERY — only meaningful for role:"DRIVER"
   pushSubscription String?           // DEPRECATED — kept only so existing data isn't lost; superseded by pushSubscriptions[] below, which supports multiple devices per account (this single field could only ever remember one device, silently overwriting itself when a user subscribed on a second device)
   pushSubscriptions PushSubscription[]
   name         String

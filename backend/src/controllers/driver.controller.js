@@ -27,8 +27,10 @@ exports.updateStatus = async (req, res) => {
   const valid = ["ONLINE", "OFFLINE", "ON_RIDE", "ON_DELIVERY"];
   if (!valid.includes(status)) return res.status(400).json({ error: "Invalid status" });
   try {
-    // Store status in user metadata or just acknowledge
-    // (Full driver table optional — status tracked via socket in MVP)
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { driverStatus: status },
+    });
     res.json({ status, message: `Status updated to ${status}` });
   } catch (e) {
     res.status(500).json({ error: e.message });
