@@ -28,7 +28,7 @@ router.post(
 router.post(
   "/book",
   authenticate,
-  requireRole("PASSENGER"),
+  requireRole("PASSENGER", "ADMIN"),
   [
     body("pickupAddress").notEmpty(),
     body("pickupLat").isFloat(),
