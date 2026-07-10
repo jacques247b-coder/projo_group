@@ -181,6 +181,15 @@ exports.register = async (req, res) => {
     if (user && user.status !== "PENDING_VERIFICATION") {
       return res.status(409).json({ error: "Phone number already registered. Please sign in." });
     }
+    // Same conflict this could hit: an email already tied to a different
+    // account (e.g. an earlier abandoned signup with a different/typo'd
+    // phone number, using this same email).
+    if (email) {
+      const emailOwner = await prisma.user.findUnique({ where: { email } });
+      if (emailOwner && emailOwner.id !== user?.id) {
+        return res.status(409).json({ error: "That email is already registered to another account. Try signing in instead, or use a different email." });
+      }
+    }
     if (!user) {
       user = await prisma.user.create({
         data: { phone, name: name.trim(), role: role === "DRIVER" ? "DRIVER" : "PASSENGER", status: "PENDING_VERIFICATION", email: email || null },
@@ -205,7 +214,11 @@ exports.register = async (req, res) => {
     }
   } catch (err) {
     console.error("[PROJO Auth] register error:", err.message);
-    res.status(500).json({ error: "Registration failed: " + err.message });
+    if (err.code === "P2002") {
+      const field = err.meta?.target?.[0] || "a field";
+      return res.status(409).json({ error: `That ${field} is already in use by another account.` });
+    }
+    res.status(500).json({ error: "Registration failed — please try again." });
   }
 };
 
@@ -244,6 +257,19 @@ exports.verifyOTP = async (req, res) => {
     // ✅ Success — clear the attempt counter
     clearOTPAttempts(phone);
 
+    // Check for an email conflict BEFORE attempting the update — this is
+    // exactly what was crashing with a raw, user-facing database error
+    // ("Unique constraint failed on the fields: (`email`)") whenever
+    // someone re-registered with an email already tied to a different
+    // account (e.g. an earlier abandoned signup attempt with a typo'd
+    // phone number, using the same email).
+    if (email) {
+      const emailOwner = await prisma.user.findUnique({ where: { email } });
+      if (emailOwner && emailOwner.id !== user.id) {
+        return res.status(409).json({ error: "That email is already registered to another account. Try signing in instead, or use a different email." });
+      }
+    }
+
     const updateData = { status: "ACTIVE", otpCode: null, otpExpiresAt: null, lastLoginAt: new Date() };
     if (name) updateData.name = name.trim();
     if (role && ["PASSENGER", "DRIVER"].includes(role)) updateData.role = role;
@@ -258,7 +284,15 @@ exports.verifyOTP = async (req, res) => {
     });
   } catch (err) {
     console.error("[PROJO Auth] verifyOTP error:", err.message);
-    res.status(500).json({ error: "Verification failed: " + err.message });
+    // Never leak raw database errors to the user (e.g. "Invalid
+    // prisma.user.update() invocation..."). Translate the common case
+    // (a unique constraint conflict) into something actionable; anything
+    // else gets a generic, safe message.
+    if (err.code === "P2002") {
+      const field = err.meta?.target?.[0] || "a field";
+      return res.status(409).json({ error: `That ${field} is already in use by another account.` });
+    }
+    res.status(500).json({ error: "Verification failed — please try again." });
   }
 };
 
