@@ -799,6 +799,21 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {/* Quick emoji insert — since notification images aren't
+                  reliably displayed by browsers anymore, strong emoji-rich
+                  copy is the most reliable way to make these stand out */}
+              <div style={{ marginBottom: "8px" }}>
+                <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "5px", textTransform: "uppercase", letterSpacing: "1px" }}>Quick Insert (tap to add to title)</div>
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                  {["🎉", "🔥", "💰", "⭐", "📢", "🚗", "📦", "🛍️", "💡", "⏰", "✅", "🎁"].map(emoji => (
+                    <button key={emoji} type="button" onClick={() => setPushForm(f => ({ ...f, title: (f.title + " " + emoji).trim() }))}
+                      style={{ fontSize: "18px", padding: "6px 10px", borderRadius: "8px", background: BG3, border: `1px solid ${BORDER}`, cursor: "pointer" }}>
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Title */}
               <div style={{ marginBottom: "12px" }}>
                 <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "5px", textTransform: "uppercase", letterSpacing: "1px" }}>Title *</div>
@@ -813,7 +828,7 @@ export default function AdminDashboard() {
               <div style={{ marginBottom: "12px" }}>
                 <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "5px", textTransform: "uppercase", letterSpacing: "1px" }}>Message *</div>
                 <textarea value={pushForm.body} onChange={e => setPushForm(f => ({ ...f, body: e.target.value }))}
-                  placeholder="e.g. Book any cleaning service this weekend and get 20% off. Tap to book now!"
+                  placeholder="e.g. Book any cleaning service this weekend and get 20% off. Tap to book now! ✨"
                   maxLength={150}
                   style={{ width: "100%", background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", color: "#f0ede8", padding: "10px 12px", fontSize: "13px", outline: "none", fontFamily: "'DM Sans',sans-serif", boxSizing: "border-box", minHeight: "80px", resize: "vertical" }} />
                 <div style={{ fontSize: "10px", color: "#6b6760", marginTop: "3px", textAlign: "right" }}>{pushForm.body.length}/150</div>
@@ -822,6 +837,7 @@ export default function AdminDashboard() {
               {/* Image Upload */}
               <div style={{ marginBottom: "12px" }}>
                 <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "5px", textTransform: "uppercase", letterSpacing: "1px" }}>Ad Image (optional — Instagram size 1080×1080)</div>
+                <div style={{ fontSize: "10px", color: "#8a7a70", marginBottom: "6px" }}>Note: most phones and PCs no longer reliably display this image in the notification itself — strong title/body copy with emojis (above) is the dependable way to stand out. Feel free to still attach one; it just may not always show.</div>
                 {pushForm.image ? (
                   <div style={{ position: "relative", marginBottom: "8px" }}>
                     <img src={pushForm.image} alt="Ad" style={{ width: "100%", maxHeight: "200px", objectFit: "cover", borderRadius: "10px", border: `1px solid ${BORDER}` }} />
