@@ -851,6 +851,16 @@ export default function AdminDashboard() {
                     reader.onload = ev => setPushForm(f => ({ ...f, image: ev.target.result }));
                     reader.readAsDataURL(file);
                   }} />
+                <div style={{ marginTop: "8px" }}>
+                  <div style={{ fontSize: "10.5px", color: "#6b6760", marginBottom: "4px" }}>...or paste an external image URL directly (skips upload entirely):</div>
+                  <input
+                    type="text"
+                    placeholder="https://example.com/image.jpg"
+                    value={pushForm.image && !pushForm.image.startsWith("data:") ? pushForm.image : ""}
+                    onChange={e => setPushForm(f => ({ ...f, image: e.target.value }))}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", background: BG3, border: `1px solid ${BORDER}`, color: "#f0ede8", fontSize: "12px", boxSizing: "border-box" }}
+                  />
+                </div>
               </div>
 
               {/* Link */}
