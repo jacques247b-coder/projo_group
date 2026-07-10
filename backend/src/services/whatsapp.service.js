@@ -33,21 +33,30 @@ function callmebotRequest(phone, apiKey, message) {
   });
 }
 
-// Normalizes to E.164 (+27...) for Twilio — CallMeBot's env var has
-// historically been stored without the leading '+' (e.g. "27766147386").
+// Normalizes to E.164 (+27...) for Twilio. CallMeBot's env var has
+// historically been stored in various formats — sometimes international
+// without the leading '+' (e.g. "27766147386"), sometimes local South
+// African format with a leading 0 (e.g. "0766147986"). Naively prepending
+// '+' to the local format produces an invalid number Twilio will reject
+// outright (e.g. "+0766147986") — handle both properly.
 function toE164(phone) {
-  return phone.startsWith("+") ? phone : `+${phone}`;
+  const digits = phone.replace(/[\s-]/g, "");
+  if (digits.startsWith("+")) return digits;
+  if (digits.startsWith("0")) return `+27${digits.slice(1)}`; // local SA format
+  return `+${digits}`; // assume it already has a country code, just missing '+'
 }
 
 async function sendWhatsAppNotification(message) {
   const phone = process.env.CALLMEBOT_PHONE || "27766147386";
   const e164Phone = toE164(phone);
+  console.log(`[PROJO WhatsApp] Admin alert — raw phone: ${phone} -> normalized: ${e164Phone}`);
 
   // Twilio SMS + WhatsApp — the reliable backbone, run in parallel
   const [sms, whatsapp] = await Promise.all([
     twilioService.sendSMS(e164Phone, message).catch((e) => ({ success: false, error: e.message })),
     twilioService.sendWhatsApp(e164Phone, message).catch((e) => ({ success: false, error: e.message })),
   ]);
+  console.log(`[PROJO WhatsApp] Twilio SMS: ${sms.success ? "✅" : "❌ " + (sms.error || "")} | Twilio WhatsApp: ${whatsapp.success ? "✅" : "❌ " + (whatsapp.error || "")}`);
 
   // CallMeBot — free bonus layer, only if configured; never blocks on it
   let callmebot = { success: false, skipped: true };
