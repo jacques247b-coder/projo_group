@@ -384,6 +384,46 @@ exports.broadcastPush = async (req, res) => {
 // GET /api/admin/push/stats — get push subscription stats (counts distinct
 // USERS reachable, not raw device rows — a user with 2 devices still
 // counts once here, matching the original meaning of this stat)
+// GET /api/admin/push/subscriptions — see exactly what's saved, per device,
+// so stale/duplicate entries (e.g. from testing across many browsers) can
+// be identified by eye instead of guessing blind.
+function providerFromEndpoint(endpoint) {
+  if (!endpoint) return "unknown";
+  if (endpoint.includes("fcm.googleapis.com")) return "Chrome/Android (FCM)";
+  if (endpoint.includes("mozilla.com")) return "Firefox";
+  if (endpoint.includes("notify.windows.com")) return "Edge/Windows";
+  if (endpoint.includes("apple.com")) return "Safari";
+  return "unknown";
+}
+exports.listPushSubscriptions = async (req, res) => {
+  try {
+    const subs = await prisma.pushSubscription.findMany({
+      include: { user: { select: { name: true, phone: true, role: true } } },
+      orderBy: { createdAt: "desc" },
+    });
+    res.json({
+      subscriptions: subs.map(s => ({
+        id: s.id,
+        userName: s.user?.name,
+        userPhone: s.user?.phone,
+        userRole: s.user?.role,
+        provider: providerFromEndpoint(s.endpoint),
+        endpointTail: s.endpoint?.slice(-20),
+        createdAt: s.createdAt,
+        lastUsedAt: s.lastUsedAt,
+      })),
+    });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
+// DELETE /api/admin/push/subscriptions/:id — remove one specific stale entry
+exports.deletePushSubscription = async (req, res) => {
+  try {
+    await prisma.pushSubscription.delete({ where: { id: req.params.id } });
+    res.json({ deleted: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
 exports.pushStats = async (req, res) => {
   try {
     const total = await prisma.user.count({ where: { pushSubscriptions: { some: {} } } });

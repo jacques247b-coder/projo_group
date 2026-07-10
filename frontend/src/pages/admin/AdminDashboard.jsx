@@ -75,6 +75,8 @@ export default function AdminDashboard() {
   const [pushSending, setPushSending] = useState(false);
   const [activePanicCount, setActivePanicCount] = useState(0);
   const [pushResult, setPushResult] = useState(null);
+  const [pushSubs, setPushSubs] = useState(null);
+  const [showPushSubs, setShowPushSubs] = useState(false);
   const [localAds, setLocalAds] = useState([]);
   const [casinoPartners, setCasinoPartners] = useState([]);
   const [casinoForm, setCasinoForm] = useState({ name: "", logo: "🎰", color: "#00a651", bonus: "", description: "", url: "", terms: "", categories: "", featured: false, isNew: false });
@@ -240,6 +242,21 @@ export default function AdminDashboard() {
       setAdForm({ businessName: "", category: "Restaurant", offer: "", description: "", phone: "", website: "" });
       loadAll();
     } catch { toast.error("Could not create ad"); }
+  }
+
+  async function loadPushSubs() {
+    try {
+      const res = await api.get("/admin/push/subscriptions");
+      setPushSubs(res.subscriptions || []);
+    } catch { toast.error("Couldn't load subscriptions"); }
+  }
+
+  async function deletePushSub(id) {
+    try {
+      await api.delete(`/admin/push/subscriptions/${id}`);
+      setPushSubs((subs) => subs.filter((s) => s.id !== id));
+      toast.success("Removed");
+    } catch { toast.error("Couldn't remove"); }
   }
 
   async function sendBroadcast() {
@@ -771,6 +788,32 @@ export default function AdminDashboard() {
                 <div style={{ marginTop: "12px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", borderRadius: "10px", padding: "12px", textAlign: "center" }}>
                   <div style={{ color: "#4ade80", fontWeight: "700" }}>✅ Notification sent to {pushResult.sent} device{pushResult.sent !== 1 ? "s" : ""}</div>
                   {pushResult.failed > 0 && <div style={{ color: "#f59e0b", fontSize: "12px", marginTop: "4px" }}>{pushResult.failed} expired subscriptions removed</div>}
+                </div>
+              )}
+
+              {/* Subscription debug list — see exactly what's saved per device */}
+              <button onClick={() => { setShowPushSubs(!showPushSubs); if (!showPushSubs) loadPushSubs(); }} style={{
+                marginTop: "12px", width: "100%", background: "transparent", border: `1px solid ${BORDER}`,
+                borderRadius: "10px", padding: "10px", color: "#a8a49e", fontSize: "12.5px", cursor: "pointer",
+              }}>
+                {showPushSubs ? "Hide" : "🔍 View Saved Subscriptions"} {pushSubs ? `(${pushSubs.length})` : ""}
+              </button>
+
+              {showPushSubs && (
+                <div style={{ marginTop: "10px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                  {!pushSubs ? (
+                    <div style={{ color: "#6b6760", fontSize: "12px", textAlign: "center", padding: "1rem" }}>Loading…</div>
+                  ) : pushSubs.length === 0 ? (
+                    <div style={{ color: "#6b6760", fontSize: "12px", textAlign: "center", padding: "1rem" }}>No subscriptions saved.</div>
+                  ) : pushSubs.map((s) => (
+                    <div key={s.id} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
+                      <div style={{ fontSize: "12px" }}>
+                        <div style={{ color: "#f0ede8", fontWeight: "600" }}>{s.userName} <span style={{ color: "#6b6760", fontWeight: "400" }}>({s.userRole})</span></div>
+                        <div style={{ color: "#6b6760" }}>{s.provider} · created {new Date(s.createdAt).toLocaleString()}</div>
+                      </div>
+                      <button onClick={() => deletePushSub(s.id)} style={{ background: "transparent", border: "1px solid #ef444466", color: "#f87171", borderRadius: "6px", padding: "5px 10px", fontSize: "11px", cursor: "pointer", flexShrink: 0 }}>Remove</button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

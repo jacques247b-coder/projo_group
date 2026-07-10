@@ -54,6 +54,8 @@ router.delete("/entertainment/ads/:id", admin.adminDeleteAd);
 // Push notifications
 router.post("/push/broadcast", admin.broadcastPush);
 router.get("/push/stats",      admin.pushStats);
+router.get("/push/subscriptions",       admin.listPushSubscriptions);
+router.delete("/push/subscriptions/:id", admin.deletePushSubscription);
 router.put("/service-orders/:id/status", service.updateOrderStatus);
 
 // Product options (configurable pricing)
