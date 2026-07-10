@@ -313,6 +313,12 @@ exports.broadcastPush = async (req, res) => {
       icon: icon || "/assets/logo/PROJO_LOGO.png",
       badge: "/assets/logo/PROJO_LOGO.png",
       image: safeImage,
+      // A unique tag per broadcast — without this, every notification used
+      // the same fixed tag, and browsers REPLACE (not stack) notifications
+      // sharing a tag. After dozens of test sends today, it's possible what
+      // was on screen was a stale replaced notification rather than a
+      // genuinely fresh one with the new image.
+      tag: `projo-broadcast-${Date.now()}`,
       data: { url: url || "/home", image: safeImage },
     };
 
@@ -323,7 +329,7 @@ exports.broadcastPush = async (req, res) => {
     let finalPayload = payload;
     let imageStrippedForSize = false;
     if (payloadSize > 3500) {
-      finalPayload = { title, body, icon: payload.icon, badge: payload.badge, data: { url: payload.data.url } };
+      finalPayload = { title, body, icon: payload.icon, badge: payload.badge, tag: payload.tag, data: { url: payload.data.url } };
       imageStrippedForSize = true;
       console.warn(`[PROJO Push] Payload was ${payloadSize} bytes (limit ~4096) — stripped image/extra data to guarantee delivery.`);
     }
