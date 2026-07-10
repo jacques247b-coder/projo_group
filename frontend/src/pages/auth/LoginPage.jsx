@@ -167,8 +167,8 @@ export default function LoginPage() {
                 Enter Verification Code
               </h2>
               <p style={{ color: "#7a5a55", fontSize: "13px", marginBottom: "1.5rem" }}>
-                6-digit code sent to{" "}
-                <strong style={{ color: G }}>{email}</strong>
+                6-digit code sent {otpVia === "whatsapp" ? "via WhatsApp to" : otpVia === "sms" ? "via SMS to" : "to"}{" "}
+                <strong style={{ color: G }}>{otpVia === "email" ? email : phone}</strong>
               </p>
 
               {isNewUser && (

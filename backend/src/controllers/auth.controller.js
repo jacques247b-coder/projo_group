@@ -161,9 +161,9 @@ exports.sendOTP = async (req, res) => {
       await sendOTPEmail(contactEmail, otp, user.name);
       res.json({ message: `OTP sent to ${contactEmail}`, isNewUser, phone, via: "email" });
     } else {
-      const { sendOTPSms } = require("../services/otp.service");
-      await sendOTPSms(phone, otp);
-      res.json({ message: "OTP sent to your phone", isNewUser, phone, via: "sms" });
+      const { sendOTPPhone } = require("../services/otp.service");
+      const result = await sendOTPPhone(phone, otp);
+      res.json({ message: result.via === "whatsapp" ? "OTP sent via WhatsApp" : "OTP sent to your phone", isNewUser, phone, via: result.via });
     }
   } catch (err) {
     console.error("[PROJO Auth] sendOTP error:", err.message);
@@ -208,9 +208,9 @@ exports.register = async (req, res) => {
       await sendOTPEmail(contactEmail, otp, name);
       res.status(201).json({ message: `OTP sent to ${contactEmail}`, userId: user.id, phone, via: "email" });
     } else {
-      const { sendOTPSms } = require("../services/otp.service");
-      await sendOTPSms(phone, otp);
-      res.status(201).json({ message: "OTP sent to your phone", userId: user.id, phone, via: "sms" });
+      const { sendOTPPhone } = require("../services/otp.service");
+      const result = await sendOTPPhone(phone, otp);
+      res.status(201).json({ message: result.via === "whatsapp" ? "OTP sent via WhatsApp" : "OTP sent to your phone", userId: user.id, phone, via: result.via });
     }
   } catch (err) {
     console.error("[PROJO Auth] register error:", err.message);
@@ -309,9 +309,9 @@ exports.login = async (req, res) => {
       await sendOTPEmail(contactEmail, otp, user.name);
       res.json({ requiresOTP: true, message: `OTP sent to ${contactEmail}`, isNewUser: false, via: "email" });
     } else {
-      const { sendOTPSms } = require("../services/otp.service");
-      await sendOTPSms(phone, otp);
-      res.json({ requiresOTP: true, message: "OTP sent to your phone", isNewUser: false, via: "sms" });
+      const { sendOTPPhone } = require("../services/otp.service");
+      const result = await sendOTPPhone(phone, otp);
+      res.json({ requiresOTP: true, message: result.via === "whatsapp" ? "OTP sent via WhatsApp" : "OTP sent to your phone", isNewUser: false, via: result.via });
     }
   } catch (err) {
     res.status(500).json({ error: "Login failed" });
