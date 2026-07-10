@@ -58,6 +58,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
+  const [userSearch, setUserSearch] = useState("");
+  const [userRoleFilter, setUserRoleFilter] = useState("ALL");
   const [rides, setRides] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
   const [products, setProducts] = useState([]);
@@ -593,6 +595,66 @@ export default function AdminDashboard() {
         )}
 
         {/* ── DRIVERS ── */}
+        {!loading && tab === "users" && (() => {
+          const filtered = users.filter(u => {
+            if (userRoleFilter !== "ALL" && u.role !== userRoleFilter) return false;
+            if (userSearch.trim()) {
+              const q = userSearch.trim().toLowerCase();
+              if (!u.name?.toLowerCase().includes(q) && !u.phone?.includes(q)) return false;
+            }
+            return true;
+          });
+          const roles = ["ALL", "PASSENGER", "DRIVER", "ADMIN", "SECURITY"];
+          return (
+            <div>
+              <input
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                placeholder="Search by name or phone…"
+                style={{ width: "100%", padding: "10px 14px", borderRadius: "10px", background: BG3, border: `1px solid ${BORDER}`, color: "#f0ede8", fontSize: "13px", marginBottom: "10px", boxSizing: "border-box" }}
+              />
+              <div style={{ display: "flex", gap: "6px", marginBottom: "1rem", flexWrap: "wrap" }}>
+                {roles.map(r => (
+                  <button key={r} onClick={() => setUserRoleFilter(r)} style={{
+                    padding: "6px 14px", borderRadius: "999px", fontSize: "11.5px", cursor: "pointer",
+                    background: userRoleFilter === r ? "rgba(232,184,75,0.15)" : "transparent",
+                    border: `1px solid ${userRoleFilter === r ? G : BORDER}`,
+                    color: userRoleFilter === r ? G : "#a8a49e", fontWeight: userRoleFilter === r ? "700" : "400",
+                  }}>{r === "ALL" ? "All" : r.charAt(0) + r.slice(1).toLowerCase()}</button>
+                ))}
+                <div style={{ marginLeft: "auto", fontSize: "12px", color: "#6b6760", alignSelf: "center" }}>{filtered.length} of {users.length}</div>
+              </div>
+
+              {filtered.length === 0 ? (
+                <div style={{ textAlign: "center", color: "#6b6760", padding: "2rem 0" }}>No users match.</div>
+              ) : filtered.map(u => (
+                <div key={u.id} style={{ ...card, marginBottom: "8px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "10px" }}>
+                    <div>
+                      <div style={{ fontWeight: "700", color: "#f0ede8" }}>{u.name}</div>
+                      <div style={{ fontSize: "12px", color: "#6b6760" }}>{u.phone}{u.email ? ` · ${u.email}` : ""}</div>
+                      <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "2px" }}>
+                        {u.role} · Joined {fmt(u.createdAt)}{u.wallet ? ` · Wallet: R${(u.wallet.balanceZar || 0).toFixed(2)}` : ""}
+                      </div>
+                    </div>
+                    <span style={{ background: (STATUS_COLOR[u.status] || "#6b6760") + "22", color: STATUS_COLOR[u.status] || "#6b6760", border: `1px solid ${STATUS_COLOR[u.status] || "#6b6760"}55`, borderRadius: "999px", padding: "3px 10px", fontSize: "10.5px", fontWeight: "700", flexShrink: 0 }}>
+                      {u.status}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
+                    {u.status !== "ACTIVE" && (
+                      <button onClick={() => updateUserStatus(u.id, "ACTIVE")} style={{ background: "#166534", border: "1px solid #4ade80", borderRadius: "6px", padding: "5px 14px", color: "#4ade80", fontSize: "11.5px", fontWeight: "700", cursor: "pointer" }}>Activate</button>
+                    )}
+                    {u.status !== "SUSPENDED" && (
+                      <button onClick={() => updateUserStatus(u.id, "SUSPENDED")} style={{ background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: "6px", padding: "5px 14px", color: "#f87171", fontSize: "11.5px", fontWeight: "700", cursor: "pointer" }}>Suspend</button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+
         {!loading && tab === "drivers" && (
           <div>
             <div style={{ display: "flex", gap: "8px", marginBottom: "1rem", flexWrap: "wrap" }}>
