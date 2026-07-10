@@ -105,15 +105,15 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const [s, u, r, d, p, dr, so, ps, la] = await Promise.all([
-        api.get("/admin/stats"),
-        api.get("/admin/users"),
-        api.get("/admin/rides"),
-        api.get("/admin/deliveries"),
-        api.get("/admin/products"),
-        api.get("/admin/drivers"),
-        api.get("/admin/service-orders").catch(() => ({ orders: [] })),
+        api.get("/admin/stats").catch((e) => { console.error("[Admin] /stats failed:", e); return { stats: null }; }),
+        api.get("/admin/users").catch((e) => { console.error("[Admin] /users failed:", e); return { users: [] }; }),
+        api.get("/admin/rides").catch((e) => { console.error("[Admin] /rides failed:", e); return { rides: [] }; }),
+        api.get("/admin/deliveries").catch((e) => { console.error("[Admin] /deliveries failed:", e); return { deliveries: [] }; }),
+        api.get("/admin/products").catch((e) => { console.error("[Admin] /products failed:", e); return { products: [] }; }),
+        api.get("/admin/drivers").catch((e) => { console.error("[Admin] /drivers failed:", e); return { drivers: [] }; }),
+        api.get("/admin/service-orders").catch((e) => { console.error("[Admin] /service-orders failed:", e); return { orders: [] }; }),
         api.get("/admin/push/stats").catch(() => null),
-        api.get("/admin/entertainment/ads").catch(() => ({ ads: [] })),
+        api.get("/admin/entertainment/ads").catch((e) => { console.error("[Admin] /entertainment/ads failed:", e); return { ads: [] }; }),
       ]);
       setStats(s.stats);
       setUsers(u.users || []);
@@ -126,7 +126,9 @@ export default function AdminDashboard() {
       const drivers = dr.drivers || [];
       setPendingDrivers(drivers.filter(d => d.status === "PENDING_VERIFICATION"));
       setAllDrivers(drivers);
+      if (!s.stats) toast.error("Some admin data couldn't load — check console for which endpoint failed. Try refreshing.");
     } catch (err) {
+      console.error("[Admin] loadAll unexpected error:", err);
       toast.error("Could not load admin data");
     } finally { setLoading(false); }
   }
