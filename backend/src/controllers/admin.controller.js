@@ -327,6 +327,7 @@ exports.broadcastPush = async (req, res) => {
       imageStrippedForSize = true;
       console.warn(`[PROJO Push] Payload was ${payloadSize} bytes (limit ~4096) — stripped image/extra data to guarantee delivery.`);
     }
+    console.log("[PROJO Push] Final payload being sent:", JSON.stringify(finalPayload));
 
     let sent = 0, failed = 0;
     let vapidNotConfigured = false;
