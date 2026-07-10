@@ -114,6 +114,24 @@ exports.bookRide = async (req, res) => {
       );
     } catch (e) { console.log("[PROJO Ride] WhatsApp notification failed:", e.message); }
 
+    // Notify every online driver — the driver app already listens for this
+    // exact event (ride:new_request), it just never actually got sent.
+    // No geo-matching yet (first online driver to accept wins) — a
+    // straightforward broadcast is the correct MVP behavior here, not a
+    // shortcut; proper nearest-driver matching is a larger feature to
+    // build separately if wanted later.
+    try {
+      const onlineDrivers = await prisma.user.findMany({
+        where: { role: "DRIVER", driverStatus: "ONLINE" },
+        select: { id: true },
+      });
+      const io = req.app.get("io");
+      for (const driver of onlineDrivers) {
+        io?.to(`driver:${driver.id}`).emit("ride:new_request", ride);
+      }
+      console.log(`[PROJO Ride] Notified ${onlineDrivers.length} online driver(s) of new ride ${ride.id}`);
+    } catch (e) { console.log("[PROJO Ride] Driver notification failed:", e.message); }
+
     res.status(201).json({
       message: discount.discountApplied > 0
         ? `Ride booked! ${discount.tierName} tier discount of ${discount.discountPct}% applied (R${discount.discountApplied} off)`

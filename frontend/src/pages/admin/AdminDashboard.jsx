@@ -98,6 +98,16 @@ export default function AdminDashboard() {
     sock.emit("panic:join_monitor");
     sock.on("panic:new_alert", () => setActivePanicCount(c => c + 1));
     sock.on("panic:alert_cancelled", () => setActivePanicCount(c => Math.max(0, c - 1)));
+
+    // Live driver online/offline status — without this, the Drivers tab
+    // (and the online-count elsewhere) only ever reflected reality after a
+    // manual page refresh, since driver:online/offline already broadcasts
+    // to the admin room server-side, but nothing here was listening for it.
+    sock.emit("admin:join");
+    sock.on("driver:status_changed", ({ driverId, status }) => {
+      setAllDrivers(prev => prev.map(d => d.id === driverId ? { ...d, driverStatus: status } : d));
+    });
+
     return () => { sock.emit("panic:leave_monitor"); sock.disconnect(); };
   }, []);
 
