@@ -150,7 +150,7 @@
         onerror="this.style.display='none'" />
       <div class="text">
         <strong>Install PROJO GROUP</strong>
-        <span>Add to your home screen for quick access</span>
+        <span>Required for ride, delivery & panic alerts to arrive reliably</span>
       </div>
       <button class="install" onclick="installApp()">Install App</button>
       <button class="dismiss" onclick="dismissBanner()">✕</button>
@@ -189,6 +189,25 @@
           if (banner) banner.classList.add('show');
         }, 3000);
       });
+
+      // iOS Safari never fires 'beforeinstallprompt' — there's no automatic
+      // prompt at all on iPhone, so without this, iOS users get zero
+      // install guidance and are stuck using the site in a browser tab,
+      // where background notifications are far less reliable.
+      (function() {
+        var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        var isStandalone = window.navigator.standalone === true;
+        if (isIOS && !isStandalone) {
+          setTimeout(function() {
+            var banner = document.getElementById('install-banner');
+            if (!banner) return;
+            banner.querySelector('.text span').textContent =
+              'Tap the Share icon below, then "Add to Home Screen" — required for alerts to arrive reliably';
+            banner.querySelector('button.install').style.display = 'none';
+            banner.classList.add('show');
+          }, 3000);
+        }
+      })();
 
       function installApp() {
         var banner = document.getElementById('install-banner');
