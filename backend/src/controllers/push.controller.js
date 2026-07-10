@@ -36,6 +36,24 @@ exports.unsubscribe = async (req, res) => {
   }
 };
 
+// GET /api/push/image/:id — PUBLIC, serves the actual image bytes for a
+// push notification. This is what the short URL in a payload points to;
+// the browser fetches this separately when displaying the notification,
+// which is why the payload itself never needs to contain the image data.
+exports.servePushImage = async (req, res) => {
+  try {
+    const record = await prisma.pushImage.findUnique({ where: { id: req.params.id } });
+    if (!record) return res.status(404).send("Not found");
+    const match = record.dataUrl.match(/^data:(.+?);base64,(.+)$/);
+    if (!match) return res.status(500).send("Invalid stored image");
+    const [, mimeType, base64Data] = match;
+    const buffer = Buffer.from(base64Data, "base64");
+    res.set("Content-Type", mimeType);
+    res.set("Cache-Control", "public, max-age=604800"); // a week — these never change once uploaded
+    res.send(buffer);
+  } catch (err) { res.status(500).send("Error serving image"); }
+};
+
 // GET /api/push/vapid-key — frontend needs this to subscribe
 exports.getVapidKey = async (req, res) => {
   res.json({ publicKey: process.env.VAPID_PUBLIC_KEY || null });

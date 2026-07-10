@@ -55,6 +55,7 @@ router.delete("/entertainment/ads/:id", admin.adminDeleteAd);
 router.post("/push/broadcast", admin.broadcastPush);
 router.get("/push/stats",      admin.pushStats);
 router.get("/push/subscriptions",       admin.listPushSubscriptions);
+router.post("/push/upload-image",       admin.uploadPushImage);
 router.delete("/push/subscriptions/:id", admin.deletePushSubscription);
 router.put("/service-orders/:id/status", service.updateOrderStatus);
 

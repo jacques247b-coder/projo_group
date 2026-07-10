@@ -269,7 +269,20 @@ export default function AdminDashboard() {
     setPushSending(true);
     setPushResult(null);
     try {
-      const res = await api.post("/admin/push/broadcast", pushForm);
+      let payload = pushForm;
+      if (pushForm.image && pushForm.image.startsWith("data:")) {
+        toast.loading("Uploading image…", { id: "push-img-upload" });
+        try {
+          const uploadRes = await api.post("/admin/push/upload-image", { image: pushForm.image });
+          payload = { ...pushForm, image: uploadRes.url };
+        } catch {
+          toast.dismiss("push-img-upload");
+          toast.error("Couldn't upload the image — sending without it");
+          payload = { ...pushForm, image: undefined };
+        }
+        toast.dismiss("push-img-upload");
+      }
+      const res = await api.post("/admin/push/broadcast", payload);
       setPushResult(res);
       if (res.sent > 0) {
         toast.success(`✅ ${res.message || `Sent to ${res.sent} device${res.sent !== 1 ? "s" : ""}!`}`);

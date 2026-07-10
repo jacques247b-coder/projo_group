@@ -133,6 +133,18 @@ model Delivery {
   updatedAt      DateTime @updatedAt
   @@map("deliveries")
 }
+// Push notification images — stored here (not on local disk, which Render's
+// free tier wipes on every deploy) and served via their own short URL, since
+// push payloads have a hard ~4KB limit and can never contain the image data
+// directly. GET /api/push/image/:id serves the actual bytes; the payload
+// only ever needs to reference that short URL.
+model PushImage {
+  id        String   @id @default(uuid())
+  dataUrl   String   @db.Text // original data:image/...;base64,... string
+  createdAt DateTime @default(now())
+  @@map("push_images")
+}
+
 model Notification {
   id        String   @id @default(uuid())
   userId    String

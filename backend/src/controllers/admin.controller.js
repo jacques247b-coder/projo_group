@@ -428,6 +428,22 @@ exports.deletePushSubscription = async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 };
 
+// POST /api/admin/push/upload-image — stores a base64 image and returns a
+// short URL that's safe to put in a push payload (the payload itself only
+// ever needs this URL, never the image bytes — those get fetched
+// separately by the browser when it displays the notification).
+exports.uploadPushImage = async (req, res) => {
+  try {
+    const { image } = req.body;
+    if (!image || !image.startsWith("data:")) return res.status(400).json({ error: "A base64 image (data:...) is required" });
+    const sizeBytes = Buffer.byteLength(image, "utf8");
+    if (sizeBytes > 5 * 1024 * 1024) return res.status(400).json({ error: "Image too large — please use one under 5MB" });
+    const record = await prisma.pushImage.create({ data: { dataUrl: image } });
+    const base = process.env.PROJO_API_BASE_URL || "https://projo-group-backend.onrender.com";
+    res.json({ url: `${base}/api/push/image/${record.id}` });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
 exports.pushStats = async (req, res) => {
   try {
     const total = await prisma.user.count({ where: { pushSubscriptions: { some: {} } } });
