@@ -17,10 +17,12 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [countdown, setCountdown] = useState(0);
+  const [otpVia, setOtpVia] = useState("email");
 
   const [form, setForm] = useState({
     name: "",
     phone: "",
+    email: "",
     role: params.get("role") === "driver" ? "DRIVER" : "PASSENGER",
     referralCode: params.get("ref") || "",
   });
@@ -35,12 +37,14 @@ export default function RegisterPage() {
   async function handleRegister(e) {
     e.preventDefault();
     if (!form.name.trim()) return toast.error("Enter your full name");
+    if (!form.email.trim() || !form.email.includes("@")) return toast.error("Enter a valid email address");
     const fullPhone = getFullPhone();
     if (fullPhone.length < 12) return toast.error("Enter a valid SA phone number");
     setLoading(true);
     try {
-      await authAPI.register({ ...form, phone: fullPhone });
-      toast.success("OTP sent! Check your phone.");
+      const res = await authAPI.register({ ...form, phone: fullPhone });
+      toast.success(res?.via === "email" ? "OTP sent! Check your email." : "OTP sent! Check your phone.");
+      setOtpVia(res?.via || "email");
       setStep("OTP");
       startCountdown();
     } catch (err) {
@@ -167,6 +171,15 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
+                <div>
+                  <label style={labelStyle}>Email</label>
+                  <input style={inputStyle} placeholder="your@email.com" required type="email"
+                    value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+                  <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "6px" }}>
+                    📧 OTP sent to your email · Used for booking confirmations & offers
+                  </div>
+                </div>
+
                 {form.referralCode !== undefined && (
                   <div>
                     <label style={labelStyle}>Referral Code (optional)</label>
@@ -213,7 +226,7 @@ export default function RegisterPage() {
               <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.25rem",
                 fontWeight: "700", color: "#f0ede8", margin: "0 0 0.5rem" }}>Verify Phone</h2>
               <p style={{ color: "#6b6760", fontSize: "13px", margin: "0 0 1.5rem" }}>
-                OTP sent to <strong style={{ color: "#e8b84b" }}>{getFullPhone()}</strong>
+                OTP sent {otpVia === "email" ? "to" : "via SMS to"} <strong style={{ color: "#e8b84b" }}>{otpVia === "email" ? form.email : getFullPhone()}</strong>
               </p>
               <form onSubmit={handleVerifyOTP}>
                 <div style={{ display: "flex", gap: "8px", marginBottom: "1.5rem", justifyContent: "center" }}>
