@@ -91,6 +91,21 @@ exports.getUsers = async (req, res) => {
 };
 
 // GET /api/admin/drivers
+// GET /api/admin/drivers/:id/documents — fetch one driver's uploaded docs
+// on demand (kept separate from the bulk drivers list, since base64
+// document data would be wasteful to include for every driver at once)
+exports.getDriverDocuments = async (req, res) => {
+  try {
+    const documents = await prisma.driverDocument.findMany({
+      where: { userId: req.params.id },
+      orderBy: { docType: "asc" },
+    });
+    res.json({ documents });
+  } catch (err) {
+    res.status(500).json({ error: "Could not load documents" });
+  }
+};
+
 exports.getDrivers = async (req, res) => {
   try {
     const drivers = await prisma.user.findMany({

@@ -67,6 +67,8 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState([]);
   const [serviceOrders, setServiceOrders] = useState([]);
   const [pendingDrivers, setPendingDrivers] = useState([]);
+  const [viewingDriverDocs, setViewingDriverDocs] = useState(null); // { driver, documents } | null
+  const [loadingDocs, setLoadingDocs] = useState(false);
   const [allDrivers, setAllDrivers] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedRide, setSelectedRide] = useState(null);
@@ -212,7 +214,22 @@ export default function AdminDashboard() {
       await api.post(`/admin/drivers/${id}/approve`);
       toast.success("Driver approved!");
       loadAll();
-    } catch { toast.error("Could not approve"); }
+    } catch (e) {
+      console.error("[Admin] Approve driver failed:", e);
+      toast.error(e?.error || "Could not approve");
+    }
+  }
+
+  async function viewDriverDocuments(driver) {
+    setViewingDriverDocs({ driver, documents: [] });
+    setLoadingDocs(true);
+    try {
+      const res = await api.get(`/admin/drivers/${driver.id}/documents`);
+      setViewingDriverDocs({ driver, documents: res.documents || [] });
+    } catch {
+      toast.error("Could not load documents");
+      setViewingDriverDocs(null);
+    } finally { setLoadingDocs(false); }
   }
 
   async function rejectDriver(id) {
@@ -750,10 +767,17 @@ export default function AdminDashboard() {
                   <div key={d.id} style={{ ...card, marginBottom: "8px" }}>
                     <div style={{ fontWeight: "700", color: "#f0ede8" }}>{d.name}</div>
                     <div style={{ fontSize: "12px", color: "#6b6760" }}>{d.phone} · {d.email || "No email"}</div>
+                    {(d.vehicleMake || d.vehicleRegistration) && (
+                      <div style={{ fontSize: "11px", color: "#a8a49e", marginTop: "4px" }}>
+                        🚗 {d.vehicleYear} {d.vehicleMake} {d.vehicleModel} ({d.vehicleColor}) · {d.vehicleRegistration} · {d.vehicleType}
+                      </div>
+                    )}
+                    {d.idNumber && <div style={{ fontSize: "11px", color: "#a8a49e" }}>ID: {d.idNumber}</div>}
                     <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "2px" }}>Applied {fmt(d.createdAt)}</div>
-                    <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
+                    <div style={{ display: "flex", gap: "8px", marginTop: "10px", flexWrap: "wrap" }}>
                       <button onClick={() => approveDriver(d.id)} style={{ background: "#166534", border: "1px solid #4ade80", borderRadius: "6px", padding: "6px 16px", color: "#4ade80", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>✓ Approve</button>
                       <button onClick={() => rejectDriver(d.id)} style={{ background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: "6px", padding: "6px 16px", color: "#f87171", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>✗ Reject</button>
+                      <button onClick={() => viewDriverDocuments(d)} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "6px", padding: "6px 16px", color: "#a8a49e", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>📄 View Documents</button>
                     </div>
                   </div>
                 ))}
@@ -1297,6 +1321,40 @@ export default function AdminDashboard() {
                 <button onClick={saveProduct} style={{ flex: 1, background: G, color: "#0a0a0a", border: "none", borderRadius: "10px", padding: "12px", fontWeight: "800", fontSize: "14px", cursor: "pointer" }}>Save Product</button>
                 <button onClick={() => setProductModal(null)} style={{ flex: 1, background: BG3, color: "#a8a49e", border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", cursor: "pointer" }}>Cancel</button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── DRIVER DOCUMENTS VIEWER ── */}
+        {viewingDriverDocs && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }} onClick={() => setViewingDriverDocs(null)}>
+            <div onClick={e => e.stopPropagation()} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "1.5rem", maxWidth: "700px", width: "100%", maxHeight: "85vh", overflowY: "auto" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                <div>
+                  <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "800", fontSize: "16px", color: "#f0ede8" }}>{viewingDriverDocs.driver.name}</div>
+                  <div style={{ fontSize: "12px", color: "#6b6760" }}>Uploaded documents</div>
+                </div>
+                <button onClick={() => setViewingDriverDocs(null)} style={{ background: "transparent", border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "6px 12px", color: "#a8a49e", cursor: "pointer" }}>Close</button>
+              </div>
+
+              {loadingDocs ? (
+                <div style={{ textAlign: "center", color: "#6b6760", padding: "2rem" }}>Loading…</div>
+              ) : viewingDriverDocs.documents.length === 0 ? (
+                <div style={{ textAlign: "center", color: "#6b6760", padding: "2rem" }}>No documents uploaded yet.</div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  {viewingDriverDocs.documents.map(doc => (
+                    <div key={doc.id} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "8px" }}>
+                      <div style={{ fontSize: "11px", fontWeight: "700", color: G, marginBottom: "6px", textTransform: "capitalize" }}>{doc.docType.replace(/([A-Z])/g, " $1").trim()}</div>
+                      {doc.dataUrl.startsWith("data:image") ? (
+                        <img src={doc.dataUrl} alt={doc.docType} style={{ width: "100%", borderRadius: "6px", display: "block" }} />
+                      ) : (
+                        <a href={doc.dataUrl} download={doc.docType} style={{ color: G, fontSize: "12px" }}>Download file</a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

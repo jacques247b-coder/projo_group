@@ -7,39 +7,53 @@ const prisma = new PrismaClient();
 exports.applyAsDriver = async (req, res) => {
   try {
     const {
-      idNumber, address,
+      idNumber,
       vehicleMake, vehicleModel, vehicleYear,
       vehicleColor, vehicleRegistration, vehicleType,
+      documents,
     } = req.body;
 
-    // Build doc URLs — in production these would be uploaded to Cloudinary
-    // For now we store filenames; upgrade to Cloudinary when ready
-    const docFields = [
-      "operatorCard", "vehiclePapers", "idCopy",
-      "personPhoto", "vehicleInside", "vehicleOutside"
-    ];
-    const uploadedDocs = {};
-    docFields.forEach(field => {
-      if (req.files && req.files[field]) {
-        uploadedDocs[field] = req.files[field][0].originalname;
-      }
-    });
-
-    // Update user with driver details and set status to PENDING_VERIFICATION
+    // Update user with driver details and set status to PENDING_VERIFICATION.
+    // Previously only role/status were saved here — idNumber and every
+    // vehicle field were silently dropped despite the frontend sending
+    // them correctly and the schema already having columns for them.
     await prisma.user.update({
       where: { id: req.user.id },
       data: {
-        role:    "DRIVER",
-        status:  "PENDING_VERIFICATION",
+        role: "DRIVER",
+        status: "PENDING_VERIFICATION",
+        idNumber: idNumber || undefined,
+        vehicleMake: vehicleMake || undefined,
+        vehicleModel: vehicleModel || undefined,
+        vehicleYear: vehicleYear || undefined,
+        vehicleColor: vehicleColor || undefined,
+        vehicleRegistration: vehicleRegistration || undefined,
+        vehicleType: vehicleType || undefined,
       },
     });
 
-    // Store application details in a JSON note field or separate table
-    // Using a simple approach — store in user's address field and notes
-    // For production, create a DriverApplication model in Prisma schema
+    // Save each uploaded document. Previously this looked for req.files
+    // (multer's format) — but no multer middleware was ever configured on
+    // this route, so req.files was always undefined and NOTHING was ever
+    // saved, regardless of what the driver actually uploaded. The frontend
+    // already sends real base64 data in req.body.documents; store each one
+    // in the DriverDocument table (already existed in the schema, just
+    // never actually used anywhere).
+    const uploadedDocs = {};
+    if (documents && typeof documents === "object") {
+      for (const [docType, dataUrl] of Object.entries(documents)) {
+        if (!dataUrl || typeof dataUrl !== "string" || !dataUrl.startsWith("data:")) continue;
+        // Replace any existing document of this type (e.g. a resubmission)
+        // rather than accumulating duplicates
+        await prisma.driverDocument.deleteMany({ where: { userId: req.user.id, docType } });
+        await prisma.driverDocument.create({ data: { userId: req.user.id, docType, dataUrl } });
+        uploadedDocs[docType] = true;
+      }
+    }
+
     console.log(`[PROJO Driver] New application from ${req.user.name} (${req.user.phone})`);
     console.log(`[PROJO Driver] Vehicle: ${vehicleYear} ${vehicleMake} ${vehicleModel} - ${vehicleRegistration}`);
-    console.log(`[PROJO Driver] Documents:`, Object.keys(uploadedDocs));
+    console.log(`[PROJO Driver] Documents saved:`, Object.keys(uploadedDocs));
 
     // Send WhatsApp notification to PROJO admin
     const uploadedDocsList = Object.keys(uploadedDocs).length > 0
@@ -186,7 +200,8 @@ exports.approveDriver = async (req, res) => {
 
     res.json({ message: "Driver approved and activated", driver });
   } catch (err) {
-    res.status(500).json({ error: "Could not approve driver" });
+    console.error("[PROJO Driver] Approve error:", err.message);
+    res.status(500).json({ error: "Could not approve driver: " + err.message });
   }
 };
 
