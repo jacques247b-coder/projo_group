@@ -12,6 +12,32 @@ import api, { panicAPI } from "../../services/api";
 import toast from "react-hot-toast";
 import { CONTACT } from "../../utils/constants";
 
+const VEHICLE_TYPE_COLORS = {
+  ECONOMY:  "#60a5fa", // blue
+  COMFORT:  "#a78bfa", // purple
+  XL:       "#f59e0b", // orange
+  LUXURY:   "#e8b84b", // gold, matches PROJO brand
+  BIKE:     "#f472b6", // pink
+  VAN:      "#2dd4bf", // teal
+  BUSINESS: "#ef4444", // red
+};
+
+// Default Leaflet markers are small blue pins that get lost against map
+// tiles — a custom, high-contrast circular badge with a car emoji is much
+// easier to actually see. Fill color shows vehicle type at a glance;
+// border color shows status (amber = en route, white = online/waiting).
+function driverMapIcon(vehicleType, enRoute) {
+  const fill = VEHICLE_TYPE_COLORS[vehicleType] || "#4ade80";
+  const border = enRoute ? "#f59e0b" : "#fff";
+  return L.divIcon({
+    className: "",
+    html: `<div style="background:${fill};width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid ${border};box-shadow:0 2px 8px rgba(0,0,0,0.5);font-size:16px;">🚗</div>`,
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+    popupAnchor: [0, -17],
+  });
+}
+
 const G = "#e8b84b";
 const BG = "#0a0a0a";
 const BG2 = "#111111";
@@ -817,6 +843,14 @@ export default function AdminDashboard() {
                   <span>Live Map ({Object.keys(driverLocations).length} tracked)</span>
                   <span style={{ color: G, cursor: "pointer", fontWeight: "400", textTransform: "none", letterSpacing: "normal" }} onClick={() => setShowMapExpanded(true)}>⤢ Expand</span>
                 </div>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "8px" }}>
+                  {Object.entries(VEHICLE_TYPE_COLORS).map(([type, color]) => (
+                    <div key={type} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: color }} />
+                      <span style={{ fontSize: "10px", color: "#6b6760" }}>{type}</span>
+                    </div>
+                  ))}
+                </div>
                 <div onClick={() => setShowMapExpanded(true)} style={{ borderRadius: "12px", overflow: "hidden", border: `1px solid ${BORDER}`, height: "320px", cursor: "pointer", position: "relative" }}>
                   <div style={{ position: "absolute", inset: 0, zIndex: 500, pointerEvents: "none" }} />
                   <MapContainer center={Object.values(driverLocations)[0] ? [Object.values(driverLocations)[0].lat, Object.values(driverLocations)[0].lng] : [-25.6694, 27.2424]} zoom={12} style={{ height: "100%", width: "100%" }} dragging={false} scrollWheelZoom={false} zoomControl={false} doubleClickZoom={false}>
@@ -824,7 +858,8 @@ export default function AdminDashboard() {
                     {Object.entries(driverLocations).map(([driverId, loc]) => {
                       const driver = allDrivers.find(d => d.id === driverId);
                       if (!driver) return null;
-                      return <Marker key={driverId} position={[loc.lat, loc.lng]} />;
+                      const enRoute = driver.driverStatus === "ON_RIDE" || driver.driverStatus === "ON_DELIVERY";
+                      return <Marker key={driverId} position={[loc.lat, loc.lng]} icon={driverMapIcon(driver.vehicleType, enRoute)} />;
                     })}
                   </MapContainer>
                 </div>
@@ -1398,10 +1433,10 @@ export default function AdminDashboard() {
                   if (!driver) return null;
                   const enRoute = driver.driverStatus === "ON_RIDE" || driver.driverStatus === "ON_DELIVERY";
                   return (
-                    <Marker key={driverId} position={[loc.lat, loc.lng]}>
+                    <Marker key={driverId} position={[loc.lat, loc.lng]} icon={driverMapIcon(driver.vehicleType, enRoute)}>
                       <Popup>
                         <strong>{driver.name}</strong><br />
-                        {enRoute ? "🚗 En route" : driver.driverStatus === "ONLINE" ? "🟢 Online, waiting" : "⚪ Offline"}<br />
+                        {enRoute ? "🚗 En route" : driver.driverStatus === "ONLINE" ? "🟢 Online, waiting" : "⚪ Offline"} · {driver.vehicleType || "ECONOMY"}<br />
                         <span style={{ fontSize: "11px", color: "#888" }}>Updated {new Date(loc.timestamp).toLocaleTimeString()}</span>
                       </Popup>
                     </Marker>
