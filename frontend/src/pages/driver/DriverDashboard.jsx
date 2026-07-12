@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 import toast from "react-hot-toast";
 import Navbar from "../../components/ui/Navbar";
+import RideChat from "../../components/ride/RideChat";
 import { driverAPI, rideAPI } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 
@@ -101,6 +102,7 @@ export default function DriverDashboard() {
   const [todayEarnings, setTodayEarnings] = useState(0);
   const [lastTrip, setLastTrip] = useState(null);
   const [showLastTrip, setShowLastTrip] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const [showStreetPickup, setShowStreetPickup] = useState(false);
   const [streetDropoff, setStreetDropoff] = useState(null);
   const [streetCustomDropoff, setStreetCustomDropoff] = useState("");
@@ -602,6 +604,10 @@ export default function DriverDashboard() {
               }}>🗺️ Navigate to Dropoff</button>
             </div>
 
+            <button onClick={() => setShowChat(true)} style={{ width: "100%", background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "10px", color: G, fontWeight: "700", fontSize: "12px", cursor: "pointer", marginBottom: "10px" }}>
+              💬 Chat with Passenger
+            </button>
+
             {/* Status action buttons */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {currentRide.status === "DRIVER_ASSIGNED" && (
@@ -782,6 +788,16 @@ export default function DriverDashboard() {
             </div>
           </div>
         </div>
+      )}
+
+      {showChat && currentRide && (
+        <RideChat
+          rideId={currentRide.id}
+          socket={socketRef.current}
+          currentUserId={user?.id}
+          otherPartyName="Passenger"
+          onClose={() => setShowChat(false)}
+        />
       )}
 
       <style>{`

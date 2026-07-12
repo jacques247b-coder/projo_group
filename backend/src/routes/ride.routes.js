@@ -106,6 +106,11 @@ router.post(
   rideController.acceptRide
 );
 
+// Ride chat — either party (checked inside the controller, since it
+// could be either role depending on who's asking)
+router.get("/:id/messages", authenticate, rideController.getRideMessages);
+router.post("/:id/messages", authenticate, rideController.sendRideMessage);
+
 // Update ride status (arrived, started, completed)
 router.post(
   "/:id/status",

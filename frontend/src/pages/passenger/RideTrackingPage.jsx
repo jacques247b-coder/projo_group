@@ -7,6 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import { RIDE_STATUS_LABELS, formatFare, CONTACT } from "../../utils/constants";
 import { LiveTrackingMap } from "../../components/map";
 import toast from "react-hot-toast";
+import RideChat from "../../components/ride/RideChat";
 
 const G = "#e8b84b";
 const BG = "#0d0505";
@@ -56,6 +57,7 @@ export default function RideTrackingPage({ shared = false }) {
   const [stars, setStars]             = useState(5);
   const [comment, setComment]         = useState("");
   const [driverInfo, setDriverInfo]   = useState(null);
+  const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
     loadRide();
@@ -301,6 +303,9 @@ export default function RideTrackingPage({ shared = false }) {
                     📞 Call
                   </button>
                 )}
+                <button onClick={() => setShowChat(true)} style={{ background: "#1a1a1a", border: "1px solid rgba(232,184,75,0.15)", borderRadius: "10px", padding: "10px 16px", color: "#e8b84b", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>
+                  💬 Chat
+                </button>
                 <button onClick={sosAlert} style={{ background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: "10px", padding: "10px 16px", color: "#f87171", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>
                   🚨 SOS
                 </button>
@@ -377,6 +382,16 @@ export default function RideTrackingPage({ shared = false }) {
           </div>
         )}
       </div>
+
+      {showChat && ride && !shared && (
+        <RideChat
+          rideId={ride.id}
+          socket={socketRef.current}
+          currentUserId={user?.id}
+          otherPartyName={driverInfo?.name || "your driver"}
+          onClose={() => setShowChat(false)}
+        />
+      )}
 
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

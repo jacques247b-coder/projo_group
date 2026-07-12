@@ -290,6 +290,17 @@ exports.updateRideStatus = async (req, res) => {
       }
     }
 
+    // Push notification for the most time-sensitive moment — the
+    // passenger needs to know the driver has arrived even if their app
+    // isn't open right now. The live socket toast (sent separately from
+    // the driver's frontend) only ever reaches an actively-open app.
+    if (status === "ARRIVED_AT_PICKUP") {
+      try {
+        const { notifyUser } = require("./push.controller");
+        await notifyUser(ride.passengerId, { title: "📍 Your Driver Has Arrived", body: "Your driver is waiting at the pickup point", data: { url: `/ride/${ride.id}` } });
+      } catch (e) { console.log("[PROJO Ride] Arrived push notification failed:", e.message); }
+    }
+
     res.json({ message: "Status updated", ride: updated });
   } catch (err) {
     res.status(500).json({ error: "Could not update status" });
@@ -338,6 +349,50 @@ exports.getSharedRide = async (req, res) => {
 };
 
 // POST /api/rides/:id/rate
+// GET /api/rides/:id/messages — chat history for a ride, restricted to
+// the ride's actual passenger or driver
+exports.getRideMessages = async (req, res) => {
+  try {
+    const ride = await prisma.ride.findUnique({ where: { id: req.params.id }, select: { passengerId: true, driverId: true } });
+    if (!ride) return res.status(404).json({ error: "Ride not found" });
+    if (req.user.id !== ride.passengerId && req.user.id !== ride.driverId) {
+      return res.status(403).json({ error: "Not your ride" });
+    }
+    const messages = await prisma.rideMessage.findMany({
+      where: { rideId: req.params.id },
+      orderBy: { createdAt: "asc" },
+    });
+    res.json({ messages });
+  } catch (err) {
+    res.status(500).json({ error: "Could not load messages" });
+  }
+};
+
+// POST /api/rides/:id/messages — send + persist a chat message, also
+// pushed live via socket so the other party sees it instantly without
+// needing to poll or refresh
+exports.sendRideMessage = async (req, res) => {
+  try {
+    const { message } = req.body;
+    if (!message || !message.trim()) return res.status(400).json({ error: "Message required" });
+    const ride = await prisma.ride.findUnique({ where: { id: req.params.id }, select: { passengerId: true, driverId: true } });
+    if (!ride) return res.status(404).json({ error: "Ride not found" });
+    if (req.user.id !== ride.passengerId && req.user.id !== ride.driverId) {
+      return res.status(403).json({ error: "Not your ride" });
+    }
+    const saved = await prisma.rideMessage.create({
+      data: { rideId: req.params.id, senderId: req.user.id, message: message.trim() },
+    });
+    const io = req.app.get("io");
+    io?.to(`ride:${req.params.id}`).emit("ride:chat_message", {
+      id: saved.id, rideId: req.params.id, senderId: req.user.id, senderName: req.user.name, message: saved.message, createdAt: saved.createdAt,
+    });
+    res.status(201).json({ message: saved });
+  } catch (err) {
+    res.status(500).json({ error: "Could not send message" });
+  }
+};
+
 exports.rateRide = async (req, res) => {
   res.json({ message: "Rating saved. Thank you!" });
 };
@@ -349,6 +404,20 @@ exports.acceptRide = async (req, res) => {
       where: { id: req.params.id },
       data: { driverId: req.user.id, status: "DRIVER_ASSIGNED" },
     });
+
+    // Push notification to the passenger — the live socket event (sent
+    // separately, from the driver's own frontend) only reaches an
+    // actively-open app; this reaches them even backgrounded/closed,
+    // same reasoning as ride dispatch to drivers.
+    try {
+      const { notifyUser } = require("./push.controller");
+      await notifyUser(ride.passengerId, {
+        title: "🚗 Driver On The Way",
+        body: `${req.user.name} is heading to your pickup`,
+        data: { url: `/ride/${ride.id}` },
+      });
+    } catch (e) { console.log("[PROJO Ride] Passenger push notification failed:", e.message); }
+
     res.json({ message: "Ride accepted", ride });
   } catch (err) {
     console.error("[PROJO Ride] acceptRide error:", err.message, "| rideId:", req.params.id, "| driverId:", req.user?.id);

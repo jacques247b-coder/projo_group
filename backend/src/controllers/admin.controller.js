@@ -254,6 +254,27 @@ exports.updateRideStatus = async (req, res) => {
       where: { id: req.params.id },
       data: { status },
     });
+
+    // Admin manually changing status previously never told the passenger
+    // at all — only the driver's own accept/status-update flow did. Match
+    // that behavior here so any admin-triggered change is just as visible.
+    const io = req.app.get("io");
+    if (status === "DRIVER_ASSIGNED" && ride.driverId) {
+      const driver = await prisma.user.findUnique({ where: { id: ride.driverId } });
+      if (driver) {
+        io?.to(`ride:${ride.id}`).emit("ride:driver_assigned", {
+          rideId: ride.id, driverId: driver.id, driverName: driver.name, driverPhone: driver.phone,
+          vehicleMake: driver.vehicleMake, vehicleModel: driver.vehicleModel, vehicleColor: driver.vehicleColor,
+          vehicleRegistration: driver.vehicleRegistration, vehicleType: driver.vehicleType,
+          photoUrl: `${process.env.PROJO_API_BASE_URL || "https://projo-group-backend.onrender.com"}/api/drivers/${driver.id}/photo`,
+        });
+        const { notifyUser } = require("./push.controller");
+        notifyUser(ride.passengerId, { title: "🚗 Driver On The Way", body: `${driver.name} has been assigned to your ride`, data: { url: `/ride/${ride.id}` } }).catch(() => {});
+      }
+    } else {
+      io?.to(`ride:${ride.id}`).emit("ride:status_changed", { status });
+    }
+
     res.json({ message: "Ride status updated", ride });
   } catch (err) {
     res.status(500).json({ error: "Could not update ride" });

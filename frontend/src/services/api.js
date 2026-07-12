@@ -79,6 +79,8 @@ export const rideAPI = {
   updateStatus: (id, status) => api.post(`/rides/${id}/status`, { status }),
   acceptRide: (id) => api.post(`/rides/${id}/accept`),
   streetPickup: (data) => api.post("/rides/street-pickup", data),
+  getMessages: (id) => api.get(`/rides/${id}/messages`),
+  sendMessage: (id, message) => api.post(`/rides/${id}/messages`, { message }),
 };
 
 export const walletAPI = {

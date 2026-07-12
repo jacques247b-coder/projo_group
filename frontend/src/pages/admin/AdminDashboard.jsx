@@ -229,6 +229,7 @@ export default function AdminDashboard() {
     try {
       await api.put(`/admin/rides/${id}/status`, { status });
       toast.success(`Status updated to ${status}`);
+      setSelectedRide(prev => prev && prev.id === id ? { ...prev, status } : prev);
       loadAll();
     } catch { toast.error("Could not update status"); }
   }
@@ -552,7 +553,12 @@ export default function AdminDashboard() {
                 </div>
                 <div style={{ display: "flex", gap: "8px", marginTop: "1rem", flexWrap: "wrap" }}>
                   {["DRIVER_ASSIGNED","IN_PROGRESS","COMPLETED"].map(s => (
-                    <button key={s} onClick={() => updateRideStatus(selectedRide.id, s)} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "6px", padding: "6px 12px", color: G, fontSize: "11px", fontWeight: "700", cursor: "pointer" }}>{s.replace(/_/g," ")}</button>
+                    <button key={s} onClick={() => updateRideStatus(selectedRide.id, s)} style={{
+                      background: selectedRide.status === s ? "rgba(232,184,75,0.15)" : BG3,
+                      border: `1px solid ${selectedRide.status === s ? G : BORDER}`,
+                      borderRadius: "6px", padding: "6px 12px", color: G, fontSize: "11px",
+                      fontWeight: selectedRide.status === s ? "800" : "700", cursor: "pointer",
+                    }}>{selectedRide.status === s ? "✓ " : ""}{s.replace(/_/g," ")}</button>
                   ))}
                   {selectedRide.status !== "CANCELLED" && selectedRide.status !== "COMPLETED" && (
                     <button onClick={() => { cancelRide(selectedRide.id); setSelectedRide(null); }} style={{ background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: "6px", padding: "6px 12px", color: "#f87171", fontSize: "11px", fontWeight: "700", cursor: "pointer" }}>Cancel Ride</button>

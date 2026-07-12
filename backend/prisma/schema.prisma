@@ -121,7 +121,23 @@ model Ride {
   streetPickupEmail String? // optional — the actual walk-up passenger's email, if the driver captured one, so THEY can get the invoice instead of it just going to the driver
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  messages       RideMessage[]
   @@map("rides")
+}
+
+// Simple 1-on-1 chat between driver and passenger, scoped to a single
+// ride. Deliberately separate from the ChatMessage model, which is built
+// for the community feature (anonymous rooms, moderation, polls) — none
+// of that complexity belongs here.
+model RideMessage {
+  id        String   @id @default(uuid())
+  rideId    String
+  ride      Ride     @relation(fields: [rideId], references: [id])
+  senderId  String   // the passenger or driver's user id — whichever sent it
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+  @@index([rideId, createdAt])
+  @@map("ride_messages")
 }
 model Delivery {
   id             String   @id @default(uuid())
