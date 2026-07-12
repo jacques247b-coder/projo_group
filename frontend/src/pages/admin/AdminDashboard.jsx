@@ -75,6 +75,10 @@ export default function AdminDashboard() {
   const [allDrivers, setAllDrivers] = useState([]);
   const [driverLocations, setDriverLocations] = useState({}); // driverId -> {lat, lng, timestamp}
   const [driverTodayStats, setDriverTodayStats] = useState({}); // driverId -> {rides, deliveries, earnings}
+  const [showMapExpanded, setShowMapExpanded] = useState(false);
+  const [viewingDriverStats, setViewingDriverStats] = useState(null); // driver object | null
+  const [driverStatsDetail, setDriverStatsDetail] = useState(null); // detailed trip list for the modal
+  const [loadingDriverStats, setLoadingDriverStats] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedRide, setSelectedRide] = useState(null);
   const [selectedDelivery, setSelectedDelivery] = useState(null);
@@ -240,6 +244,19 @@ export default function AdminDashboard() {
       toast.error("Could not load documents");
       setViewingDriverDocs(null);
     } finally { setLoadingDocs(false); }
+  }
+
+  async function viewDriverShiftStats(driver) {
+    setViewingDriverStats(driver);
+    setDriverStatsDetail(null);
+    setLoadingDriverStats(true);
+    try {
+      const res = await api.get(`/admin/drivers/${driver.id}/shift-stats`);
+      setDriverStatsDetail(res);
+    } catch {
+      toast.error("Could not load shift stats");
+      setViewingDriverStats(null);
+    } finally { setLoadingDriverStats(false); }
   }
 
   async function rejectDriver(id) {
@@ -796,23 +813,18 @@ export default function AdminDashboard() {
 
             {Object.keys(driverLocations).length > 0 && (
               <div style={{ marginBottom: "1.5rem" }}>
-                <div style={{ fontSize: "12px", fontWeight: "700", color: "#6b6760", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Live Map ({Object.keys(driverLocations).length} tracked)</div>
-                <div style={{ borderRadius: "12px", overflow: "hidden", border: `1px solid ${BORDER}`, height: "320px" }}>
-                  <MapContainer center={Object.values(driverLocations)[0] ? [Object.values(driverLocations)[0].lat, Object.values(driverLocations)[0].lng] : [-25.6694, 27.2424]} zoom={12} style={{ height: "100%", width: "100%" }}>
+                <div style={{ fontSize: "12px", fontWeight: "700", color: "#6b6760", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span>Live Map ({Object.keys(driverLocations).length} tracked)</span>
+                  <span style={{ color: G, cursor: "pointer", fontWeight: "400", textTransform: "none", letterSpacing: "normal" }} onClick={() => setShowMapExpanded(true)}>⤢ Expand</span>
+                </div>
+                <div onClick={() => setShowMapExpanded(true)} style={{ borderRadius: "12px", overflow: "hidden", border: `1px solid ${BORDER}`, height: "320px", cursor: "pointer", position: "relative" }}>
+                  <div style={{ position: "absolute", inset: 0, zIndex: 500, pointerEvents: "none" }} />
+                  <MapContainer center={Object.values(driverLocations)[0] ? [Object.values(driverLocations)[0].lat, Object.values(driverLocations)[0].lng] : [-25.6694, 27.2424]} zoom={12} style={{ height: "100%", width: "100%" }} dragging={false} scrollWheelZoom={false} zoomControl={false} doubleClickZoom={false}>
                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap" />
                     {Object.entries(driverLocations).map(([driverId, loc]) => {
                       const driver = allDrivers.find(d => d.id === driverId);
                       if (!driver) return null;
-                      const enRoute = driver.driverStatus === "ON_RIDE" || driver.driverStatus === "ON_DELIVERY";
-                      return (
-                        <Marker key={driverId} position={[loc.lat, loc.lng]}>
-                          <Popup>
-                            <strong>{driver.name}</strong><br />
-                            {enRoute ? "🚗 En route" : driver.driverStatus === "ONLINE" ? "🟢 Online, waiting" : "⚪ Offline"}<br />
-                            <span style={{ fontSize: "11px", color: "#888" }}>Updated {new Date(loc.timestamp).toLocaleTimeString()}</span>
-                          </Popup>
-                        </Marker>
-                      );
+                      return <Marker key={driverId} position={[loc.lat, loc.lng]} />;
                     })}
                   </MapContainer>
                 </div>
@@ -837,9 +849,12 @@ export default function AdminDashboard() {
                     </span>
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: "12px", marginTop: "10px", paddingTop: "10px", borderTop: `1px solid ${BORDER}`, fontSize: "11px", color: "#a8a49e" }}>
-                  <span>Today: <strong style={{ color: "#f0ede8" }}>{today.rides + today.deliveries}</strong> trip{today.rides + today.deliveries !== 1 ? "s" : ""}</span>
-                  <span>Earned: <strong style={{ color: G }}>R{today.earnings.toFixed(2)}</strong></span>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "10px", paddingTop: "10px", borderTop: `1px solid ${BORDER}` }}>
+                  <div style={{ display: "flex", gap: "12px", fontSize: "11px", color: "#a8a49e" }}>
+                    <span>Today: <strong style={{ color: "#f0ede8" }}>{today.rides + today.deliveries}</strong> trip{today.rides + today.deliveries !== 1 ? "s" : ""}</span>
+                    <span>Earned: <strong style={{ color: G }}>R{today.earnings.toFixed(2)}</strong></span>
+                  </div>
+                  <button onClick={() => viewDriverShiftStats(d)} style={{ background: "transparent", border: `1px solid ${BORDER}`, borderRadius: "6px", padding: "4px 10px", color: G, fontSize: "10.5px", fontWeight: "700", cursor: "pointer", flexShrink: 0 }}>View Full Stats</button>
                 </div>
               </div>
               );
@@ -1364,6 +1379,81 @@ export default function AdminDashboard() {
                 <button onClick={saveProduct} style={{ flex: 1, background: G, color: "#0a0a0a", border: "none", borderRadius: "10px", padding: "12px", fontWeight: "800", fontSize: "14px", cursor: "pointer" }}>Save Product</button>
                 <button onClick={() => setProductModal(null)} style={{ flex: 1, background: BG3, color: "#a8a49e", border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", cursor: "pointer" }}>Cancel</button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── EXPANDED MAP ── */}
+        {showMapExpanded && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 1100, display: "flex", flexDirection: "column", padding: "1rem" }} onClick={() => setShowMapExpanded(false)}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "800", fontSize: "16px", color: "#f0ede8" }}>Live Driver Map ({Object.keys(driverLocations).length} tracked)</div>
+              <button onClick={() => setShowMapExpanded(false)} style={{ background: "transparent", border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "8px 16px", color: "#a8a49e", cursor: "pointer" }}>✕ Close</button>
+            </div>
+            <div onClick={e => e.stopPropagation()} style={{ flex: 1, borderRadius: "12px", overflow: "hidden", border: `1px solid ${BORDER}` }}>
+              <MapContainer center={Object.values(driverLocations)[0] ? [Object.values(driverLocations)[0].lat, Object.values(driverLocations)[0].lng] : [-25.6694, 27.2424]} zoom={13} style={{ height: "100%", width: "100%" }}>
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap" />
+                {Object.entries(driverLocations).map(([driverId, loc]) => {
+                  const driver = allDrivers.find(d => d.id === driverId);
+                  if (!driver) return null;
+                  const enRoute = driver.driverStatus === "ON_RIDE" || driver.driverStatus === "ON_DELIVERY";
+                  return (
+                    <Marker key={driverId} position={[loc.lat, loc.lng]}>
+                      <Popup>
+                        <strong>{driver.name}</strong><br />
+                        {enRoute ? "🚗 En route" : driver.driverStatus === "ONLINE" ? "🟢 Online, waiting" : "⚪ Offline"}<br />
+                        <span style={{ fontSize: "11px", color: "#888" }}>Updated {new Date(loc.timestamp).toLocaleTimeString()}</span>
+                      </Popup>
+                    </Marker>
+                  );
+                })}
+              </MapContainer>
+            </div>
+          </div>
+        )}
+
+        {/* ── DRIVER SHIFT STATS ── */}
+        {viewingDriverStats && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }} onClick={() => setViewingDriverStats(null)}>
+            <div onClick={e => e.stopPropagation()} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "1.5rem", maxWidth: "500px", width: "100%", maxHeight: "85vh", overflowY: "auto" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "800", fontSize: "16px", color: "#f0ede8" }}>{viewingDriverStats.name}</div>
+                <button onClick={() => setViewingDriverStats(null)} style={{ background: "transparent", border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "6px 12px", color: "#a8a49e", cursor: "pointer" }}>Close</button>
+              </div>
+              <div style={{ fontSize: "12px", color: "#6b6760", marginBottom: "16px" }}>Today's shift</div>
+
+              {loadingDriverStats ? (
+                <div style={{ textAlign: "center", color: "#6b6760", padding: "2rem" }}>Loading…</div>
+              ) : driverStatsDetail ? (
+                <>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "1.5rem" }}>
+                    <div style={{ ...card, textAlign: "center", padding: "12px" }}>
+                      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "22px", fontWeight: "800", color: G }}>{driverStatsDetail.totalTrips}</div>
+                      <div style={{ fontSize: "11px", color: "#6b6760" }}>Trips Today</div>
+                    </div>
+                    <div style={{ ...card, textAlign: "center", padding: "12px" }}>
+                      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "22px", fontWeight: "800", color: "#4ade80" }}>R{driverStatsDetail.totalEarned.toFixed(2)}</div>
+                      <div style={{ fontSize: "11px", color: "#6b6760" }}>Earned Today</div>
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: "11px", color: "#6b6760", fontWeight: "700", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>Trip History</div>
+                  {driverStatsDetail.trips.length === 0 ? (
+                    <div style={{ textAlign: "center", color: "#6b6760", padding: "1.5rem" }}>No completed trips yet today.</div>
+                  ) : driverStatsDetail.trips.map(t => (
+                    <div key={t.id} style={{ ...card, marginBottom: "6px", padding: "10px 12px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                        <div>
+                          <span style={{ fontSize: "10px", fontWeight: "700", color: t.type === "Delivery" ? "#3b9eff" : t.type === "Street Pickup" ? "#a78bfa" : G, textTransform: "uppercase" }}>{t.type}</span>
+                          <div style={{ fontSize: "12px", color: "#f0ede8", marginTop: "2px" }}>{t.from} → {t.to}</div>
+                          <div style={{ fontSize: "10.5px", color: "#6b6760", marginTop: "2px" }}>{new Date(t.time).toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" })}</div>
+                        </div>
+                        <div style={{ color: "#4ade80", fontWeight: "700", fontSize: "13px", flexShrink: 0 }}>R{(t.earned || 0).toFixed(2)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              ) : null}
             </div>
           </div>
         )}

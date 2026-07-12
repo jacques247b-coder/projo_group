@@ -109,6 +109,43 @@ exports.getDriverDocuments = async (req, res) => {
 // GET /api/admin/drivers/today-stats — today's rides + earnings for every
 // driver at once (one query each, grouped in JS — avoids an N+1 query per
 // driver for what would otherwise be a very chatty endpoint)
+// GET /api/admin/drivers/:id/shift-stats — one driver's detailed shift
+// breakdown: every trip completed today, listed individually, plus
+// totals. Separate from the lightweight today-stats endpoint above
+// (which covers every driver at once but only as counts/sums) — this one
+// is for when admin clicks into a specific driver to see the full picture.
+exports.getDriverShiftStats = async (req, res) => {
+  try {
+    const since = new Date();
+    since.setHours(0, 0, 0, 0);
+    const driverId = req.params.id;
+
+    const [rides, deliveries] = await Promise.all([
+      prisma.ride.findMany({
+        where: { driverId, status: "COMPLETED", updatedAt: { gte: since } },
+        select: { id: true, pickupAddress: true, dropoffAddress: true, totalFare: true, driverPayout: true, updatedAt: true, isStreetPickup: true },
+        orderBy: { updatedAt: "desc" },
+      }),
+      prisma.delivery.findMany({
+        where: { driverId, status: "COMPLETED", updatedAt: { gte: since } },
+        select: { id: true, pickupAddress: true, dropoffAddress: true, fare: true, updatedAt: true },
+        orderBy: { updatedAt: "desc" },
+      }),
+    ]);
+
+    const trips = [
+      ...rides.map(r => ({ type: r.isStreetPickup ? "Street Pickup" : "Ride", id: r.id, from: r.pickupAddress, to: r.dropoffAddress, earned: r.driverPayout, time: r.updatedAt })),
+      ...deliveries.map(d => ({ type: "Delivery", id: d.id, from: d.pickupAddress, to: d.dropoffAddress, earned: d.fare, time: d.updatedAt })),
+    ].sort((a, b) => new Date(b.time) - new Date(a.time));
+
+    const totalEarned = trips.reduce((sum, t) => sum + (t.earned || 0), 0);
+
+    res.json({ trips, totalEarned, totalTrips: trips.length });
+  } catch (err) {
+    res.status(500).json({ error: "Could not load driver shift stats" });
+  }
+};
+
 exports.getDriverTodayStats = async (req, res) => {
   try {
     const since = new Date();
