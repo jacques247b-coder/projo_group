@@ -35,6 +35,17 @@ export default function DriverDashboard() {
   const [online, setOnline] = useState(false);
   const restoredOnlineRef = useRef(false);
   const socketRef = useRef(null);
+  // The socket setup effect below only runs once (empty dependency array —
+  // intentional, so the connection itself isn't torn down and recreated on
+  // every state change). That means any state the socket's event handlers
+  // reference gets permanently frozen at whatever it was on that first
+  // render — a classic stale-closure bug. These refs are kept in sync with
+  // the real state via the effects further down, and the handlers read
+  // .current instead, so they always see the live value.
+  const onlineRef = useRef(false);
+  const locationGrantedRef = useRef(false);
+  const userRef = useRef(user);
+  useEffect(() => { userRef.current = user; }, [user]);
 
   // Restore online/offline UI state from what's actually persisted in the
   // database, instead of always starting as offline regardless of what the
@@ -58,6 +69,12 @@ export default function DriverDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.driverStatus, user?.id]);
   const [locationGranted, setLocationGranted] = useState(false);
+
+  // Keep the refs in sync with the real state on every change, so the
+  // socket handlers (set up once, see the big comment above) always read
+  // the current value via .current instead of a permanently stale one.
+  useEffect(() => { onlineRef.current = online; }, [online]);
+  useEffect(() => { locationGrantedRef.current = locationGranted; }, [locationGranted]);
   const [locationError, setLocationError] = useState(null);
   const [driverPos, setDriverPos] = useState(null);
   const [pendingRide, setPendingRide] = useState(null);
@@ -143,15 +160,16 @@ export default function DriverDashboard() {
       // driver would show "online" in the UI but never actually receive
       // ride requests again, since driver:online is what puts them in the
       // room and a fresh socket connection starts in no rooms at all.
-      if (user?.driverStatus === "ONLINE") {
-        sock.emit("driver:online", { driverId: user?.id });
+      if (userRef.current?.driverStatus === "ONLINE") {
+        sock.emit("driver:online", { driverId: userRef.current?.id });
       }
     });
     sock.on("disconnect", () => console.log("[PROJO Driver] Socket disconnected"));
 
     // New ride request
     sock.on("ride:new_request", (ride) => {
-      if (online && locationGranted) {
+      console.log("[PROJO Driver] Received ride:new_request", ride.id, "| online:", onlineRef.current, "| locationGranted:", locationGrantedRef.current);
+      if (onlineRef.current && locationGrantedRef.current) {
         setPendingRide(ride);
         toast("🚗 New ride request!", { duration: 20000, icon: "🔔" });
         // Vibrate device
@@ -161,7 +179,7 @@ export default function DriverDashboard() {
 
     // New delivery request
     sock.on("delivery:new_request", (delivery) => {
-      if (online && locationGranted) {
+      if (onlineRef.current && locationGrantedRef.current) {
         setPendingRide({ ...delivery, type: "delivery" });
         toast("📦 New delivery request!", { duration: 20000, icon: "🔔" });
         if (navigator.vibrate) navigator.vibrate([300, 100, 300]);

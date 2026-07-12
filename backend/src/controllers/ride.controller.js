@@ -123,11 +123,14 @@ exports.bookRide = async (req, res) => {
     try {
       const onlineDrivers = await prisma.user.findMany({
         where: { role: "DRIVER", driverStatus: "ONLINE" },
-        select: { id: true },
+        select: { id: true, name: true },
       });
       const io = req.app.get("io");
       for (const driver of onlineDrivers) {
-        io?.to(`driver:${driver.id}`).emit("ride:new_request", ride);
+        const roomName = `driver:${driver.id}`;
+        const roomSize = io?.sockets?.adapter?.rooms?.get(roomName)?.size || 0;
+        console.log(`[PROJO Ride] Emitting to room "${roomName}" (${driver.name}) — ${roomSize} socket(s) actually in that room right now`);
+        io?.to(roomName).emit("ride:new_request", ride);
       }
       console.log(`[PROJO Ride] Notified ${onlineDrivers.length} online driver(s) of new ride ${ride.id}`);
     } catch (e) { console.log("[PROJO Ride] Driver notification failed:", e.message); }
