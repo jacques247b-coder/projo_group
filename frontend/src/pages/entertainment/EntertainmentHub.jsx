@@ -7,6 +7,7 @@ import Navbar from "../../components/ui/Navbar";
 import ReadingHub from "./ReadingHub";
 import { useAuth } from "../../context/AuthContext";
 import toast from "react-hot-toast";
+import PokerGame from "../../components/games/PokerGame";
 
 const G = "#e8b84b";
 const BG = "#0a0a0a";
@@ -329,6 +330,7 @@ const GAMES = [
   { id: "reaction", title: "Reaction Time", icon: "⚡", color: G, desc: "How fast are you?" },
   { id: "sudoku",   title: "Sudoku",        icon: "🔢", color: "#34d399", desc: "Classic number puzzle" },
   { id: "solitaire",title: "Solitaire",     icon: "🃏", color: "#f87171", desc: "Classic card game" },
+  { id: "pokerlive", title: "Texas Hold'em Live", icon: "♠️", color: "#4ade80", desc: "Play live against real players — free chips" },
 ];
 
 const TABS = [
@@ -2462,6 +2464,7 @@ export default function EntertainmentHub() {
                   {activeGame === "reaction" && <ReactionGame />}
                   {activeGame === "tictactoe"&& <TicTacToe />}
                   {activeGame === "memory"   && <MemoryGame />}
+                  {activeGame === "pokerlive" && <PokerGame />}
                   {activeGame === "trivia"   && <TriviaGame />}
                   {activeGame === "snake"    && <SnakeGame />}
                   {activeGame === "sudoku"   && <SudokuGame />}

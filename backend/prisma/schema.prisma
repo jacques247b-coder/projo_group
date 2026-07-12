@@ -11,6 +11,7 @@ model User {
   id           String    @id @default(uuid())
   email        String?   @unique
   phone        String    @unique
+  pokerChips   Int       @default(1000) // free-to-play fake currency — never real money/wallet, so no gambling licensing applies
   driverStatus String?   @default("OFFLINE") // ONLINE | OFFLINE | ON_RIDE | ON_DELIVERY — only meaningful for role:"DRIVER"
   idNumber             String?  // SA ID number — driver applications only
   vehicleMake          String?
@@ -245,6 +246,48 @@ model DigitalPurchase {
   createdAt  DateTime @default(now())
   @@unique([productId, userId]) // already bought it — no need to buy again, just re-download
   @@map("digital_purchases")
+}
+
+// Texas Hold'em — free-to-play only, fake chips (User.pokerChips), never
+// real money or wallet stakes, so no gambling licensing applies. Server is
+// authoritative for all game state; hole cards are only ever sent to the
+// player who owns them, never broadcast, until showdown.
+model PokerTable {
+  id              String   @id @default(uuid())
+  name            String
+  status          String   @default("WAITING") // WAITING | PLAYING | FINISHED
+  maxPlayers      Int      @default(6)
+  smallBlind      Int      @default(10)
+  bigBlind        Int      @default(20)
+  dealerSeat      Int      @default(0)
+  currentTurnSeat Int?
+  currentRound    String   @default("PREFLOP") // PREFLOP | FLOP | TURN | RIVER | SHOWDOWN
+  communityCards  String   @default("[]") @db.Text // JSON array
+  deck            String   @default("[]") @db.Text // JSON array, server-side only, never sent to clients
+  pot             Int      @default(0)
+  currentBet      Int      @default(0) // the bet amount everyone must match this round
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  players         PokerPlayer[]
+  @@map("poker_tables")
+}
+
+model PokerPlayer {
+  id           String   @id @default(uuid())
+  tableId      String
+  table        PokerTable @relation(fields: [tableId], references: [id])
+  userId       String
+  seat         Int
+  chips        Int      // this table's stack, drawn from User.pokerChips on join, returned on leave
+  holeCards    String   @default("[]") @db.Text // JSON, private — only ever sent to this player
+  status       String   @default("ACTIVE") // ACTIVE | FOLDED | ALL_IN | SITTING_OUT
+  currentBet   Int      @default(0) // this player's bet in the CURRENT betting round only — resets every round
+  totalBet     Int      @default(0) // total contribution across the WHOLE hand, all rounds — resets only when a new hand deals. Used for side-pot calculation, since currentBet alone isn't enough once betting has moved past preflop.
+  hasActed     Boolean  @default(false)
+  joinedAt     DateTime @default(now())
+  @@unique([tableId, seat])
+  @@unique([tableId, userId])
+  @@map("poker_players")
 }
 
 model PromoCode {

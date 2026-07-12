@@ -26,6 +26,7 @@ app.get("/health", (req, res) => {
 
 app.use("/api/auth",       require("./routes/auth.routes"));
 app.use("/api/rides",      require("./routes/ride.routes"));
+app.use("/api/games",      require("./routes/games.routes"));
 app.use("/api/wallet",     require("./routes/wallet.routes"));
 app.use("/api/deliveries", require("./routes/delivery.routes"));
 app.use("/api/shop",       require("./routes/shop.routes"));
@@ -52,6 +53,8 @@ const { registerDatingSocket } = require("./sockets/dating.socket");
 registerDatingSocket(io);
 const { registerPanicSocket } = require("./sockets/panic.socket");
 registerPanicSocket(io);
+const { registerPokerSocket } = require("./sockets/poker.socket");
+registerPokerSocket(io);
 
 io.on("connection", (socket) => {
   // Driver joins their room
