@@ -183,6 +183,7 @@ exports.streetPickup = async (req, res) => {
         driverPayout: fare.totalFare, // driver collects the full cash fare directly
         status: "DRIVER_ASSIGNED",
         paidWithWallet: false,
+        isStreetPickup: true,
       },
     });
 
@@ -233,8 +234,12 @@ exports.updateRideStatus = async (req, res) => {
       data: { status },
     });
 
-    // Award loyalty points + generate invoice when ride COMPLETES
-    if (status === "COMPLETED") {
+    // Award loyalty points + generate invoice when ride COMPLETES —
+    // never for street pickups, since passengerId is just the driver's own
+    // account there (a placeholder, not a real customer) and would
+    // otherwise incorrectly earn the driver points/invoices for their own
+    // cash pickups.
+    if (status === "COMPLETED" && !ride.isStreetPickup) {
       await awardPoints(ride.passengerId, ride.totalFare, `Ride completed`);
       try {
         const { generateAndSendInvoice } = require("../services/invoice.service");
