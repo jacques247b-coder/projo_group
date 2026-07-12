@@ -1451,9 +1451,24 @@ export default function AdminDashboard() {
         {viewingDriverStats && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }} onClick={() => setViewingDriverStats(null)}>
             <div onClick={e => e.stopPropagation()} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "1.5rem", maxWidth: "500px", width: "100%", maxHeight: "85vh", overflowY: "auto" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "800", fontSize: "16px", color: "#f0ede8" }}>{viewingDriverStats.name}</div>
-                <button onClick={() => setViewingDriverStats(null)} style={{ background: "transparent", border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "6px 12px", color: "#a8a49e", cursor: "pointer" }}>Close</button>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <img src={`${process.env.REACT_APP_API_URL || "https://projo-group-backend.onrender.com/api"}/drivers/${viewingDriverStats.id}/photo`} alt={viewingDriverStats.name}
+                    style={{ width: "56px", height: "56px", borderRadius: "50%", objectFit: "cover", border: `2px solid ${G}`, background: BG3 }}
+                    onError={e => { e.target.style.display = "none"; }} />
+                  <div>
+                    <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "800", fontSize: "16px", color: "#f0ede8" }}>{viewingDriverStats.name}</div>
+                    <div style={{ fontSize: "12px", color: "#6b6760" }}>{viewingDriverStats.phone}</div>
+                    {(viewingDriverStats.vehicleMake || viewingDriverStats.vehicleRegistration) && (
+                      <div style={{ fontSize: "11px", color: "#a8a49e", marginTop: "2px" }}>
+                        🚗 {[viewingDriverStats.vehicleColor, viewingDriverStats.vehicleYear, viewingDriverStats.vehicleMake, viewingDriverStats.vehicleModel].filter(Boolean).join(" ")}
+                        {viewingDriverStats.vehicleType ? ` · ${viewingDriverStats.vehicleType}` : ""}
+                      </div>
+                    )}
+                    {viewingDriverStats.vehicleRegistration && <div style={{ fontSize: "11px", color: "#a8a49e" }}>Plate: {viewingDriverStats.vehicleRegistration}</div>}
+                  </div>
+                </div>
+                <button onClick={() => setViewingDriverStats(null)} style={{ background: "transparent", border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "6px 12px", color: "#a8a49e", cursor: "pointer", flexShrink: 0 }}>Close</button>
               </div>
               <div style={{ fontSize: "12px", color: "#6b6760", marginBottom: "16px" }}>Today's shift</div>
 

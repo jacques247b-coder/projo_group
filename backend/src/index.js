@@ -96,8 +96,8 @@ io.on("connection", (socket) => {
   });
 
   // Driver accepted ride — notify passenger immediately with driver info
-  socket.on("ride:accepted", ({ rideId, driverId, driverName, driverPhone }) => {
-    io.to(`ride:${rideId}`).emit("ride:driver_assigned", { rideId, driverId, driverName, driverPhone });
+  socket.on("ride:accepted", ({ rideId, driverId, driverName, driverPhone, vehicleMake, vehicleModel, vehicleColor, vehicleRegistration, vehicleType, photoUrl }) => {
+    io.to(`ride:${rideId}`).emit("ride:driver_assigned", { rideId, driverId, driverName, driverPhone, vehicleMake, vehicleModel, vehicleColor, vehicleRegistration, vehicleType, photoUrl });
     console.log(`[PROJO Socket] Driver ${driverName} accepted ride ${rideId}`);
   });
 

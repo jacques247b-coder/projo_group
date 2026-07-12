@@ -8,6 +8,31 @@ const { Resend } = require("resend");
 const { sendWhatsAppNotification } = require("../services/whatsapp.service");
 const prisma = new PrismaClient();
 
+// Attaches driver name/phone/vehicle/photo to a ride once assigned, so
+// this survives a page refresh — previously this info only ever arrived
+// via the transient ride:accepted socket event, which meant reloading the
+// tracking page after a driver accepted lost all of it permanently.
+async function enrichRideWithDriverInfo(ride) {
+  if (!ride || !ride.driverId) return ride;
+  const driver = await prisma.user.findUnique({
+    where: { id: ride.driverId },
+    select: { id: true, name: true, phone: true, vehicleMake: true, vehicleModel: true, vehicleColor: true, vehicleRegistration: true, vehicleType: true },
+  });
+  if (!driver) return ride;
+  const base = process.env.PROJO_API_BASE_URL || "https://projo-group-backend.onrender.com";
+  return {
+    ...ride,
+    driverInfo: {
+      name: driver.name,
+      phone: driver.phone,
+      vehicle: [driver.vehicleColor, driver.vehicleMake, driver.vehicleModel].filter(Boolean).join(" "),
+      vehicleType: driver.vehicleType,
+      vehicleRegistration: driver.vehicleRegistration,
+      photoUrl: `${base}/api/drivers/${driver.id}/photo`,
+    },
+  };
+}
+
 function calcFare(pickupLat, pickupLng, dropoffLat, dropoffLng, vehicleType = "ECONOMY", distanceKm = 0) {
   const mults = { ECONOMY: 1.0, COMFORT: 1.3, XL: 1.5, LUXURY: 2.5, BIKE: 1.0, VAN: 1.5, BUSINESS: 2.0 };
   const mult = mults[vehicleType] || 1.0;
@@ -278,7 +303,7 @@ exports.getActiveRide = async (req, res) => {
       where: { passengerId: req.user.id, status: { in: ["REQUESTED", "DRIVER_ASSIGNED", "DRIVER_EN_ROUTE", "ARRIVED_AT_PICKUP", "IN_PROGRESS"] } },
       orderBy: { createdAt: "desc" },
     });
-    res.json({ ride });
+    res.json({ ride: await enrichRideWithDriverInfo(ride) });
   } catch { res.json({ ride: null }); }
 };
 
@@ -299,7 +324,7 @@ exports.getRideById = async (req, res) => {
   try {
     const ride = await prisma.ride.findUnique({ where: { id: req.params.id } });
     if (!ride) return res.status(404).json({ error: "Ride not found" });
-    res.json({ ride });
+    res.json({ ride: await enrichRideWithDriverInfo(ride) });
   } catch { res.status(500).json({ error: "Could not get ride" }); }
 };
 
@@ -308,7 +333,7 @@ exports.getSharedRide = async (req, res) => {
   try {
     const ride = await prisma.ride.findUnique({ where: { shareToken: req.params.token } });
     if (!ride) return res.status(404).json({ error: "Ride not found" });
-    res.json({ ride });
+    res.json({ ride: await enrichRideWithDriverInfo(ride) });
   } catch { res.status(500).json({ error: "Could not get ride" }); }
 };
 

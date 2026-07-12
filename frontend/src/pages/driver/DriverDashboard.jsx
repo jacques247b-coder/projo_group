@@ -287,6 +287,12 @@ export default function DriverDashboard() {
         driverId: user?.id,
         driverName: user?.name,
         driverPhone: user?.phone,
+        vehicleMake: user?.vehicleMake,
+        vehicleModel: user?.vehicleModel,
+        vehicleColor: user?.vehicleColor,
+        vehicleRegistration: user?.vehicleRegistration,
+        vehicleType: user?.vehicleType,
+        photoUrl: `${process.env.REACT_APP_API_URL || "http://localhost:5000/api"}/drivers/${user?.id}/photo`,
       });
 
       // Start broadcasting location to passenger immediately

@@ -7,6 +7,28 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 // GET /api/drivers/me
+// GET /api/drivers/:id/photo — PUBLIC (any authenticated user), serves
+// just the driver's face photo as actual image bytes. Deliberately
+// separate from the admin documents endpoint, which exposes ID/license
+// docs that should never be passenger-visible — this route only ever
+// touches the personPhoto document type.
+exports.getDriverPhoto = async (req, res) => {
+  try {
+    const doc = await prisma.driverDocument.findFirst({
+      where: { userId: req.params.id, docType: "personPhoto" },
+    });
+    if (!doc) return res.status(404).send("No photo on file");
+    const match = doc.dataUrl.match(/^data:(.+?);base64,(.+)$/);
+    if (!match) return res.status(500).send("Invalid stored photo");
+    const [, mimeType, base64Data] = match;
+    res.set("Content-Type", mimeType);
+    res.set("Cache-Control", "public, max-age=86400");
+    res.send(Buffer.from(base64Data, "base64"));
+  } catch (err) {
+    res.status(500).send("Error serving photo");
+  }
+};
+
 exports.getProfile = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({

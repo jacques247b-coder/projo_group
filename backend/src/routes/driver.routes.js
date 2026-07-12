@@ -7,6 +7,7 @@ const driverApp = require("../controllers/driver.application.controller");
 
 // ── Existing driver routes ────────────────────────────────────
 router.get("/me",            authenticate, requireRole("DRIVER"), driver.getProfile);
+router.get("/:id/photo",     authenticate, driver.getDriverPhoto);
 router.post("/status",       authenticate, requireRole("DRIVER"), driver.updateStatus);
 router.get("/earnings",      authenticate, requireRole("DRIVER"), driver.getEarnings);
 router.get("/pending-rides",    authenticate, requireRole("DRIVER"), driver.getPendingRides);

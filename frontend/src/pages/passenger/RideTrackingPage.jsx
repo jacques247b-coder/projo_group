@@ -275,21 +275,29 @@ export default function RideTrackingPage({ shared = false }) {
 
         {/* Driver info card */}
         {driverInfo && ride.status !== "COMPLETED" && ride.status !== "CANCELLED" && (
-          <div style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "1rem", marginBottom: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <div style={{ fontSize: "11px", color: "#6b6760", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>Your Driver</div>
-              <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "15px" }}>{driverInfo.name}</div>
-              {driverInfo.vehicle && <div style={{ fontSize: "12px", color: "#6b6760" }}>{driverInfo.vehicle}</div>}
-            </div>
-            <div style={{ display: "flex", gap: "8px" }}>
-              {driverInfo.phone && (
-                <button onClick={callDriver} style={{ background: "#166534", border: "1px solid #4ade80", borderRadius: "10px", padding: "10px 16px", color: "#4ade80", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>
-                  📞 Call
+          <div style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "1rem", marginBottom: "1rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                {driverInfo.photoUrl && (
+                  <img src={driverInfo.photoUrl} alt={driverInfo.name} style={{ width: "52px", height: "52px", borderRadius: "50%", objectFit: "cover", border: `2px solid ${G}` }} onError={e => e.target.style.display = "none"} />
+                )}
+                <div>
+                  <div style={{ fontSize: "11px", color: "#6b6760", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "4px" }}>Your Driver</div>
+                  <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "15px" }}>{driverInfo.name}</div>
+                  {driverInfo.vehicle && <div style={{ fontSize: "12px", color: "#6b6760" }}>{driverInfo.vehicle}{driverInfo.vehicleType ? ` · ${driverInfo.vehicleType}` : ""}</div>}
+                  {driverInfo.vehicleRegistration && <div style={{ fontSize: "11px", color: "#6b6760" }}>Plate: {driverInfo.vehicleRegistration}</div>}
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+                {driverInfo.phone && (
+                  <button onClick={callDriver} style={{ background: "#166534", border: "1px solid #4ade80", borderRadius: "10px", padding: "10px 16px", color: "#4ade80", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>
+                    📞 Call
+                  </button>
+                )}
+                <button onClick={sosAlert} style={{ background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: "10px", padding: "10px 16px", color: "#f87171", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>
+                  🚨 SOS
                 </button>
-              )}
-              <button onClick={sosAlert} style={{ background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: "10px", padding: "10px 16px", color: "#f87171", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>
-                🚨 SOS
-              </button>
+              </div>
             </div>
           </div>
         )}
