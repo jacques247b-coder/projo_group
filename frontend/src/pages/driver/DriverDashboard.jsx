@@ -153,6 +153,16 @@ export default function DriverDashboard() {
     );
     socketRef.current = sock;
 
+    // Catches EVERY event on this socket, regardless of name — if this
+    // never fires during a test but the server confirms it emitted
+    // something, the connection itself isn't receiving anything at all
+    // (a lower-level issue); if it fires for other things but not
+    // ride:new_request specifically, that narrows it down completely
+    // differently.
+    sock.onAny((eventName, ...args) => {
+      console.log("[PROJO Driver] Socket received ANY event:", eventName, args);
+    });
+
     sock.on("connect", () => {
       console.log("[PROJO Driver] Socket connected");
       // Rejoin the dispatch room if this driver was already online before
