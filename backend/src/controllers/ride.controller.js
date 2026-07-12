@@ -131,6 +131,13 @@ exports.bookRide = async (req, res) => {
         const roomSize = io?.sockets?.adapter?.rooms?.get(roomName)?.size || 0;
         console.log(`[PROJO Ride] Emitting to room "${roomName}" (${driver.name}) — ${roomSize} socket(s) actually in that room right now`);
         io?.to(roomName).emit("ride:new_request", ride);
+        // Diagnostic: also send a trivial payload on a totally different
+        // event name, at the exact same moment, to the exact same room —
+        // if THIS also never arrives client-side, the issue isn't specific
+        // to the ride payload/serialization; if it DOES arrive while
+        // ride:new_request doesn't, that tells us the payload itself is
+        // the problem.
+        io?.to(roomName).emit("test:ping", { hello: "world", timestamp: Date.now() });
       }
       console.log(`[PROJO Ride] Notified ${onlineDrivers.length} online driver(s) of new ride ${ride.id}`);
     } catch (e) { console.log("[PROJO Ride] Driver notification failed:", e.message); }
