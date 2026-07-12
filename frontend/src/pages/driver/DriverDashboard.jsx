@@ -27,6 +27,18 @@ function fmtTime(dt) {
   return new Date(dt).toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" });
 }
 
+const STREET_PICKUP_AREAS = [
+  { name: "Rustenburg CBD",        lat: -25.6694, lng: 27.2424 },
+  { name: "Waterfall East",        lat: -25.6520, lng: 27.2630 },
+  { name: "Boitekong",             lat: -25.6900, lng: 27.2100 },
+  { name: "Tlhabane",              lat: -25.6970, lng: 27.2700 },
+  { name: "Cashan",                lat: -25.6550, lng: 27.2200 },
+  { name: "Protea Park",           lat: -25.6400, lng: 27.2350 },
+  { name: "Rustenburg Industrial", lat: -25.6800, lng: 27.2500 },
+  { name: "Phokeng",               lat: -25.7100, lng: 27.1900 },
+];
+const STREET_PICKUP_VEHICLE_TYPES = ["ECONOMY", "COMFORT", "XL", "LUXURY"];
+
 export default function DriverDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -88,6 +100,11 @@ export default function DriverDashboard() {
   const [todayEarnings, setTodayEarnings] = useState(0);
   const [lastTrip, setLastTrip] = useState(null);
   const [showLastTrip, setShowLastTrip] = useState(false);
+  const [showStreetPickup, setShowStreetPickup] = useState(false);
+  const [streetDropoff, setStreetDropoff] = useState(null);
+  const [streetCustomDropoff, setStreetCustomDropoff] = useState("");
+  const [streetVehicleType, setStreetVehicleType] = useState("ECONOMY");
+  const [streetSubmitting, setStreetSubmitting] = useState(false);
 
   const watchRef = useRef(null);
   const posRef = useRef(null);
@@ -290,6 +307,40 @@ export default function DriverDashboard() {
     }
   }
 
+  async function startStreetPickup() {
+    const dropoff = streetDropoff || (streetCustomDropoff.trim() ? {
+      name: streetCustomDropoff.trim(),
+      // Same approach as the passenger booking page for a custom/typed
+      // address — an approximate point within the service area, since
+      // there's no real geocoding wired up yet anywhere in the app.
+      lat: -25.6694 + (Math.random() - 0.5) * 0.02,
+      lng: 27.2424 + (Math.random() - 0.5) * 0.02,
+    } : null);
+    if (!dropoff) return toast.error("Select or enter a dropoff location");
+    if (!posRef.current) return toast.error("Waiting for your location — try again in a moment");
+
+    setStreetSubmitting(true);
+    try {
+      const res = await rideAPI.streetPickup({
+        pickupAddress: "Driver's current location (street pickup)",
+        pickupLat: posRef.current.lat,
+        pickupLng: posRef.current.lng,
+        dropoffAddress: dropoff.name,
+        dropoffLat: dropoff.lat,
+        dropoffLng: dropoff.lng,
+        vehicleType: streetVehicleType,
+      });
+      setCurrentRide(res.ride);
+      setShowStreetPickup(false);
+      setStreetDropoff(null);
+      setStreetCustomDropoff("");
+      toast.success("✅ Street pickup started — head to dropoff");
+    } catch (err) {
+      console.error("[PROJO Driver] Street pickup failed:", err);
+      toast.error(err?.error || "Could not start street pickup");
+    } finally { setStreetSubmitting(false); }
+  }
+
   async function declineRide() {
     setPendingRide(null);
     toast("Ride declined", { icon: "👋" });
@@ -397,6 +448,11 @@ export default function DriverDashboard() {
           </button>
           {(currentRide || currentDelivery) && (
             <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "6px" }}>Complete current trip first</div>
+          )}
+          {online && !currentRide && !currentDelivery && (
+            <button onClick={() => setShowStreetPickup(true)} style={{ ...btn(BG3, G), border: `1px solid ${BORDER}`, marginTop: "10px" }}>
+              🚶 Street Pickup
+            </button>
           )}
         </div>
 
@@ -620,6 +676,55 @@ export default function DriverDashboard() {
         </div>
 
       </div>
+
+      {/* ── STREET PICKUP MODAL ── */}
+      {showStreetPickup && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }} onClick={() => setShowStreetPickup(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "1.5rem", maxWidth: "420px", width: "100%", maxHeight: "85vh", overflowY: "auto" }}>
+            <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "800", fontSize: "16px", color: "#f0ede8", marginBottom: "4px" }}>🚶 Street Pickup</div>
+            <div style={{ fontSize: "12px", color: "#6b6760", marginBottom: "16px" }}>For a passenger who flagged you down directly — pickup is your current location, cash payment only.</div>
+
+            <div style={{ fontSize: "11px", color: "#6b6760", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>Dropoff</div>
+            {streetDropoff ? (
+              <div style={{ background: "rgba(232,184,75,0.1)", border: `1px solid ${G}`, borderRadius: "8px", padding: "10px 12px", marginBottom: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontSize: "13px", fontWeight: "600", color: G }}>✅ {streetDropoff.name}</span>
+                <button onClick={() => setStreetDropoff(null)} style={{ background: "transparent", border: "none", color: "#6b6760", cursor: "pointer", fontSize: "16px" }}>✕</button>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
+                  {STREET_PICKUP_AREAS.map(area => (
+                    <button key={area.name} onClick={() => setStreetDropoff(area)} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "999px", padding: "6px 12px", color: "#a8a49e", fontSize: "12px", cursor: "pointer" }}>
+                      {area.name}
+                    </button>
+                  ))}
+                </div>
+                <input value={streetCustomDropoff} onChange={e => setStreetCustomDropoff(e.target.value)} placeholder="Or type a different address..."
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", background: BG3, border: `1px solid ${BORDER}`, color: "#f0ede8", fontSize: "13px", boxSizing: "border-box", marginBottom: "16px" }} />
+              </>
+            )}
+
+            <div style={{ fontSize: "11px", color: "#6b6760", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>Vehicle Type</div>
+            <div style={{ display: "flex", gap: "6px", marginBottom: "20px", flexWrap: "wrap" }}>
+              {STREET_PICKUP_VEHICLE_TYPES.map(vt => (
+                <button key={vt} onClick={() => setStreetVehicleType(vt)} style={{
+                  background: streetVehicleType === vt ? "rgba(232,184,75,0.15)" : BG3,
+                  border: `1px solid ${streetVehicleType === vt ? G : BORDER}`,
+                  borderRadius: "8px", padding: "8px 14px", color: streetVehicleType === vt ? G : "#a8a49e",
+                  fontSize: "12px", fontWeight: streetVehicleType === vt ? "700" : "400", cursor: "pointer",
+                }}>{vt}</button>
+              ))}
+            </div>
+
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button onClick={startStreetPickup} disabled={streetSubmitting} style={{ flex: 1, background: G, color: "#0a0a0a", border: "none", borderRadius: "10px", padding: "12px", fontWeight: "800", fontSize: "14px", cursor: "pointer", opacity: streetSubmitting ? 0.6 : 1 }}>
+                {streetSubmitting ? "Starting…" : "Start Pickup"}
+              </button>
+              <button onClick={() => setShowStreetPickup(false)} style={{ flex: 1, background: BG3, color: "#a8a49e", border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", cursor: "pointer" }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes pulse {

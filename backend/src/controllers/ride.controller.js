@@ -155,6 +155,45 @@ exports.bookRide = async (req, res) => {
 };
 
 // POST /api/rides/:id/cancel — customer cancels
+// POST /api/rides/street-pickup — driver creates a ride on behalf of a
+// walk-up/street passenger who doesn't have the app open (or an account
+// at all). Skips the broadcast-to-online-drivers step entirely, since
+// this driver is already physically with the passenger and is assigned
+// immediately — cash payment only, no wallet option, since there's no
+// real passenger account to charge.
+exports.streetPickup = async (req, res) => {
+  const { pickupAddress, pickupLat, pickupLng, dropoffAddress, dropoffLat, dropoffLng,
+    vehicleType = "ECONOMY", distanceKm } = req.body;
+  try {
+    const fare = calcFare(pickupLat, pickupLng, dropoffLat, dropoffLng, vehicleType, distanceKm);
+
+    const ride = await prisma.ride.create({
+      data: {
+        // No real passenger account exists for a street pickup — the
+        // driver's own account fills this required field. This ride will
+        // still show correctly on the driver's own trip history; it just
+        // won't appear in anyone else's "my rides" list, which is correct
+        // since there is no "anyone else" here.
+        passengerId: req.user.id,
+        driverId: req.user.id,
+        pickupAddress, pickupLat, pickupLng,
+        dropoffAddress, dropoffLat, dropoffLng,
+        zone: fare.zone, distanceKm: fare.distanceKm,
+        baseFare: fare.baseFare, totalFare: fare.totalFare,
+        driverPayout: fare.totalFare, // driver collects the full cash fare directly
+        status: "DRIVER_ASSIGNED",
+        paidWithWallet: false,
+      },
+    });
+
+    console.log(`[PROJO Ride] Street pickup created by driver ${req.user.name} (${req.user.phone})`);
+    res.status(201).json({ message: "Street pickup started", ride });
+  } catch (err) {
+    console.error("[PROJO Ride] Street pickup error:", err.message);
+    res.status(500).json({ error: "Could not start street pickup: " + err.message });
+  }
+};
+
 exports.cancelRide = async (req, res) => {
   try {
     const ride = await prisma.ride.findUnique({ where: { id: req.params.id } });

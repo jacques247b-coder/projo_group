@@ -78,6 +78,7 @@ export const rideAPI = {
   rateRide: (id, stars, comment) => api.post(`/rides/${id}/rate`, { stars, comment }),
   updateStatus: (id, status) => api.post(`/rides/${id}/status`, { status }),
   acceptRide: (id) => api.post(`/rides/${id}/accept`),
+  streetPickup: (data) => api.post("/rides/street-pickup", data),
 };
 
 export const walletAPI = {

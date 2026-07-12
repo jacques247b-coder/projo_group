@@ -43,6 +43,24 @@ router.post(
   rideController.bookRide
 );
 
+// ── POST /api/rides/street-pickup ────────────────────────────
+// Driver creates a ride for a walk-up passenger (no app/account needed)
+router.post(
+  "/street-pickup",
+  authenticate,
+  requireRole("DRIVER"),
+  [
+    body("pickupAddress").notEmpty(),
+    body("pickupLat").isFloat(),
+    body("pickupLng").isFloat(),
+    body("dropoffAddress").notEmpty(),
+    body("dropoffLat").isFloat(),
+    body("dropoffLng").isFloat(),
+    body("vehicleType").isIn(["ECONOMY", "COMFORT", "XL", "LUXURY", "BIKE", "VAN", "BUSINESS"]),
+  ],
+  rideController.streetPickup
+);
+
 // ── GET /api/rides/active ─────────────────────────────────────
 // Get passenger's current active ride
 router.get("/active", authenticate, rideController.getActiveRide);
