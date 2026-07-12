@@ -77,7 +77,7 @@ export const rideAPI = {
   cancelRide: (id, reason) => api.post(`/rides/${id}/cancel`, { reason }),
   rateRide: (id, stars, comment) => api.post(`/rides/${id}/rate`, { stars, comment }),
   updateStatus: (id, status) => api.post(`/rides/${id}/status`, { status }),
-  acceptRide: (id) => api.post(`/driver/rides/${id}/accept`),
+  acceptRide: (id) => api.post(`/rides/${id}/accept`),
 };
 
 export const walletAPI = {
@@ -133,7 +133,7 @@ export const panicAPI = {
   adminToggleSecurityContact: (id) => api.post(`/panic/security-contacts/${id}/toggle`),
   adminTogglePrimaryContact: (id) => api.post(`/panic/security-contacts/${id}/toggle-primary`),
   adminListSecurityUsers: () => api.get("/panic/security-users"),
-  adminCreateSecurityUser: (name, phone) => api.post("/panic/security-users", { name, phone }),
+  adminCreateSecurityUser: (name, phone, email) => api.post("/panic/security-users", { name, phone, email }),
   adminRemoveSecurityUser: (id) => api.delete(`/panic/security-users/${id}`),
 };
 
