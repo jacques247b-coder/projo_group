@@ -242,6 +242,16 @@ exports.cancelRide = async (req, res) => {
       // Points only awarded on completion so nothing to deduct here
     }
 
+    // This never actually told anyone — the driver (if one was already
+    // assigned) kept showing the ride as current indefinitely, even after
+    // a refresh, since nothing ever cleared it client-side. Passenger
+    // gets this too, in case admin is the one cancelling.
+    const io = req.app.get("io");
+    io?.to(`ride:${ride.id}`).emit("ride:cancelled", { rideId: ride.id });
+    if (ride.driverId) {
+      io?.to(`driver:${ride.driverId}`).emit("ride:cancelled", { rideId: ride.id });
+    }
+
     res.json({ message: "Ride cancelled. Wallet refunded if applicable.", ride: { ...ride, status: "CANCELLED" } });
   } catch (err) {
     res.status(500).json({ error: "Could not cancel ride" });
