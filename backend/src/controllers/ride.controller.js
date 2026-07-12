@@ -234,19 +234,22 @@ exports.updateRideStatus = async (req, res) => {
       data: { status },
     });
 
-    // Award loyalty points + generate invoice when ride COMPLETES —
-    // never for street pickups, since passengerId is just the driver's own
-    // account there (a placeholder, not a real customer) and would
-    // otherwise incorrectly earn the driver points/invoices for their own
-    // cash pickups.
-    if (status === "COMPLETED" && !ride.isStreetPickup) {
-      await awardPoints(ride.passengerId, ride.totalFare, `Ride completed`);
+    // Invoice sends on every completed ride, including street pickups —
+    // it's a real receipt/record either way. Loyalty points are the one
+    // thing that must never apply to street pickups, since passengerId
+    // there is just the driver's own account (a placeholder, not a real
+    // customer) and would otherwise incorrectly earn the driver points on
+    // their own cash pickups.
+    if (status === "COMPLETED") {
+      if (!ride.isStreetPickup) {
+        await awardPoints(ride.passengerId, ride.totalFare, `Ride completed`);
+        console.log(`[PROJO Ride] Points awarded for completed ride ${ride.id}`);
+      }
       try {
         const { generateAndSendInvoice } = require("../services/invoice.service");
         const passenger = await prisma.user.findUnique({ where: { id: ride.passengerId } });
         if (passenger) await generateAndSendInvoice({ type: "ride", data: ride, user: passenger });
       } catch (e) { console.log("[PROJO Invoice] Ride:", e.message); }
-      console.log(`[PROJO Ride] Points awarded for completed ride ${ride.id}`);
     }
 
     // Driver/admin cancels — refund wallet if paid, no points deducted (never awarded yet)
