@@ -16,4 +16,11 @@ router.put("/classifieds/:id/mark-sold",authenticate, entertainment.markSold);
 router.delete("/classifieds/:id",        authenticate, entertainment.deleteClassified);
 router.post("/classifieds/:id/renew",    authenticate, entertainment.renewClassified);
 
+// Digital Marketplace
+const marketplace = require("../controllers/digitalMarketplace.controller");
+router.get("/digital-products",                  authenticate, marketplace.getDigitalProducts);
+router.post("/digital-products/:id/purchase",    authenticate, marketplace.purchaseDigitalProduct);
+router.get("/digital-products/:id/download",     authenticate, marketplace.downloadDigitalProduct);
+router.get("/my-purchases",                      authenticate, marketplace.getMyPurchases);
+
 module.exports = router;

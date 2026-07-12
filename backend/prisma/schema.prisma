@@ -213,6 +213,40 @@ model Product {
   @@map("products")
 }
 
+// Digital marketplace — separate from the physical-shop Product model,
+// since these need actual file storage and unlock-after-payment logic.
+// File stored as base64 (same pattern as driver documents and push
+// images elsewhere in this app — Render's free tier wipes local disk on
+// every deploy, so anything that needs to survive lives in the database
+// instead). Payment goes through the existing PROJO Wallet for now;
+// PayFast is a planned addition, not yet wired up.
+model DigitalProduct {
+  id            String   @id @default(uuid())
+  name          String
+  description   String   @db.Text
+  category      String?  // e.g. Templates, Ebooks, Music, Software
+  priceZar      Float
+  coverImageUrl String?  @db.Text // base64 cover image shown on the product block
+  fileDataUrl   String   @db.Text // base64 file content, served only after purchase
+  fileName      String   // original filename, used when downloading
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  purchases     DigitalPurchase[]
+  @@map("digital_products")
+}
+
+model DigitalPurchase {
+  id         String   @id @default(uuid())
+  productId  String
+  product    DigitalProduct @relation(fields: [productId], references: [id])
+  userId     String
+  pricePaid  Float
+  createdAt  DateTime @default(now())
+  @@unique([productId, userId]) // already bought it — no need to buy again, just re-download
+  @@map("digital_purchases")
+}
+
 model PromoCode {
   id              String   @id @default(uuid())
   code            String   @unique

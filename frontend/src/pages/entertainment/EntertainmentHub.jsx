@@ -346,6 +346,7 @@ const TABS = [
   { key: "reading",  label: "📚",  full: "Reading" },
   { key: "casino",      label: "🎰",  full: "18+ Casino" },
   { key: "classifieds", label: "📋",  full: "Classifieds" },
+  { key: "marketplace", label: "🛍️",  full: "Marketplace" },
   { key: "ads",         label: "🏪",  full: "Biz Ads" },
 ];
 
@@ -1618,6 +1619,169 @@ function ClassifiedsTab({ user }) {
   );
 }
 
+// ── DIGITAL MARKETPLACE ──────────────────────────────────────
+function MarketplaceTab({ user }) {
+  const G = "#e8b84b";
+  const BG2 = "#111111";
+  const BG3 = "#1a1a1a";
+  const BORDER = "rgba(232,184,75,0.15)";
+  const API = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
+  const [products, setProducts] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [selected, setSelected] = React.useState(null);
+  const [purchasing, setPurchasing] = React.useState(false);
+  const [subTab, setSubTab] = React.useState("browse");
+  const [myPurchases, setMyPurchases] = React.useState([]);
+
+  const token = localStorage.getItem("projo_token");
+  const headers = { Authorization: `Bearer ${token}` };
+
+  async function loadProducts() {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/entertainment/digital-products`, { headers });
+      const data = await res.json();
+      setProducts(data.products || []);
+    } catch {}
+    setLoading(false);
+  }
+
+  async function loadMyPurchases() {
+    try {
+      const res = await fetch(`${API}/entertainment/my-purchases`, { headers });
+      const data = await res.json();
+      setMyPurchases(data.purchases || []);
+    } catch {}
+  }
+
+  React.useEffect(() => { loadProducts(); }, []);
+  React.useEffect(() => { if (subTab === "mine") loadMyPurchases(); }, [subTab]);
+
+  async function buyProduct(product) {
+    if (!window.confirm(`Buy "${product.name}" for R${product.priceZar.toFixed(2)}? This will be deducted from your PROJO Wallet.`)) return;
+    setPurchasing(true);
+    try {
+      const res = await fetch(`${API}/entertainment/digital-products/${product.id}/purchase`, { method: "POST", headers });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || "Purchase failed"); return; }
+      toast.success("🎉 Purchase successful!");
+      setProducts(prev => prev.map(p => p.id === product.id ? { ...p, owned: true } : p));
+      setSelected(prev => prev ? { ...prev, owned: true } : prev);
+    } catch { toast.error("Purchase failed — try again"); }
+    setPurchasing(false);
+  }
+
+  function downloadProduct(productId, fileName) {
+    const url = `${API}/entertainment/digital-products/${productId}/download`;
+    fetch(url, { headers })
+      .then(res => { if (!res.ok) throw new Error(); return res.blob(); })
+      .then(blob => {
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        link.click();
+      })
+      .catch(() => toast.error("Download failed — try again"));
+  }
+
+  return (
+    <div>
+      <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+        <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "1.6rem", fontWeight: "800", color: G }}>🛍️ Digital Marketplace</div>
+        <div style={{ fontSize: "13px", color: "#a8a49e", marginTop: "4px" }}>Templates, ebooks, music, software & more — instant download after purchase</div>
+      </div>
+
+      <div style={{ display: "flex", gap: "8px", marginBottom: "1.5rem", justifyContent: "center" }}>
+        {[{ key: "browse", label: "Browse" }, { key: "mine", label: "My Purchases" }].map(t => (
+          <button key={t.key} onClick={() => setSubTab(t.key)} style={{
+            background: subTab === t.key ? "rgba(232,184,75,0.15)" : "transparent",
+            border: `1px solid ${subTab === t.key ? G : BORDER}`,
+            borderRadius: "999px", padding: "8px 20px", color: subTab === t.key ? G : "#a8a49e",
+            fontWeight: subTab === t.key ? "700" : "400", cursor: "pointer", fontSize: "13px",
+          }}>{t.label}</button>
+        ))}
+      </div>
+
+      {subTab === "browse" ? (
+        loading ? (
+          <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>Loading…</div>
+        ) : products.length === 0 ? (
+          <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>No products available yet — check back soon!</div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "14px" }}>
+            {products.map(p => (
+              <div key={p.id} onClick={() => setSelected(p)} style={{
+                background: BG2, border: `1px solid ${BORDER}`, borderRadius: "14px", overflow: "hidden", cursor: "pointer",
+                transition: "transform 0.15s", boxShadow: "0 4px 16px rgba(0,0,0,0.3)",
+              }}>
+                <div style={{ height: "120px", background: p.coverImageUrl ? `url(${p.coverImageUrl}) center/cover` : `linear-gradient(135deg, ${BG3}, #2a2118)`, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
+                  {!p.coverImageUrl && <span style={{ fontSize: "40px", opacity: 0.3 }}>📦</span>}
+                  {p.owned && <span style={{ position: "absolute", top: "8px", right: "8px", background: "#166534", color: "#4ade80", fontSize: "9px", fontWeight: "800", padding: "3px 8px", borderRadius: "999px", border: "1px solid #4ade80" }}>OWNED</span>}
+                </div>
+                <div style={{ padding: "10px 12px" }}>
+                  {p.category && <div style={{ fontSize: "9px", color: G, textTransform: "uppercase", letterSpacing: "1px", fontWeight: "700", marginBottom: "3px" }}>{p.category}</div>}
+                  <div style={{ fontSize: "13px", fontWeight: "700", color: "#f0ede8", marginBottom: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</div>
+                  <div style={{ fontSize: "11px", color: "#6b6760", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{p.description}</div>
+                  <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "16px", fontWeight: "800", color: G, marginTop: "8px" }}>R{p.priceZar.toFixed(2)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      ) : (
+        myPurchases.length === 0 ? (
+          <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>No purchases yet — browse the marketplace to find something!</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {myPurchases.map(pu => (
+              <div key={pu.id} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "12px", padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{ width: "44px", height: "44px", borderRadius: "8px", background: pu.product.coverImageUrl ? `url(${pu.product.coverImageUrl}) center/cover` : BG3, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {!pu.product.coverImageUrl && <span style={{ fontSize: "18px", opacity: 0.4 }}>📦</span>}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "13px", fontWeight: "700", color: "#f0ede8" }}>{pu.product.name}</div>
+                    <div style={{ fontSize: "11px", color: "#6b6760" }}>Bought {new Date(pu.createdAt).toLocaleDateString()}</div>
+                  </div>
+                </div>
+                <button onClick={() => downloadProduct(pu.product.id, pu.product.fileName)} style={{ background: G, border: "none", borderRadius: "8px", padding: "8px 16px", color: "#0a0a0a", fontWeight: "700", fontSize: "12px", cursor: "pointer" }}>⬇ Download</button>
+              </div>
+            ))}
+          </div>
+        )
+      )}
+
+      {/* Product detail modal */}
+      {selected && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }} onClick={() => setSelected(null)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", maxWidth: "440px", width: "100%", maxHeight: "85vh", overflowY: "auto" }}>
+            <div style={{ height: "180px", background: selected.coverImageUrl ? `url(${selected.coverImageUrl}) center/cover` : `linear-gradient(135deg, ${BG3}, #2a2118)`, borderRadius: "16px 16px 0 0", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {!selected.coverImageUrl && <span style={{ fontSize: "60px", opacity: 0.3 }}>📦</span>}
+            </div>
+            <div style={{ padding: "1.25rem" }}>
+              {selected.category && <div style={{ fontSize: "10px", color: G, textTransform: "uppercase", letterSpacing: "1px", fontWeight: "700", marginBottom: "6px" }}>{selected.category}</div>}
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "18px", fontWeight: "800", color: "#f0ede8", marginBottom: "8px" }}>{selected.name}</div>
+              <div style={{ fontSize: "13px", color: "#a8a49e", lineHeight: 1.6, marginBottom: "16px", whiteSpace: "pre-wrap" }}>{selected.description}</div>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "24px", fontWeight: "800", color: G, marginBottom: "16px" }}>R{selected.priceZar.toFixed(2)}</div>
+              {selected.owned ? (
+                <button onClick={() => downloadProduct(selected.id, selected.fileName)} style={{ width: "100%", background: "#166534", border: "1px solid #4ade80", borderRadius: "10px", padding: "14px", color: "#4ade80", fontWeight: "800", fontSize: "14px", cursor: "pointer" }}>
+                  ⬇ Download Now
+                </button>
+              ) : (
+                <button onClick={() => buyProduct(selected)} disabled={purchasing} style={{ width: "100%", background: G, border: "none", borderRadius: "10px", padding: "14px", color: "#0a0a0a", fontWeight: "800", fontSize: "14px", cursor: "pointer", opacity: purchasing ? 0.6 : 1 }}>
+                  {purchasing ? "Processing…" : "💰 Buy with PROJO Wallet"}
+                </button>
+              )}
+              <button onClick={() => setSelected(null)} style={{ width: "100%", background: "transparent", border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "10px", color: "#a8a49e", marginTop: "8px", cursor: "pointer" }}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── LOCAL ADS ─────────────────────────────────────────────────
 function LocalAdsTab({ user }) {
   const [ads, setAds] = useState([]);
@@ -2372,6 +2536,7 @@ export default function EntertainmentHub() {
 
         {/* ── CLASSIFIEDS TAB ── */}
         {tab === "classifieds" && <ClassifiedsTab user={user} />}
+        {tab === "marketplace" && <MarketplaceTab user={user} />}
 
         {/* ── LOCAL ADS TAB ── */}
         {tab === "ads" && <LocalAdsTab user={user} />}

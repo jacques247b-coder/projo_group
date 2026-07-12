@@ -6,12 +6,17 @@ const admin = require("../controllers/admin.controller");
 const promo = require("../controllers/promo.controller");
 const service = require("../controllers/service.controller");
 const options = require("../controllers/productOptions.controller");
+const marketplace = require("../controllers/digitalMarketplace.controller");
 
 router.use(authenticate, requireRole("ADMIN"));
 
 router.get("/stats", admin.getStats);
 router.get("/users", admin.getUsers);
 router.get("/classifieds", admin.getClassifieds);
+router.get("/digital-products",          marketplace.adminGetDigitalProducts);
+router.post("/digital-products",         marketplace.adminCreateDigitalProduct);
+router.put("/digital-products/:id",      marketplace.adminUpdateDigitalProduct);
+router.delete("/digital-products/:id",   marketplace.adminDeleteDigitalProduct);
 router.delete("/classifieds/:id", admin.deleteClassifiedAdmin);
 router.get("/drivers", admin.getDrivers);
 router.get("/drivers/today-stats", admin.getDriverTodayStats);

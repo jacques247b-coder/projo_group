@@ -65,6 +65,7 @@ const TABS = [
   { key: "push",       label: "📣 Broadcast" },
   { key: "ads",        label: "🏪 Local Ads" },
   { key: "classifieds", label: "📋 Classifieds" },
+  { key: "marketplace", label: "🛍️ Marketplace" },
   { key: "casino",     label: "🎰 Casino Offers" },
   { key: "reading",    label: "📚 Reading Hub" },
 ];
@@ -120,6 +121,10 @@ export default function AdminDashboard() {
   const [showPushSubs, setShowPushSubs] = useState(false);
   const [localAds, setLocalAds] = useState([]);
   const [classifieds, setClassifieds] = useState([]);
+  const [marketProducts, setMarketProducts] = useState([]);
+  const [showMarketForm, setShowMarketForm] = useState(false);
+  const [marketForm, setMarketForm] = useState({ name: "", description: "", category: "", priceZar: "", coverImageUrl: "", fileDataUrl: "", fileName: "" });
+  const [marketSubmitting, setMarketSubmitting] = useState(false);
   const [casinoPartners, setCasinoPartners] = useState([]);
   const [casinoForm, setCasinoForm] = useState({ name: "", logo: "🎰", color: "#00a651", bonus: "", description: "", url: "", terms: "", categories: "", featured: false, isNew: false });
   const [showCasinoForm, setShowCasinoForm] = useState(false);
@@ -175,7 +180,7 @@ export default function AdminDashboard() {
   async function loadAll() {
     setLoading(true);
     try {
-      const [s, u, r, d, p, dr, so, ps, la, cl, dts] = await Promise.all([
+      const [s, u, r, d, p, dr, so, ps, la, cl, dts, mp] = await Promise.all([
         getWithRetry("/admin/stats", { stats: null }),
         getWithRetry("/admin/users", { users: [] }),
         getWithRetry("/admin/rides", { rides: [] }),
@@ -187,12 +192,14 @@ export default function AdminDashboard() {
         getWithRetry("/admin/entertainment/ads", { ads: [] }),
         getWithRetry("/admin/classifieds", { classifieds: [] }),
         getWithRetry("/admin/drivers/today-stats", { stats: {} }),
+        getWithRetry("/admin/digital-products", { products: [] }),
       ]);
       setStats(s.stats);
       setUsers(u.users || []);
       setRides(r.rides || []);
       setDeliveries(d.deliveries || []);
       setProducts(p.products || []);
+      setMarketProducts(mp?.products || []);
       setServiceOrders(so.orders || []);
       setDriverTodayStats(dts?.stats || {});
       if (ps) setPushStats(ps);
@@ -346,6 +353,44 @@ export default function AdminDashboard() {
     if (!window.confirm("Remove this classified ad?")) return;
     try {
       await api.delete(`/admin/classifieds/${id}`);
+      toast.success("Removed");
+      loadAll();
+    } catch { toast.error("Could not remove"); }
+  }
+
+  function readFileAsBase64(file, callback) {
+    const reader = new FileReader();
+    reader.onload = e => callback(e.target.result);
+    reader.readAsDataURL(file);
+  }
+
+  async function createMarketProduct() {
+    if (!marketForm.name.trim() || !marketForm.description.trim() || !marketForm.priceZar || !marketForm.fileDataUrl) {
+      return toast.error("Name, description, price, and a file are all required");
+    }
+    setMarketSubmitting(true);
+    try {
+      await api.post("/admin/digital-products", marketForm);
+      toast.success("Product added!");
+      setShowMarketForm(false);
+      setMarketForm({ name: "", description: "", category: "", priceZar: "", coverImageUrl: "", fileDataUrl: "", fileName: "" });
+      loadAll();
+    } catch (e) { toast.error(e?.error || "Could not create product"); }
+    finally { setMarketSubmitting(false); }
+  }
+
+  async function toggleMarketProduct(product) {
+    try {
+      await api.put(`/admin/digital-products/${product.id}`, { isActive: !product.isActive });
+      toast.success(product.isActive ? "Hidden from marketplace" : "Now live on marketplace");
+      loadAll();
+    } catch { toast.error("Could not update"); }
+  }
+
+  async function deleteMarketProduct(id) {
+    if (!window.confirm("Delete this product? This also removes it from anyone who's already purchased it.")) return;
+    try {
+      await api.delete(`/admin/digital-products/${id}`);
       toast.success("Removed");
       loadAll();
     } catch { toast.error("Could not remove"); }
@@ -1267,6 +1312,43 @@ export default function AdminDashboard() {
           );
         })()}
 
+        {/* ── DIGITAL MARKETPLACE ADMIN ── */}
+        {!loading && tab === "marketplace" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <div>
+                <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "15px", fontWeight: "800", color: G }}>🛍️ Digital Marketplace</div>
+                <div style={{ fontSize: "12px", color: "#6b6760" }}>Templates, ebooks, music, software — sold via PROJO Wallet (PayFast direct checkout coming later)</div>
+              </div>
+              <button onClick={() => setShowMarketForm(true)} style={{ background: G, border: "none", borderRadius: "8px", padding: "8px 16px", color: "#0a0a0a", fontWeight: "700", fontSize: "12px", cursor: "pointer" }}>+ Add Product</button>
+            </div>
+
+            {marketProducts.length === 0 ? (
+              <div style={{ textAlign: "center", color: "#6b6760", padding: "3rem" }}>No products yet — click "+ Add Product" to list your first one</div>
+            ) : marketProducts.map(p => (
+              <div key={p.id} style={{ ...card, marginBottom: "8px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "10px" }}>
+                  <div style={{ display: "flex", gap: "10px", flex: 1, minWidth: 0 }}>
+                    <div style={{ width: "48px", height: "48px", borderRadius: "8px", background: p.coverImageUrl ? `url(${p.coverImageUrl}) center/cover` : BG3, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {!p.coverImageUrl && <span style={{ fontSize: "20px", opacity: 0.4 }}>📦</span>}
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: "700", color: "#f0ede8", fontSize: "13px" }}>{p.name}</div>
+                      <div style={{ fontSize: "11px", color: "#6b6760" }}>{p.category || "Uncategorized"} · R{p.priceZar.toFixed(2)} · {p._count?.purchases || 0} sold</div>
+                      <div style={{ fontSize: "10.5px", color: "#6b6760", marginTop: "2px" }}>File: {p.fileName}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                    <span style={{ fontSize: "10px", fontWeight: "700", color: p.isActive ? "#4ade80" : "#6b6760" }}>{p.isActive ? "LIVE" : "HIDDEN"}</span>
+                    <button onClick={() => toggleMarketProduct(p)} style={{ background: "transparent", border: `1px solid ${BORDER}`, borderRadius: "6px", padding: "4px 8px", color: "#a8a49e", fontSize: "10px", cursor: "pointer" }}>{p.isActive ? "Hide" : "Show"}</button>
+                    <button onClick={() => deleteMarketProduct(p.id)} style={{ background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: "6px", padding: "4px 8px", color: "#f87171", fontSize: "10px", cursor: "pointer" }}>Del</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* ── CASINO OFFERS ADMIN ── */}
         {!loading && tab === "casino" && (
           <div>
@@ -1518,6 +1600,65 @@ export default function AdminDashboard() {
                   ))}
                 </>
               ) : null}
+            </div>
+          </div>
+        )}
+
+        {/* ── ADD DIGITAL PRODUCT ── */}
+        {showMarketForm && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }} onClick={() => setShowMarketForm(false)}>
+            <div onClick={e => e.stopPropagation()} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "1.5rem", maxWidth: "440px", width: "100%", maxHeight: "85vh", overflowY: "auto" }}>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "800", fontSize: "16px", color: "#f0ede8", marginBottom: "16px" }}>Add Digital Product</div>
+
+              <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "5px", textTransform: "uppercase", letterSpacing: "1px" }}>Name *</div>
+              <input value={marketForm.name} onChange={e => setMarketForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Instagram Post Templates Pack"
+                style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", background: BG3, border: `1px solid ${BORDER}`, color: "#f0ede8", fontSize: "13px", boxSizing: "border-box", marginBottom: "12px" }} />
+
+              <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "5px", textTransform: "uppercase", letterSpacing: "1px" }}>Description *</div>
+              <textarea value={marketForm.description} onChange={e => setMarketForm(f => ({ ...f, description: e.target.value }))} placeholder="What's included, how it helps, format..."
+                style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", background: BG3, border: `1px solid ${BORDER}`, color: "#f0ede8", fontSize: "13px", boxSizing: "border-box", marginBottom: "12px", minHeight: "80px", resize: "vertical" }} />
+
+              <div style={{ display: "flex", gap: "10px", marginBottom: "12px" }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "5px", textTransform: "uppercase", letterSpacing: "1px" }}>Category</div>
+                  <input value={marketForm.category} onChange={e => setMarketForm(f => ({ ...f, category: e.target.value }))} placeholder="Templates"
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", background: BG3, border: `1px solid ${BORDER}`, color: "#f0ede8", fontSize: "13px", boxSizing: "border-box" }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "5px", textTransform: "uppercase", letterSpacing: "1px" }}>Price (R) *</div>
+                  <input value={marketForm.priceZar} onChange={e => setMarketForm(f => ({ ...f, priceZar: e.target.value }))} type="number" placeholder="99.00"
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", background: BG3, border: `1px solid ${BORDER}`, color: "#f0ede8", fontSize: "13px", boxSizing: "border-box" }} />
+                </div>
+              </div>
+
+              <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "5px", textTransform: "uppercase", letterSpacing: "1px" }}>Cover Image (shown on the product block)</div>
+              {marketForm.coverImageUrl ? (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                  <img src={marketForm.coverImageUrl} alt="Cover" style={{ width: "44px", height: "44px", borderRadius: "8px", objectFit: "cover" }} />
+                  <button onClick={() => setMarketForm(f => ({ ...f, coverImageUrl: "" }))} style={{ background: "transparent", border: `1px solid ${BORDER}`, borderRadius: "6px", padding: "4px 10px", color: "#a8a49e", fontSize: "11px", cursor: "pointer" }}>Remove</button>
+                </div>
+              ) : (
+                <input type="file" accept="image/*" onChange={e => e.target.files[0] && readFileAsBase64(e.target.files[0], url => setMarketForm(f => ({ ...f, coverImageUrl: url })))}
+                  style={{ width: "100%", marginBottom: "12px", color: "#a8a49e", fontSize: "12px" }} />
+              )}
+
+              <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "5px", textTransform: "uppercase", letterSpacing: "1px" }}>Product File * (what the buyer downloads, up to 15MB)</div>
+              {marketForm.fileName ? (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px", background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "8px 12px" }}>
+                  <span style={{ fontSize: "12px", color: "#f0ede8", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>📎 {marketForm.fileName}</span>
+                  <button onClick={() => setMarketForm(f => ({ ...f, fileDataUrl: "", fileName: "" }))} style={{ background: "transparent", border: "none", color: "#6b6760", cursor: "pointer" }}>✕</button>
+                </div>
+              ) : (
+                <input type="file" onChange={e => e.target.files[0] && readFileAsBase64(e.target.files[0], url => setMarketForm(f => ({ ...f, fileDataUrl: url, fileName: e.target.files[0].name })))}
+                  style={{ width: "100%", marginBottom: "16px", color: "#a8a49e", fontSize: "12px" }} />
+              )}
+
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button onClick={createMarketProduct} disabled={marketSubmitting} style={{ flex: 1, background: G, color: "#0a0a0a", border: "none", borderRadius: "10px", padding: "12px", fontWeight: "800", fontSize: "14px", cursor: "pointer", opacity: marketSubmitting ? 0.6 : 1 }}>
+                  {marketSubmitting ? "Uploading…" : "Add Product"}
+                </button>
+                <button onClick={() => setShowMarketForm(false)} style={{ flex: 1, background: BG3, color: "#a8a49e", border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", cursor: "pointer" }}>Cancel</button>
+              </div>
             </div>
           </div>
         )}
