@@ -46,7 +46,16 @@ export default function DriverDashboard() {
     if (user?.driverStatus === "ONLINE" && !restoredOnlineRef.current) {
       restoredOnlineRef.current = true;
       setOnline(true);
+      // Restoring 'online' alone isn't enough — the ride-request handler
+      // also requires locationGranted to be true, and that only ever gets
+      // set inside startLocationTracking()'s own success callback, which
+      // otherwise only runs from an explicit button click. Without this,
+      // a driver who refreshes shows correctly online but ride requests
+      // still silently get dropped by the same gate that used to check
+      // the broken 'online' flag.
+      startLocationTracking();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.driverStatus, user?.id]);
   const [locationGranted, setLocationGranted] = useState(false);
   const [locationError, setLocationError] = useState(null);
