@@ -33,6 +33,21 @@ export default function DriverDashboard() {
 
   // State
   const [online, setOnline] = useState(false);
+  const restoredOnlineRef = useRef(false);
+  const socketRef = useRef(null);
+
+  // Restore online/offline UI state from what's actually persisted in the
+  // database, instead of always starting as offline regardless of what the
+  // driver last set. (Rejoining the actual socket dispatch room happens
+  // separately, inside the socket's own "connect" handler below — doing it
+  // there instead of here guarantees the socket connection actually exists
+  // yet, which isn't guaranteed at the time this effect first runs.)
+  useEffect(() => {
+    if (user?.driverStatus === "ONLINE" && !restoredOnlineRef.current) {
+      restoredOnlineRef.current = true;
+      setOnline(true);
+    }
+  }, [user?.driverStatus, user?.id]);
   const [locationGranted, setLocationGranted] = useState(false);
   const [locationError, setLocationError] = useState(null);
   const [driverPos, setDriverPos] = useState(null);
@@ -48,7 +63,6 @@ export default function DriverDashboard() {
   const [lastTrip, setLastTrip] = useState(null);
   const [showLastTrip, setShowLastTrip] = useState(false);
 
-  const socketRef = useRef(null);
   const watchRef = useRef(null);
   const posRef = useRef(null);
 
@@ -113,7 +127,17 @@ export default function DriverDashboard() {
     );
     socketRef.current = sock;
 
-    sock.on("connect", () => console.log("[PROJO Driver] Socket connected"));
+    sock.on("connect", () => {
+      console.log("[PROJO Driver] Socket connected");
+      // Rejoin the dispatch room if this driver was already online before
+      // this connection (e.g. page refresh) — without this, a refreshed
+      // driver would show "online" in the UI but never actually receive
+      // ride requests again, since driver:online is what puts them in the
+      // room and a fresh socket connection starts in no rooms at all.
+      if (user?.driverStatus === "ONLINE") {
+        sock.emit("driver:online", { driverId: user?.id });
+      }
+    });
     sock.on("disconnect", () => console.log("[PROJO Driver] Socket disconnected"));
 
     // New ride request

@@ -12,8 +12,16 @@ model User {
   email        String?   @unique
   phone        String    @unique
   driverStatus String?   @default("OFFLINE") // ONLINE | OFFLINE | ON_RIDE | ON_DELIVERY — only meaningful for role:"DRIVER"
+  idNumber             String?  // SA ID number — driver applications only
+  vehicleMake          String?
+  vehicleModel         String?
+  vehicleYear          String?
+  vehicleColor         String?
+  vehicleRegistration  String?
+  vehicleType          String?  // ECONOMY | COMFORT | etc
   pushSubscription String?           // DEPRECATED — kept only so existing data isn't lost; superseded by pushSubscriptions[] below, which supports multiple devices per account (this single field could only ever remember one device, silently overwriting itself when a user subscribed on a second device)
   pushSubscriptions PushSubscription[]
+  driverDocuments   DriverDocument[]
   name         String
   role         String    @default("PASSENGER")
   status       String    @default("PENDING_VERIFICATION")
@@ -139,6 +147,21 @@ model Delivery {
 // push payloads have a hard ~4KB limit and can never contain the image data
 // directly. GET /api/push/image/:id serves the actual bytes; the payload
 // only ever needs to reference that short URL.
+// Driver application documents (operator card, ID copy, vehicle photos, etc)
+// — stored as base64 in the database (not local disk, which Render's free
+// tier wipes on every deploy), one row per document. Only ever shown to
+// admins reviewing an application.
+model DriverDocument {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  docType   String   // operatorCard | vehiclePapers | idCopy | personPhoto | vehicleInside | vehicleOutside
+  dataUrl   String   @db.Text
+  createdAt DateTime @default(now())
+  @@index([userId])
+  @@map("driver_documents")
+}
+
 model PushImage {
   id        String   @id @default(uuid())
   dataUrl   String   @db.Text // original data:image/...;base64,... string

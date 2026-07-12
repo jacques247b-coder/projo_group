@@ -192,27 +192,23 @@ export default function DriverSignupPage() {
     localStorage.removeItem("drv_otpSent");
     localStorage.removeItem("drv_verified");
     const token = localStorage.getItem("projo_token");
-      const formData = new FormData();
 
-      // Personal & vehicle data
-      formData.append("idNumber", personal.idNumber);
-      formData.append("address", personal.address);
-      formData.append("vehicleMake", vehicle.make);
-      formData.append("vehicleModel", vehicle.model);
-      formData.append("vehicleYear", vehicle.year);
-      formData.append("vehicleColor", vehicle.color);
-      formData.append("vehicleRegistration", vehicle.registration);
-      formData.append("vehicleType", vehicle.vehicleType);
-
-      // Documents
-      REQUIRED_DOCS.forEach(d => {
-        if (docs[d.key]) formData.append(d.key, docs[d.key]);
-      });
+      const payload = {
+        idNumber: personal.idNumber,
+        address: personal.address,
+        vehicleMake: vehicle.make,
+        vehicleModel: vehicle.model,
+        vehicleYear: vehicle.year,
+        vehicleColor: vehicle.color,
+        vehicleRegistration: vehicle.registration,
+        vehicleType: vehicle.vehicleType,
+        documents: docs, // { operatorCard: "data:...", vehiclePapers: "data:...", ... } — already base64 from handleDocUpload
+      };
 
       const res = await fetch(`${process.env.REACT_APP_API_URL}/drivers/apply`, {
         method: "POST",
-        headers: { "Authorization": `Bearer ${token}` },
-        body: formData,
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -234,8 +230,13 @@ export default function DriverSignupPage() {
       toast.error("File too large. Max 10MB per document.");
       return;
     }
-    setDocs(d => ({ ...d, [key]: file }));
-    toast.success(`${key} uploaded ✅`);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setDocs(d => ({ ...d, [key]: ev.target.result })); // base64 data URL
+      toast.success(`${key} uploaded ✅`);
+    };
+    reader.onerror = () => toast.error("Couldn't read that file — please try again.");
+    reader.readAsDataURL(file);
   }
 
   const progressPct = ((step) / (STEPS.length - 1)) * 100;
@@ -483,7 +484,7 @@ export default function DriverSignupPage() {
                       marginBottom: "2px" }}>{doc.label}</div>
                     <div style={{ fontSize: "11px", color: "#6b6760" }}>
                       {docs[doc.key] ? (
-                        <span style={{ color: GREEN }}>✅ {docs[doc.key].name}</span>
+                        <span style={{ color: GREEN }}>✅ Uploaded</span>
                       ) : doc.desc}
                     </div>
                   </div>
