@@ -182,6 +182,7 @@ export default function BookRidePage() {
     if (bookingType === "delivery" && !recipientName) return toast.error("Please enter recipient name");
     setLoading(true);
     try {
+      let bookedRideId = null;
       if (bookingType === "delivery") {
         await deliveryAPI.bookDelivery({
           description: packageDesc || "Package",
@@ -191,16 +192,28 @@ export default function BookRidePage() {
           distanceKm: fareResult?.distanceKm || 0,
         });
       } else {
-        await rideAPI.bookRide({
+        const res = await rideAPI.bookRide({
           pickupAddress: pickup.name, pickupLat: pickup.lat, pickupLng: pickup.lng,
           dropoffAddress: dropoff.name, dropoffLat: dropoff.lat, dropoffLng: dropoff.lng,
           vehicleType, scheduledFor: scheduledFor || null,
           paidWithWallet: payWithWallet,
         });
+        bookedRideId = res?.ride?.id;
       }
       const points = calcLoyaltyPoints(fareResult?.totalFare || 60);
       toast.success(`🎉 Booked! You earned ${points} loyalty point${points !== 1 ? "s" : ""}!`);
-      navigate("/rides");
+      // Straight to live tracking for a real-time ride — previously this
+      // always went to the generic history list instead, which meant the
+      // driver photo, vehicle details, ETA, and live map (all of which
+      // exist on the tracking page) were never actually seen unless
+      // someone happened to dig through ride history and click in
+      // manually. Deliveries and scheduled rides still go to the list,
+      // since there's nothing to track live yet.
+      if (bookedRideId && !scheduledFor) {
+        navigate(`/ride/${bookedRideId}`);
+      } else {
+        navigate("/rides");
+      }
     } catch (err) {
       toast.error(err?.error || "Could not book. Please try again.");
     } finally { setLoading(false); }

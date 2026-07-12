@@ -77,6 +77,7 @@ export default function DriverDashboard() {
       // still silently get dropped by the same gate that used to check
       // the broken 'online' flag.
       startLocationTracking();
+      checkForPendingRide();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.driverStatus, user?.id]);
@@ -237,6 +238,19 @@ export default function DriverDashboard() {
     };
   }, []);
 
+  // Re-check for a missed ride every time the driver actually returns to
+  // the app — the mount-time check above only ever runs once, but a driver
+  // can background the app, get notified, and come back multiple times in
+  // a shift. This is what actually catches that.
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState === "visible") checkForPendingRide();
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentRide, currentDelivery, pendingRide]);
+
   // ── Go Online/Offline ──────────────────────────────────────
   async function toggleOnline() {
     if (!online) {
@@ -269,6 +283,26 @@ export default function DriverDashboard() {
   }
 
   // ── Accept ride ────────────────────────────────────────────
+  // If a ride was dispatched while the driver was backgrounded/closed, the
+  // push notification wakes them up, but reopening the app only re-connects
+  // the socket going forward — it never had a chance to receive that
+  // specific ride:new_request event, since the socket wasn't even
+  // connected at the moment it was broadcast. Without this, the driver
+  // sees the notification, opens the app, and finds... nothing. This
+  // fetches whatever's still actually pending and unassigned, so the
+  // request shows up regardless of whether the live event was missed.
+  async function checkForPendingRide() {
+    if (currentRide || currentDelivery || pendingRide) return;
+    try {
+      const res = await driverAPI.getPendingRides();
+      const oldest = res?.rides?.[0];
+      if (oldest) {
+        setPendingRide(oldest);
+        toast("🚗 Ride request waiting for you!", { duration: 20000, icon: "🔔" });
+      }
+    } catch { /* silent — this is a background catch-up check, not a user action */ }
+  }
+
   async function acceptRide() {
     if (!pendingRide) return;
     try {
