@@ -876,6 +876,14 @@ export default function AdminDashboard() {
                   <div>
                     <div style={{ fontWeight: "700", color: "#f0ede8" }}>{d.name}</div>
                     <div style={{ fontSize: "12px", color: "#6b6760" }}>{d.phone}</div>
+                    {(d.vehicleMake || d.vehicleRegistration) ? (
+                      <div style={{ fontSize: "11px", color: "#a8a49e", marginTop: "2px" }}>
+                        🚗 {[d.vehicleColor, d.vehicleYear, d.vehicleMake, d.vehicleModel].filter(Boolean).join(" ")}
+                        {d.vehicleType ? ` · ${d.vehicleType}` : ""}{d.vehicleRegistration ? ` · ${d.vehicleRegistration}` : ""}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: "11px", color: "#6b6760", marginTop: "2px", fontStyle: "italic" }}>No vehicle details on file</div>
+                    )}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                     <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: enRoute ? "#f59e0b" : d.driverStatus === "ONLINE" ? "#4ade80" : "#6b6760" }} />
