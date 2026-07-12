@@ -101,7 +101,14 @@ export default function RideTrackingPage({ shared = false }) {
     // Driver assigned — show driver info immediately
     socket.on("ride:driver_assigned", (data) => {
       setRide(prev => ({ ...prev, status: "DRIVER_ASSIGNED", driverId: data.driverId }));
-      setDriverInfo({ name: data.driverName, phone: data.driverPhone });
+      setDriverInfo({
+        name: data.driverName,
+        phone: data.driverPhone,
+        vehicle: [data.vehicleColor, data.vehicleMake, data.vehicleModel].filter(Boolean).join(" "),
+        vehicleType: data.vehicleType,
+        vehicleRegistration: data.vehicleRegistration,
+        photoUrl: data.photoUrl,
+      });
       toast.success("🚗 Driver found and on the way!");
       if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
     });

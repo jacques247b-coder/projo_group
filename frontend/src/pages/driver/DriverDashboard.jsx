@@ -605,6 +605,16 @@ export default function DriverDashboard() {
             {/* Status action buttons */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {currentRide.status === "DRIVER_ASSIGNED" && (
+                <button onClick={() => updateRideStatus("DRIVER_EN_ROUTE")} style={btn("#1a3a5c", "#60a5fa")}>
+                  🚗 Heading to Pickup
+                </button>
+              )}
+              {currentRide.status === "DRIVER_EN_ROUTE" && (
+                <button onClick={() => updateRideStatus("ARRIVED_AT_PICKUP")} style={btn("#4a3a1a", "#f59e0b")}>
+                  📍 Arrived at Pickup
+                </button>
+              )}
+              {currentRide.status === "ARRIVED_AT_PICKUP" && (
                 <button onClick={() => updateRideStatus("IN_PROGRESS")} style={btn("#1a4a2e", "#4ade80")}>
                   🚗 Start Ride — Passenger On Board
                 </button>

@@ -59,6 +59,18 @@ function buildInvoicePDF(invoiceData) {
     // Gold divider line
     doc.moveTo(50, 145).lineTo(545, 145).strokeColor(GOLD).lineWidth(1).stroke();
 
+    // ── Watermark — faint centered logo behind the invoice body ──
+    // Drawn now (after the header, before any body content) so it sits
+    // underneath everything that follows without obscuring readability.
+    try {
+      const logoPath = require("path").join(__dirname, "..", "..", "assets", "logo", "PROJO_LOGO.png");
+      const wmSize = 320;
+      doc.opacity(0.06).image(logoPath, (595 - wmSize) / 2, 300, { width: wmSize });
+      doc.opacity(1); // reset for everything that follows
+    } catch (e) {
+      console.log("[PROJO Invoice] Watermark skipped:", e.message);
+    }
+
     // ── Bill To ──────────────────────────────────────────────
     let y = 160;
     doc.fillColor(GRAY).fontSize(9).font("Helvetica-Bold")
