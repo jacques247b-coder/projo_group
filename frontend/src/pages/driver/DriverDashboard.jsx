@@ -284,7 +284,10 @@ export default function DriverDashboard() {
 
       setPendingRide(null);
       toast.success("✅ Ride accepted! Head to pickup");
-    } catch { toast.error("Could not accept ride"); }
+    } catch (err) {
+      console.error("[PROJO Driver] Accept ride failed:", err);
+      toast.error(err?.error || "Could not accept ride");
+    }
   }
 
   async function declineRide() {

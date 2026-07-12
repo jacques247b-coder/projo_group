@@ -272,5 +272,8 @@ exports.acceptRide = async (req, res) => {
       data: { driverId: req.user.id, status: "DRIVER_ASSIGNED" },
     });
     res.json({ message: "Ride accepted", ride });
-  } catch { res.status(500).json({ error: "Could not accept ride" }); }
+  } catch (err) {
+    console.error("[PROJO Ride] acceptRide error:", err.message, "| rideId:", req.params.id, "| driverId:", req.user?.id);
+    res.status(500).json({ error: "Could not accept ride: " + err.message });
+  }
 };
