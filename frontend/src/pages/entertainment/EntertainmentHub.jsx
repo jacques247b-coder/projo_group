@@ -2123,20 +2123,38 @@ export default function EntertainmentHub() {
 
       {/* Tabs */}
       <div style={{ background: BG2, borderBottom: `1px solid ${BORDER}`, paddingTop: "72px" }}>
-        <div style={{ maxWidth: "900px", margin: "0 auto", padding: "12px 1rem" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(70px, 1fr))", gap: "6px" }}>
-            {TABS.map(t => (
-              <button key={t.key} onClick={() => { setTab(t.key); setActiveGame(null); }} style={{
-                background: tab === t.key ? "rgba(232,184,75,0.15)" : BG3,
-                border: `1px solid ${tab === t.key ? G : BORDER}`,
-                borderRadius: "12px", padding: "10px 6px",
-                display: "flex", flexDirection: "column", alignItems: "center", gap: "4px",
-                cursor: "pointer", fontFamily: "'DM Sans',sans-serif",
-              }}>
-                <span style={{ fontSize: "22px", lineHeight: 1 }}>{t.label}</span>
-                <span style={{ fontSize: "10px", fontWeight: "700", color: tab === t.key ? G : "#a8a49e", whiteSpace: "nowrap" }}>{t.full}</span>
-              </button>
-            ))}
+        <div style={{ maxWidth: "900px", margin: "0 auto", padding: "16px 1rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(82px, 1fr))", gap: "10px" }}>
+            {TABS.map(t => {
+              const isActive = tab === t.key;
+              const isNew = t.key === "marketplace";
+              return (
+                <button key={t.key} onClick={() => { setTab(t.key); setActiveGame(null); }} style={{
+                  background: isActive
+                    ? "linear-gradient(155deg, rgba(232,184,75,0.22), rgba(232,184,75,0.06))"
+                    : "linear-gradient(155deg, #1d1d1d, #161616)",
+                  border: `1px solid ${isActive ? G : "rgba(255,255,255,0.06)"}`,
+                  borderRadius: "16px", padding: "14px 6px 12px",
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: "6px",
+                  cursor: "pointer", fontFamily: "'DM Sans',sans-serif", position: "relative",
+                  boxShadow: isActive ? "0 6px 20px rgba(232,184,75,0.25), inset 0 1px 0 rgba(255,255,255,0.08)" : "0 2px 8px rgba(0,0,0,0.25)",
+                  transform: isActive ? "translateY(-2px)" : "none",
+                  transition: "all 0.18s ease",
+                }}>
+                  {isNew && (
+                    <span style={{ position: "absolute", top: "-6px", right: "-4px", background: "linear-gradient(135deg, #ff5f6d, #ffc371)", color: "#1a0808", fontSize: "7px", fontWeight: "800", padding: "2px 5px", borderRadius: "999px", letterSpacing: "0.5px", boxShadow: "0 2px 6px rgba(255,95,109,0.5)" }}>NEW</span>
+                  )}
+                  <span style={{
+                    fontSize: "28px", lineHeight: 1,
+                    filter: isActive ? "drop-shadow(0 0 8px rgba(232,184,75,0.6))" : "grayscale(15%) opacity(0.85)",
+                    transform: isActive ? "scale(1.08)" : "scale(1)",
+                    transition: "all 0.18s ease",
+                  }}>{t.label}</span>
+                  <span style={{ fontSize: "10px", fontWeight: isActive ? "800" : "600", color: isActive ? G : "#8a8580", whiteSpace: "nowrap", letterSpacing: "0.2px" }}>{t.full}</span>
+                  {isActive && <span style={{ position: "absolute", bottom: "-1px", left: "20%", right: "20%", height: "2px", background: G, borderRadius: "2px", boxShadow: `0 0 6px ${G}` }} />}
+                </button>
+              );
+            })}
           </div>
 
         </div>
