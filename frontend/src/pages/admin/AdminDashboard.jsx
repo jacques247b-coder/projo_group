@@ -4,6 +4,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import Navbar from "../../components/ui/Navbar";
 import api, { panicAPI } from "../../services/api";
 import toast from "react-hot-toast";
@@ -70,6 +73,8 @@ export default function AdminDashboard() {
   const [viewingDriverDocs, setViewingDriverDocs] = useState(null); // { driver, documents } | null
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [allDrivers, setAllDrivers] = useState([]);
+  const [driverLocations, setDriverLocations] = useState({}); // driverId -> {lat, lng, timestamp}
+  const [driverTodayStats, setDriverTodayStats] = useState({}); // driverId -> {rides, deliveries, earnings}
   const [search, setSearch] = useState("");
   const [selectedRide, setSelectedRide] = useState(null);
   const [selectedDelivery, setSelectedDelivery] = useState(null);
@@ -111,6 +116,9 @@ export default function AdminDashboard() {
     sock.on("driver:status_changed", ({ driverId, status }) => {
       setAllDrivers(prev => prev.map(d => d.id === driverId ? { ...d, driverStatus: status } : d));
     });
+    sock.on("driver:location", ({ driverId, lat, lng, timestamp }) => {
+      setDriverLocations(prev => ({ ...prev, [driverId]: { lat, lng, timestamp } }));
+    });
 
     return () => { sock.emit("panic:leave_monitor"); sock.disconnect(); };
   }, []);
@@ -137,7 +145,7 @@ export default function AdminDashboard() {
   async function loadAll() {
     setLoading(true);
     try {
-      const [s, u, r, d, p, dr, so, ps, la, cl] = await Promise.all([
+      const [s, u, r, d, p, dr, so, ps, la, cl, dts] = await Promise.all([
         getWithRetry("/admin/stats", { stats: null }),
         getWithRetry("/admin/users", { users: [] }),
         getWithRetry("/admin/rides", { rides: [] }),
@@ -148,6 +156,7 @@ export default function AdminDashboard() {
         getWithRetry("/admin/push/stats", null),
         getWithRetry("/admin/entertainment/ads", { ads: [] }),
         getWithRetry("/admin/classifieds", { classifieds: [] }),
+        getWithRetry("/admin/drivers/today-stats", { stats: {} }),
       ]);
       setStats(s.stats);
       setUsers(u.users || []);
@@ -155,6 +164,7 @@ export default function AdminDashboard() {
       setDeliveries(d.deliveries || []);
       setProducts(p.products || []);
       setServiceOrders(so.orders || []);
+      setDriverTodayStats(dts?.stats || {});
       if (ps) setPushStats(ps);
       setLocalAds(la?.ads || []);
       setClassifieds(cl?.classifieds || []);
@@ -784,8 +794,36 @@ export default function AdminDashboard() {
               </div>
             )}
 
+            {Object.keys(driverLocations).length > 0 && (
+              <div style={{ marginBottom: "1.5rem" }}>
+                <div style={{ fontSize: "12px", fontWeight: "700", color: "#6b6760", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Live Map ({Object.keys(driverLocations).length} tracked)</div>
+                <div style={{ borderRadius: "12px", overflow: "hidden", border: `1px solid ${BORDER}`, height: "320px" }}>
+                  <MapContainer center={Object.values(driverLocations)[0] ? [Object.values(driverLocations)[0].lat, Object.values(driverLocations)[0].lng] : [-25.6694, 27.2424]} zoom={12} style={{ height: "100%", width: "100%" }}>
+                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap" />
+                    {Object.entries(driverLocations).map(([driverId, loc]) => {
+                      const driver = allDrivers.find(d => d.id === driverId);
+                      if (!driver) return null;
+                      const enRoute = driver.driverStatus === "ON_RIDE" || driver.driverStatus === "ON_DELIVERY";
+                      return (
+                        <Marker key={driverId} position={[loc.lat, loc.lng]}>
+                          <Popup>
+                            <strong>{driver.name}</strong><br />
+                            {enRoute ? "🚗 En route" : driver.driverStatus === "ONLINE" ? "🟢 Online, waiting" : "⚪ Offline"}<br />
+                            <span style={{ fontSize: "11px", color: "#888" }}>Updated {new Date(loc.timestamp).toLocaleTimeString()}</span>
+                          </Popup>
+                        </Marker>
+                      );
+                    })}
+                  </MapContainer>
+                </div>
+              </div>
+            )}
+
             <div style={{ fontSize: "12px", fontWeight: "700", color: "#6b6760", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>All Drivers</div>
-            {allDrivers.filter(d => d.status === "ACTIVE").map(d => (
+            {allDrivers.filter(d => d.status === "ACTIVE").map(d => {
+              const enRoute = d.driverStatus === "ON_RIDE" || d.driverStatus === "ON_DELIVERY";
+              const today = driverTodayStats[d.id] || { rides: 0, deliveries: 0, earnings: 0 };
+              return (
               <div key={d.id} style={{ ...card, marginBottom: "8px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
@@ -793,14 +831,19 @@ export default function AdminDashboard() {
                     <div style={{ fontSize: "12px", color: "#6b6760" }}>{d.phone}</div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: d.driverStatus === "ONLINE" ? "#4ade80" : "#6b6760" }} />
-                    <span style={{ fontSize: "12px", fontWeight: "700", color: d.driverStatus === "ONLINE" ? "#4ade80" : "#6b6760" }}>
-                      {d.driverStatus === "ONLINE" ? "ONLINE" : "OFFLINE"}
+                    <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: enRoute ? "#f59e0b" : d.driverStatus === "ONLINE" ? "#4ade80" : "#6b6760" }} />
+                    <span style={{ fontSize: "12px", fontWeight: "700", color: enRoute ? "#f59e0b" : d.driverStatus === "ONLINE" ? "#4ade80" : "#6b6760" }}>
+                      {enRoute ? "EN ROUTE" : d.driverStatus === "ONLINE" ? "ONLINE" : "OFFLINE"}
                     </span>
                   </div>
                 </div>
+                <div style={{ display: "flex", gap: "12px", marginTop: "10px", paddingTop: "10px", borderTop: `1px solid ${BORDER}`, fontSize: "11px", color: "#a8a49e" }}>
+                  <span>Today: <strong style={{ color: "#f0ede8" }}>{today.rides + today.deliveries}</strong> trip{today.rides + today.deliveries !== 1 ? "s" : ""}</span>
+                  <span>Earned: <strong style={{ color: G }}>R{today.earnings.toFixed(2)}</strong></span>
+                </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
 

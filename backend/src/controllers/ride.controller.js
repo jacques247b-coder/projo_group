@@ -163,7 +163,7 @@ exports.bookRide = async (req, res) => {
 // real passenger account to charge.
 exports.streetPickup = async (req, res) => {
   const { pickupAddress, pickupLat, pickupLng, dropoffAddress, dropoffLat, dropoffLng,
-    vehicleType = "ECONOMY", distanceKm } = req.body;
+    vehicleType = "ECONOMY", distanceKm, passengerEmail } = req.body;
   try {
     const fare = calcFare(pickupLat, pickupLng, dropoffLat, dropoffLng, vehicleType, distanceKm);
 
@@ -184,6 +184,7 @@ exports.streetPickup = async (req, res) => {
         status: "DRIVER_ASSIGNED",
         paidWithWallet: false,
         isStreetPickup: true,
+        streetPickupEmail: passengerEmail || null,
       },
     });
 
@@ -248,7 +249,12 @@ exports.updateRideStatus = async (req, res) => {
       try {
         const { generateAndSendInvoice } = require("../services/invoice.service");
         const passenger = await prisma.user.findUnique({ where: { id: ride.passengerId } });
-        if (passenger) await generateAndSendInvoice({ type: "ride", data: ride, user: passenger });
+        if (passenger) {
+          const invoiceRecipient = ride.streetPickupEmail
+            ? { ...passenger, email: ride.streetPickupEmail, name: "Street Pickup Passenger" }
+            : passenger;
+          await generateAndSendInvoice({ type: "ride", data: ride, user: invoiceRecipient });
+        }
       } catch (e) { console.log("[PROJO Invoice] Ride:", e.message); }
     }
 

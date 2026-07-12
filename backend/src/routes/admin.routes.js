@@ -14,6 +14,7 @@ router.get("/users", admin.getUsers);
 router.get("/classifieds", admin.getClassifieds);
 router.delete("/classifieds/:id", admin.deleteClassifiedAdmin);
 router.get("/drivers", admin.getDrivers);
+router.get("/drivers/today-stats", admin.getDriverTodayStats);
 router.get("/drivers/:id/documents", admin.getDriverDocuments);
 router.get("/rides", admin.getAllRides);
 router.get("/deliveries", admin.getAllDeliveries);

@@ -118,6 +118,7 @@ model Ride {
   shareToken     String?   @unique @default(cuid())
   paidWithWallet Boolean   @default(false)
   isStreetPickup Boolean   @default(false) // driver-created booking for a walk-up passenger with no real account — passengerId is filled with the driver's own id as a placeholder, so loyalty points/invoices must never fire for these
+  streetPickupEmail String? // optional — the actual walk-up passenger's email, if the driver captured one, so THEY can get the invoice instead of it just going to the driver
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   @@map("rides")

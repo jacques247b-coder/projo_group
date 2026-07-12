@@ -90,6 +90,9 @@ io.on("connection", (socket) => {
     if (passengerId) {
       io.to(`passenger:${passengerId}`).emit("driver:location", payload);
     }
+    // Admin sees every driver's live position, ride or no ride — needed
+    // for the driver-monitoring map in the admin panel
+    io.to("admin").emit("driver:location", payload);
   });
 
   // Driver accepted ride — notify passenger immediately with driver info

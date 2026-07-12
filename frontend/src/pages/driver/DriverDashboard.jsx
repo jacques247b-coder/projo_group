@@ -104,6 +104,7 @@ export default function DriverDashboard() {
   const [streetDropoff, setStreetDropoff] = useState(null);
   const [streetCustomDropoff, setStreetCustomDropoff] = useState("");
   const [streetVehicleType, setStreetVehicleType] = useState("ECONOMY");
+  const [streetPassengerEmail, setStreetPassengerEmail] = useState("");
   const [streetSubmitting, setStreetSubmitting] = useState(false);
 
   const watchRef = useRef(null);
@@ -329,11 +330,13 @@ export default function DriverDashboard() {
         dropoffLat: dropoff.lat,
         dropoffLng: dropoff.lng,
         vehicleType: streetVehicleType,
+        passengerEmail: streetPassengerEmail.trim() || undefined,
       });
       setCurrentRide(res.ride);
       setShowStreetPickup(false);
       setStreetDropoff(null);
       setStreetCustomDropoff("");
+      setStreetPassengerEmail("");
       toast.success("✅ Street pickup started — head to dropoff");
     } catch (err) {
       console.error("[PROJO Driver] Street pickup failed:", err);
@@ -703,6 +706,11 @@ export default function DriverDashboard() {
                   style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", background: BG3, border: `1px solid ${BORDER}`, color: "#f0ede8", fontSize: "13px", boxSizing: "border-box", marginBottom: "16px" }} />
               </>
             )}
+
+            <div style={{ fontSize: "11px", color: "#6b6760", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>Passenger Email (optional)</div>
+            <input value={streetPassengerEmail} onChange={e => setStreetPassengerEmail(e.target.value)} placeholder="If they want a receipt..." type="email"
+              style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", background: BG3, border: `1px solid ${BORDER}`, color: "#f0ede8", fontSize: "13px", boxSizing: "border-box", marginBottom: "16px" }} />
+            <div style={{ fontSize: "10.5px", color: "#6b6760", marginTop: "-12px", marginBottom: "16px" }}>Leave blank and the receipt just goes to your own email instead.</div>
 
             <div style={{ fontSize: "11px", color: "#6b6760", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "6px" }}>Vehicle Type</div>
             <div style={{ display: "flex", gap: "6px", marginBottom: "20px", flexWrap: "wrap" }}>

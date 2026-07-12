@@ -106,6 +106,45 @@ exports.getDriverDocuments = async (req, res) => {
   }
 };
 
+// GET /api/admin/drivers/today-stats — today's rides + earnings for every
+// driver at once (one query each, grouped in JS — avoids an N+1 query per
+// driver for what would otherwise be a very chatty endpoint)
+exports.getDriverTodayStats = async (req, res) => {
+  try {
+    const since = new Date();
+    since.setHours(0, 0, 0, 0);
+
+    const [rides, deliveries] = await Promise.all([
+      prisma.ride.findMany({
+        where: { status: "COMPLETED", driverId: { not: null }, updatedAt: { gte: since } },
+        select: { driverId: true, driverPayout: true },
+      }),
+      prisma.delivery.findMany({
+        where: { status: "COMPLETED", driverId: { not: null }, updatedAt: { gte: since } },
+        select: { driverId: true, fare: true },
+      }),
+    ]);
+
+    const stats = {}; // driverId -> { rides, deliveries, earnings }
+    for (const r of rides) {
+      const s = stats[r.driverId] || { rides: 0, deliveries: 0, earnings: 0 };
+      s.rides++;
+      s.earnings += r.driverPayout || 0; // already the driver's final cut, not the total fare
+      stats[r.driverId] = s;
+    }
+    for (const d of deliveries) {
+      const s = stats[d.driverId] || { rides: 0, deliveries: 0, earnings: 0 };
+      s.deliveries++;
+      s.earnings += d.fare || 0;
+      stats[d.driverId] = s;
+    }
+
+    res.json({ stats });
+  } catch (err) {
+    res.status(500).json({ error: "Could not load driver stats" });
+  }
+};
+
 exports.getDrivers = async (req, res) => {
   try {
     const drivers = await prisma.user.findMany({
