@@ -149,7 +149,7 @@ export default function DriverDashboard() {
     const token = localStorage.getItem("projo_token");
     const sock = io(
       process.env.REACT_APP_API_URL?.replace("/api", "") || "http://localhost:5000",
-      { auth: { token } }
+      { auth: { token }, transports: ["websocket"] }
     );
     socketRef.current = sock;
 
@@ -164,7 +164,7 @@ export default function DriverDashboard() {
     });
 
     sock.on("connect", () => {
-      console.log("[PROJO Driver] Socket connected");
+      console.log("[PROJO Driver] Socket connected via transport:", sock.io.engine.transport.name);
       // Rejoin the dispatch room if this driver was already online before
       // this connection (e.g. page refresh) — without this, a refreshed
       // driver would show "online" in the UI but never actually receive
