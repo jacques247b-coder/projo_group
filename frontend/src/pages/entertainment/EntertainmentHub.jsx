@@ -354,25 +354,53 @@ const TABS = [
 
 // ── MINI GAMES ────────────────────────────────────────────────
 function Game2048() {
-  const [grid, setGrid] = useState(() => initGrid());
+  const SIZES = { easy: 5, medium: 4, hard: 3 }; // bigger board = more room = easier
+  const [difficulty, setDifficulty] = useState(null);
+  const [size, setSize] = useState(4);
+  const [grid, setGrid] = useState(null);
   const [score, setScore] = useState(0);
   const [best, setBest] = useState(() => parseInt(localStorage.getItem("projo_2048_best") || "0"));
   const [gameOver, setGameOver] = useState(false);
 
-  function initGrid() {
-    const g = Array(4).fill(null).map(() => Array(4).fill(0));
+  function initGrid(n) {
+    const g = Array(n).fill(null).map(() => Array(n).fill(0));
     addRandom(g); addRandom(g);
     return g;
   }
   function addRandom(g) {
+    const n = g.length;
     const empty = [];
-    for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) if (!g[r][c]) empty.push([r,c]);
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (!g[r][c]) empty.push([r,c]);
     if (!empty.length) return;
     const [r,c] = empty[Math.floor(Math.random() * empty.length)];
     g[r][c] = Math.random() < 0.9 ? 2 : 4;
   }
+
+  function start(diff) {
+    const n = SIZES[diff];
+    setDifficulty(diff);
+    setSize(n);
+    setGrid(initGrid(n));
+    setScore(0);
+    setGameOver(false);
+  }
+
+  if (!difficulty) {
+    return (
+      <div style={{ textAlign: "center", padding: "1rem 0" }}>
+        <div style={{ fontSize: "14px", color: G, fontWeight: "700", marginBottom: "16px" }}>Choose difficulty</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxWidth: "220px", margin: "0 auto" }}>
+          <button onClick={() => start("easy")} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", color: "#4ade80", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>😌 Easy — 5×5 board</button>
+          <button onClick={() => start("medium")} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", color: "#f59e0b", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>🤔 Medium — 4×4 (classic)</button>
+          <button onClick={() => start("hard")} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", color: "#ef4444", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>🔥 Hard — 3×3 board</button>
+        </div>
+      </div>
+    );
+  }
+
   function move(dir) {
     if (gameOver) return;
+    const n = size;
     const g = grid.map(r => [...r]);
     let moved = false, gained = 0;
     const rotate = (arr) => arr[0].map((_, i) => arr.map(r => r[i]).reverse());
@@ -386,7 +414,7 @@ function Game2048() {
           merged.push(filtered[i] * 2); gained += filtered[i] * 2; i += 2;
         } else { merged.push(filtered[i]); i++; }
       }
-      const padded = [...merged, ...Array(4 - merged.length).fill(0)];
+      const padded = [...merged, ...Array(n - merged.length).fill(0)];
       if (padded.join() !== row.join()) moved = true;
       return padded;
     });
@@ -408,9 +436,9 @@ function Game2048() {
           ))}
         </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "8px", background: "#bbada0", padding: "8px", borderRadius: "10px", marginBottom: "12px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${size},1fr)`, gap: "8px", background: "#bbada0", padding: "8px", borderRadius: "10px", marginBottom: "12px" }}>
         {grid.flat().map((v,i) => (
-          <div key={i} style={{ height: "70px", background: COLORS[v] || "#3c3a32", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "800", fontSize: v > 999 ? "14px" : v > 99 ? "18px" : "22px", color: v <= 4 ? "#776e65" : "#f9f6f2" }}>
+          <div key={i} style={{ height: size === 5 ? "56px" : size === 3 ? "84px" : "70px", background: COLORS[v] || "#3c3a32", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "800", fontSize: v > 999 ? "14px" : v > 99 ? "18px" : "22px", color: v <= 4 ? "#776e65" : "#f9f6f2" }}>
             {v || ""}
           </div>
         ))}
@@ -420,7 +448,10 @@ function Game2048() {
           <button key={dir} onClick={() => move(dir)} style={{ background: "#8f7a66", color: "#fff", border: "none", borderRadius: "8px", padding: "10px", fontSize: "18px", cursor: "pointer", fontWeight: "700" }}>{label}</button>
         ))}
       </div>
-      <button onClick={() => { setGrid(initGrid()); setScore(0); setGameOver(false); }} style={{ width: "100%", marginTop: "10px", background: G, color: "#0a0a0a", border: "none", borderRadius: "8px", padding: "10px", fontWeight: "700", cursor: "pointer" }}>New Game</button>
+      <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
+        <button onClick={() => start(difficulty)} style={{ flex: 1, background: G, color: "#0a0a0a", border: "none", borderRadius: "8px", padding: "10px", fontWeight: "700", cursor: "pointer" }}>New Game</button>
+        <button onClick={() => setDifficulty(null)} style={{ flex: 1, background: BG3, border: `1px solid ${BORDER}`, color: "#a8a49e", borderRadius: "8px", padding: "10px", fontWeight: "700", cursor: "pointer" }}>Change Difficulty</button>
+      </div>
     </div>
   );
 }
@@ -429,12 +460,15 @@ function ReactionGame() {
   const [state, setState] = useState("idle"); // idle, waiting, ready, done
   const [time, setTime] = useState(null);
   const [best, setBest] = useState(() => parseInt(localStorage.getItem("projo_reaction_best") || "9999"));
+  const [difficulty, setDifficulty] = useState("medium");
+  const WAIT_RANGES = { easy: [1500, 3000], medium: [1000, 4000], hard: [500, 5000] };
   const timerRef = useRef(null);
   const startRef = useRef(null);
 
   function start() {
     setState("waiting");
-    timerRef.current = setTimeout(() => { setState("ready"); startRef.current = Date.now(); }, 1000 + Math.random() * 3000);
+    const [min, max] = WAIT_RANGES[difficulty];
+    timerRef.current = setTimeout(() => { setState("ready"); startRef.current = Date.now(); }, min + Math.random() * (max - min));
   }
   function tap() {
     if (state === "waiting") { clearTimeout(timerRef.current); setState("idle"); toast.error("Too early! Wait for green."); return; }
@@ -450,6 +484,16 @@ function ReactionGame() {
   const messages = { idle:"Tap to Start", waiting:"Wait...", ready:"TAP NOW!", done:`${time}ms${time < best ? " 🏆 New Best!" : ""}` };
   return (
     <div style={{ textAlign: "center", padding: "1rem" }}>
+      <div style={{ display: "flex", gap: "6px", justifyContent: "center", marginBottom: "10px" }}>
+        {[{ k: "easy", l: "😌 Easy", c: "#4ade80" }, { k: "medium", l: "🤔 Medium", c: "#f59e0b" }, { k: "hard", l: "🔥 Hard", c: "#ef4444" }].map(d => (
+          <button key={d.k} onClick={() => setDifficulty(d.k)} disabled={state==="waiting"} style={{
+            background: difficulty === d.k ? `${d.c}22` : BG3,
+            border: `1px solid ${difficulty === d.k ? d.c : BORDER}`,
+            borderRadius: "8px", padding: "6px 12px", color: difficulty === d.k ? d.c : "#a8a49e",
+            fontSize: "12px", fontWeight: difficulty === d.k ? "700" : "400", cursor: state==="waiting" ? "not-allowed" : "pointer",
+          }}>{d.l}</button>
+        ))}
+      </div>
       <div style={{ fontSize: "13px", color: "#6b6760", marginBottom: "8px" }}>Best: {best === 9999 ? "—" : `${best}ms`}</div>
       <div onClick={tap} style={{ height: "200px", background: colors[state], borderRadius: "16px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "background 0.1s" }}>
         <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "24px", fontWeight: "800", color: state === "ready" ? "#0a0a0a" : "#fff" }}>{messages[state]}</div>
@@ -460,40 +504,113 @@ function ReactionGame() {
 }
 
 function TicTacToe() {
+  const [mode, setMode] = useState(null); // null | "2p" | "easy" | "medium" | "hard"
   const [board, setBoard] = useState(Array(9).fill(null));
   const [xTurn, setXTurn] = useState(true);
   const [winner, setWinner] = useState(null);
   const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-  function checkWinner(b) { for (const [a,c,d] of wins) { if (b[a] && b[a]===b[c] && b[a]===b[d]) return b[a]; } return b.includes(null) ? null : "Draw"; }
+  function checkWinner(b) { for (const [a,c,d] of wins) { if (b[a] && b[a]===b[c] && b[a]===b[d]) return b[a]; } return b.every(x=>x) ? "Draw" : null; }
+
+  // Minimax — plays perfectly, used for Hard mode
+  function minimax(b, isMax) {
+    const w = checkWinner(b);
+    if (w === "O") return { score: 10 };
+    if (w === "X") return { score: -10 };
+    if (w === "Draw") return { score: 0 };
+    const moves = [];
+    for (let i = 0; i < 9; i++) {
+      if (!b[i]) {
+        const nb = [...b]; nb[i] = isMax ? "O" : "X";
+        const result = minimax(nb, !isMax);
+        moves.push({ index: i, score: result.score });
+      }
+    }
+    return isMax ? moves.reduce((best,m)=>m.score>best.score?m:best) : moves.reduce((best,m)=>m.score<best.score?m:best);
+  }
+
+  function computerMove(b, difficulty) {
+    const empty = b.map((v,i)=>v?null:i).filter(i=>i!==null);
+    if (difficulty === "easy") {
+      return empty[Math.floor(Math.random()*empty.length)];
+    }
+    if (difficulty === "medium") {
+      // Block an immediate win, or win if possible — otherwise random
+      for (const i of empty) { const nb=[...b]; nb[i]="O"; if (checkWinner(nb)==="O") return i; }
+      for (const i of empty) { const nb=[...b]; nb[i]="X"; if (checkWinner(nb)==="X") return i; }
+      return Math.random() < 0.6 ? empty[Math.floor(Math.random()*empty.length)] : minimax(b,true).index;
+    }
+    return minimax(b, true).index; // hard — unbeatable
+  }
+
   function play(i) {
     if (board[i] || winner) return;
     const nb = [...board]; nb[i] = xTurn ? "X" : "O";
-    setBoard(nb); setXTurn(!xTurn);
-    const w = checkWinner(nb); if (w) setWinner(w);
+    setBoard(nb);
+    const w = checkWinner(nb);
+    if (w) { setWinner(w); return; }
+    setXTurn(!xTurn);
+    if (mode !== "2p") {
+      setTimeout(() => {
+        const ci = computerMove(nb, mode);
+        if (ci === undefined) return;
+        const nb2 = [...nb]; nb2[ci] = "O";
+        setBoard(nb2);
+        const w2 = checkWinner(nb2);
+        if (w2) setWinner(w2); else setXTurn(true);
+      }, 450);
+    }
   }
+
+  function reset() { setBoard(Array(9).fill(null)); setXTurn(true); setWinner(null); }
+
+  if (!mode) {
+    return (
+      <div style={{ textAlign: "center", padding: "1rem 0" }}>
+        <div style={{ fontSize: "14px", color: G, fontWeight: "700", marginBottom: "16px" }}>Choose your opponent</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxWidth: "220px", margin: "0 auto" }}>
+          {[{ k: "2p", l: "👥 2 Player (same device)" }, { k: "easy", l: "😌 vs Computer — Easy" }, { k: "medium", l: "🤔 vs Computer — Medium" }, { k: "hard", l: "🔥 vs Computer — Hard (unbeatable)" }].map(o => (
+            <button key={o.k} onClick={() => setMode(o.k)} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", color: "#f0ede8", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>{o.l}</button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ textAlign: "center" }}>
       <div style={{ fontSize: "14px", color: G, fontWeight: "700", marginBottom: "12px" }}>
-        {winner ? (winner === "Draw" ? "Draw!" : `${winner} Wins! 🎉`) : `${xTurn ? "X" : "O"}'s turn`}
+        {winner ? (winner === "Draw" ? "Draw!" : `${winner} Wins! 🎉`) : mode !== "2p" ? (xTurn ? "Your turn (X)" : "Computer thinking…") : `${xTurn ? "X" : "O"}'s turn`}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "8px", maxWidth: "220px", margin: "0 auto 12px" }}>
         {board.map((v,i) => (
           <button key={i} onClick={() => play(i)} style={{ height: "70px", background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", fontSize: "28px", fontWeight: "800", color: v === "X" ? "#60a5fa" : "#f87171", cursor: "pointer" }}>{v}</button>
         ))}
       </div>
-      <button onClick={() => { setBoard(Array(9).fill(null)); setXTurn(true); setWinner(null); }} style={{ background: G, color: "#0a0a0a", border: "none", borderRadius: "8px", padding: "8px 20px", fontWeight: "700", cursor: "pointer" }}>Reset</button>
+      <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+        <button onClick={reset} style={{ background: G, color: "#0a0a0a", border: "none", borderRadius: "8px", padding: "8px 20px", fontWeight: "700", cursor: "pointer" }}>Reset</button>
+        <button onClick={() => { setMode(null); reset(); }} style={{ background: BG3, border: `1px solid ${BORDER}`, color: "#a8a49e", borderRadius: "8px", padding: "8px 20px", fontWeight: "700", cursor: "pointer" }}>Change Mode</button>
+      </div>
     </div>
   );
 }
 
 function MemoryGame() {
-  const emojis = ["🦁","🐘","🦒","🐊","🦓","🐆","🦏","🦛"];
-  const [cards, setCards] = useState(() => {
-    const deck = [...emojis,...emojis].sort(() => Math.random()-0.5).map((e,i) => ({ id:i, emoji:e, flipped:false, matched:false }));
-    return deck;
-  });
+  const allEmojis = ["🦁","🐘","🦒","🐊","🦓","🐆","🦏","🦛","🐒","🦌","🐺","🦔"];
+  const [difficulty, setDifficulty] = useState(null); // null | easy | medium | hard
+  const PAIRS = { easy: 4, medium: 8, hard: 12 };
+  const COLS = { easy: 4, medium: 4, hard: 6 };
+
+  function freshDeck(diff) {
+    const emojis = allEmojis.slice(0, PAIRS[diff]);
+    return [...emojis, ...emojis].sort(() => Math.random()-0.5).map((e,i) => ({ id:i, emoji:e, flipped:false, matched:false }));
+  }
+
+  const [cards, setCards] = useState([]);
   const [flipped, setFlipped] = useState([]);
   const [moves, setMoves] = useState(0);
+
+  function start(diff) { setDifficulty(diff); setCards(freshDeck(diff)); setFlipped([]); setMoves(0); }
+
   function flip(id) {
     if (flipped.length === 2) return;
     const card = cards.find(c => c.id === id);
@@ -512,18 +629,35 @@ function MemoryGame() {
       }
     }
   }
+
+  if (!difficulty) {
+    return (
+      <div style={{ textAlign: "center", padding: "1rem 0" }}>
+        <div style={{ fontSize: "14px", color: G, fontWeight: "700", marginBottom: "16px" }}>Choose difficulty</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxWidth: "220px", margin: "0 auto" }}>
+          <button onClick={() => start("easy")} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", color: "#4ade80", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>😌 Easy — 4 pairs</button>
+          <button onClick={() => start("medium")} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", color: "#f59e0b", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>🤔 Medium — 8 pairs</button>
+          <button onClick={() => start("hard")} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", color: "#ef4444", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>🔥 Hard — 12 pairs</button>
+        </div>
+      </div>
+    );
+  }
+
   const won = cards.every(c => c.matched);
   return (
     <div style={{ textAlign: "center" }}>
       <div style={{ fontSize: "13px", color: "#6b6760", marginBottom: "12px" }}>Moves: {moves} {won && "🎉 You won!"}</div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "8px", maxWidth: "280px", margin: "0 auto 12px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: `repeat(${COLS[difficulty]},1fr)`, gap: "8px", maxWidth: COLS[difficulty] === 6 ? "340px" : "280px", margin: "0 auto 12px" }}>
         {cards.map(c => (
-          <button key={c.id} onClick={() => flip(c.id)} style={{ height: "60px", background: c.flipped||c.matched ? BG3 : "#3a2020", border: `1px solid ${c.matched ? G : BORDER}`, borderRadius: "10px", fontSize: "24px", cursor: "pointer", transition: "all 0.3s" }}>
+          <button key={c.id} onClick={() => flip(c.id)} style={{ height: "56px", background: c.flipped||c.matched ? BG3 : "#3a2020", border: `1px solid ${c.matched ? G : BORDER}`, borderRadius: "10px", fontSize: "22px", cursor: "pointer", transition: "all 0.3s" }}>
             {c.flipped||c.matched ? c.emoji : "❓"}
           </button>
         ))}
       </div>
-      <button onClick={() => { setCards([...emojis,...emojis].sort(() => Math.random()-0.5).map((e,i) => ({id:i,emoji:e,flipped:false,matched:false}))); setFlipped([]); setMoves(0); }} style={{ background: G, color: "#0a0a0a", border: "none", borderRadius: "8px", padding: "8px 20px", fontWeight: "700", cursor: "pointer" }}>New Game</button>
+      <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+        <button onClick={() => start(difficulty)} style={{ background: G, color: "#0a0a0a", border: "none", borderRadius: "8px", padding: "8px 20px", fontWeight: "700", cursor: "pointer" }}>New Game</button>
+        <button onClick={() => setDifficulty(null)} style={{ background: BG3, border: `1px solid ${BORDER}`, color: "#a8a49e", borderRadius: "8px", padding: "8px 20px", fontWeight: "700", cursor: "pointer" }}>Change Difficulty</button>
+      </div>
     </div>
   );
 }
@@ -535,6 +669,8 @@ function SnakeGame() {
   const [score, setScore] = React.useState(0);
   const [best, setBest] = React.useState(() => parseInt(localStorage.getItem("projo_snake_best")||"0"));
   const [status, setStatus] = React.useState("idle"); // idle, playing, over
+  const [difficulty, setDifficulty] = React.useState("medium");
+  const SPEEDS = { easy: 190, medium: 140, hard: 90 };
   const loopRef = React.useRef(null);
 
   const COLS = 20, ROWS = 20, CELL = 16;
@@ -598,7 +734,7 @@ function SnakeGame() {
     g.snake = [{x:10,y:10},{x:9,y:10},{x:8,y:10}];
     g.dir = "RIGHT"; g.nextDir = "RIGHT";
     g.food = randomFood(g.snake);
-    g.score = 0; g.speed = 150; g.running = true;
+    g.score = 0; g.speed = SPEEDS[difficulty]; g.running = true;
     setScore(0); setStatus("playing");
     clearInterval(loopRef.current);
     loopRef.current = setInterval(gameLoop, g.speed);
@@ -638,9 +774,21 @@ function SnakeGame() {
       </div>
       <canvas ref={canvasRef} width={COLS*CELL} height={ROWS*CELL} style={{ border: "1px solid rgba(232,184,75,0.2)", borderRadius: "8px", display: "block", margin: "0 auto" }} />
       {status !== "playing" && (
-        <button onClick={startGame} style={{ marginTop: "12px", background: "#4ade80", color: "#0a0a0a", border: "none", borderRadius: "8px", padding: "10px 24px", fontWeight: "800", cursor: "pointer", fontSize: "14px" }}>
-          {status === "over" ? "🐍 Play Again" : "🐍 Start Game"}
-        </button>
+        <>
+          <div style={{ display: "flex", gap: "6px", justifyContent: "center", marginBottom: "10px" }}>
+            {[{ k: "easy", l: "😌 Easy", c: "#4ade80" }, { k: "medium", l: "🤔 Medium", c: "#f59e0b" }, { k: "hard", l: "🔥 Hard", c: "#ef4444" }].map(d => (
+              <button key={d.k} onClick={() => setDifficulty(d.k)} style={{
+                background: difficulty === d.k ? `${d.c}22` : BG3,
+                border: `1px solid ${difficulty === d.k ? d.c : BORDER}`,
+                borderRadius: "8px", padding: "6px 12px", color: difficulty === d.k ? d.c : "#a8a49e",
+                fontSize: "12px", fontWeight: difficulty === d.k ? "700" : "400", cursor: "pointer",
+              }}>{d.l}</button>
+            ))}
+          </div>
+          <button onClick={startGame} style={{ background: "#4ade80", color: "#0a0a0a", border: "none", borderRadius: "8px", padding: "10px 24px", fontWeight: "800", cursor: "pointer", fontSize: "14px" }}>
+            {status === "over" ? "🐍 Play Again" : "🐍 Start Game"}
+          </button>
+        </>
       )}
       {status === "over" && <div style={{ color: "#f87171", marginTop: "8px", fontWeight: "700" }}>Game Over! Score: {score}</div>}
       {/* Mobile controls */}
@@ -668,40 +816,60 @@ function SudokuGame() {
   const BG3 = "#1a1a1a";
   const BORDER = "rgba(232,184,75,0.15)";
 
-  // Generate a valid sudoku puzzle
-  function generatePuzzle() {
-    const base = [
-      [5,3,0,0,7,0,0,0,0],
-      [6,0,0,1,9,5,0,0,0],
-      [0,9,8,0,0,0,0,6,0],
-      [8,0,0,0,6,0,0,0,3],
-      [4,0,0,8,0,3,0,0,1],
-      [7,0,0,0,2,0,0,0,6],
-      [0,6,0,0,0,0,2,8,0],
-      [0,0,0,4,1,9,0,0,5],
-      [0,0,0,0,8,0,0,7,9],
-    ];
-    const solution = [
-      [5,3,4,6,7,8,9,1,2],
-      [6,7,2,1,9,5,3,4,8],
-      [1,9,8,3,4,2,5,6,7],
-      [8,5,9,7,6,1,4,2,3],
-      [4,2,6,8,5,3,7,9,1],
-      [7,1,3,9,2,4,8,5,6],
-      [9,6,1,5,3,7,2,8,4],
-      [2,8,7,4,1,9,6,3,5],
-      [3,4,5,2,8,6,1,7,9],
-    ];
-    // Shuffle by rotating/reflecting randomly
-    return { puzzle: base, solution };
+  const solution = [
+    [5,3,4,6,7,8,9,1,2],
+    [6,7,2,1,9,5,3,4,8],
+    [1,9,8,3,4,2,5,6,7],
+    [8,5,9,7,6,1,4,2,3],
+    [4,2,6,8,5,3,7,9,1],
+    [7,1,3,9,2,4,8,5,6],
+    [9,6,1,5,3,7,2,8,4],
+    [2,8,7,4,1,9,6,3,5],
+    [3,4,5,2,8,6,1,7,9],
+  ];
+  // Same solved grid every time, but how many cells stay visible varies
+  // by difficulty — fewer blanks = easier, more blanks = harder
+  const BLANKS = { easy: 30, medium: 45, hard: 54 };
+
+  function generatePuzzle(difficulty) {
+    const puzzle = solution.map(row => [...row]);
+    const cells = [];
+    for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) cells.push([r, c]);
+    for (let i = cells.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [cells[i], cells[j]] = [cells[j], cells[i]]; }
+    for (let i = 0; i < BLANKS[difficulty]; i++) { const [r, c] = cells[i]; puzzle[r][c] = 0; }
+    return puzzle;
   }
 
-  const { puzzle, solution } = React.useMemo(() => generatePuzzle(), []);
-  const [grid, setGrid] = React.useState(() => puzzle.map(r => [...r]));
+  const [difficulty, setDifficulty] = React.useState(null);
+  const [puzzle, setPuzzle] = React.useState(null);
+  const [grid, setGrid] = React.useState(null);
   const [selected, setSelected] = React.useState(null);
   const [errors, setErrors] = React.useState({});
   const [won, setWon] = React.useState(false);
   const [notes, setNotes] = React.useState(false);
+
+  function start(diff) {
+    const p = generatePuzzle(diff);
+    setDifficulty(diff);
+    setPuzzle(p);
+    setGrid(p.map(r => [...r]));
+    setSelected(null);
+    setErrors({});
+    setWon(false);
+  }
+
+  if (!difficulty) {
+    return (
+      <div style={{ textAlign: "center", padding: "1rem 0" }}>
+        <div style={{ fontSize: "14px", color: G, fontWeight: "700", marginBottom: "16px" }}>Choose difficulty</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxWidth: "220px", margin: "0 auto" }}>
+          <button onClick={() => start("easy")} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", color: "#4ade80", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>😌 Easy</button>
+          <button onClick={() => start("medium")} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", color: "#f59e0b", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>🤔 Medium</button>
+          <button onClick={() => start("hard")} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", color: "#ef4444", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>🔥 Hard</button>
+        </div>
+      </div>
+    );
+  }
 
   const isFixed = (r, c) => puzzle[r][c] !== 0;
 
@@ -785,10 +953,16 @@ function SudokuGame() {
         }}>✕</button>
       </div>
 
-      <button onClick={() => { setGrid(puzzle.map(r=>[...r])); setErrors({}); setWon(false); setSelected(null); }}
-        style={{ marginTop: "12px", background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "8px 20px", color: "#6b6760", cursor: "pointer", fontSize: "12px" }}>
-        Reset Puzzle
-      </button>
+      <div style={{ display: "flex", gap: "8px", justifyContent: "center", marginTop: "12px" }}>
+        <button onClick={() => { setGrid(puzzle.map(r=>[...r])); setErrors({}); setWon(false); setSelected(null); }}
+          style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "8px 20px", color: "#6b6760", cursor: "pointer", fontSize: "12px" }}>
+          Reset Puzzle
+        </button>
+        <button onClick={() => setDifficulty(null)}
+          style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "8px 20px", color: G, cursor: "pointer", fontSize: "12px", fontWeight: "700" }}>
+          Change Difficulty
+        </button>
+      </div>
     </div>
   );
 }
@@ -830,10 +1004,36 @@ function SolitaireGame() {
     };
   }
 
-  const [game, setGame] = React.useState(() => initGame());
+  const [difficulty, setDifficulty] = React.useState(null); // null | easy | medium | hard
+  const DRAW_COUNT = { easy: 1, medium: 1, hard: 3 };
+  const REDEAL_LIMIT = { easy: Infinity, medium: 3, hard: Infinity };
+  const [redealsUsed, setRedealsUsed] = React.useState(0);
+  const [game, setGame] = React.useState(null);
   const [selected, setSelected] = React.useState(null); // { source, colIdx, cardIdx }
   const [moves, setMoves] = React.useState(0);
   const [won, setWon] = React.useState(false);
+
+  function start(diff) {
+    setDifficulty(diff);
+    setGame(initGame());
+    setSelected(null);
+    setMoves(0);
+    setWon(false);
+    setRedealsUsed(0);
+  }
+
+  if (!difficulty) {
+    return (
+      <div style={{ textAlign: "center", padding: "1rem 0" }}>
+        <div style={{ fontSize: "14px", color: G, fontWeight: "700", marginBottom: "16px" }}>Choose difficulty</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxWidth: "240px", margin: "0 auto" }}>
+          <button onClick={() => start("easy")} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", color: "#4ade80", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>😌 Easy — draw 1, unlimited redeals</button>
+          <button onClick={() => start("medium")} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", color: "#f59e0b", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>🤔 Medium — draw 1, 3 redeals only</button>
+          <button onClick={() => start("hard")} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", color: "#ef4444", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>🔥 Hard — draw 3, unlimited redeals</button>
+        </div>
+      </div>
+    );
+  }
 
   function rankVal(r) { return RANKS.indexOf(r); }
   function isRed(s) { return RED.includes(s); }
@@ -852,15 +1052,24 @@ function SolitaireGame() {
   }
 
   function drawCard() {
+    const drawCount = DRAW_COUNT[difficulty];
+    const redealLimit = REDEAL_LIMIT[difficulty];
     setGame(prev => {
       const g = JSON.parse(JSON.stringify(prev));
       if (g.stock.length === 0) {
+        if (redealsUsed >= redealLimit) {
+          toast.error("No more redeals left at this difficulty!");
+          return prev;
+        }
         g.stock = g.waste.reverse().map(c => ({ ...c, faceUp: false }));
         g.waste = [];
+        setRedealsUsed(r => r + 1);
       } else {
-        const card = g.stock.pop();
-        card.faceUp = true;
-        g.waste.push(card);
+        for (let i = 0; i < drawCount && g.stock.length > 0; i++) {
+          const card = g.stock.pop();
+          card.faceUp = true;
+          g.waste.push(card);
+        }
       }
       return g;
     });
@@ -999,12 +1208,18 @@ function SolitaireGame() {
           ))}
         </div>
 
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: `${Math.max(...game.tableau.map(c=>c.length)) * 20 + 80}px` }}>
-          <div style={{ fontSize: "12px", color: "#6b6760" }}>Moves: {moves}</div>
-          <button onClick={() => { setGame(initGame()); setSelected(null); setMoves(0); setWon(false); }}
-            style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "6px 14px", color: G, fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>
-            New Game
-          </button>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: `${Math.max(...game.tableau.map(c=>c.length)) * 20 + 80}px`, gap: "8px" }}>
+          <div style={{ fontSize: "12px", color: "#6b6760" }}>Moves: {moves}{REDEAL_LIMIT[difficulty] !== Infinity ? ` · Redeals left: ${REDEAL_LIMIT[difficulty] - redealsUsed}` : ""}</div>
+          <div style={{ display: "flex", gap: "6px" }}>
+            <button onClick={() => start(difficulty)}
+              style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "6px 14px", color: G, fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>
+              New Game
+            </button>
+            <button onClick={() => setDifficulty(null)}
+              style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "6px 14px", color: "#a8a49e", fontSize: "12px", cursor: "pointer" }}>
+              Difficulty
+            </button>
+          </div>
         </div>
         <div style={{ fontSize: "10px", color: "#4a3030", marginTop: "6px" }}>Tap a card to select, tap destination to move · Tap deck to draw</div>
       </div>
@@ -1013,44 +1228,88 @@ function SolitaireGame() {
 }
 
 // SA Trivia
-const TRIVIA = [
-  { q: "What is the capital city of South Africa?", a: ["Cape Town", "Pretoria", "Johannesburg", "Durban"], correct: 1 },
-  { q: "What year did SA host the FIFA World Cup?", a: ["2006","2010","2014","2018"], correct: 1 },
-  { q: "What is South Africa's national animal?", a: ["Lion","Elephant","Springbok","Rhino"], correct: 2 },
-  { q: "How many official languages does SA have?", a: ["9","11","7","13"], correct: 1 },
-  { q: "Which SA city is called 'eGoli'?", a: ["Durban","Cape Town","Johannesburg","Pretoria"], correct: 2 },
-  { q: "What currency does South Africa use?", a: ["Dollar","Pound","Rand","Euro"], correct: 2 },
-  { q: "Who was SA's first democratic president?", a: ["F.W. de Klerk","Thabo Mbeki","Nelson Mandela","Cyril Ramaphosa"], correct: 2 },
-  { q: "Which ocean borders the Cape of Good Hope?", a: ["Indian","Atlantic","Both","Pacific"], correct: 2 },
-];
+const TRIVIA = {
+  easy: [
+    { q: "What is the capital city of South Africa?", a: ["Cape Town", "Pretoria", "Johannesburg", "Durban"], correct: 1 },
+    { q: "What currency does South Africa use?", a: ["Dollar","Pound","Rand","Euro"], correct: 2 },
+    { q: "What is South Africa's national animal?", a: ["Lion","Elephant","Springbok","Rhino"], correct: 2 },
+    { q: "Who was SA's first democratic president?", a: ["F.W. de Klerk","Thabo Mbeki","Nelson Mandela","Cyril Ramaphosa"], correct: 2 },
+    { q: "Which SA city is called 'eGoli'?", a: ["Durban","Cape Town","Johannesburg","Pretoria"], correct: 2 },
+    { q: "What is South Africa's national sport team colour?", a: ["Blue","Green and Gold","Red","Black and White"], correct: 1 },
+    { q: "Which ocean is on the west coast of South Africa?", a: ["Indian","Pacific","Atlantic","Arctic"], correct: 2 },
+    { q: "What is the largest city in South Africa by population?", a: ["Cape Town","Durban","Pretoria","Johannesburg"], correct: 3 },
+  ],
+  medium: [
+    { q: "What year did SA host the FIFA World Cup?", a: ["2006","2010","2014","2018"], correct: 1 },
+    { q: "How many official languages does SA have?", a: ["9","11","7","13"], correct: 1 },
+    { q: "Which ocean borders the Cape of Good Hope?", a: ["Indian","Atlantic","Both","Pacific"], correct: 2 },
+    { q: "In what year did apartheid officially end?", a: ["1990","1994","1991","1996"], correct: 1 },
+    { q: "Which mountain overlooks Cape Town?", a: ["Drakensberg","Table Mountain","Magaliesberg","Blyde Canyon"], correct: 1 },
+    { q: "What is South Africa's national flower?", a: ["Protea","Rose","Aloe","Daisy"], correct: 0 },
+    { q: "Which province is Johannesburg located in?", a: ["Free State","Gauteng","North West","Limpopo"], correct: 1 },
+    { q: "South Africa has how many capital cities?", a: ["1","2","3","4"], correct: 2 },
+  ],
+  hard: [
+    { q: "Which South African city is the judicial capital?", a: ["Pretoria","Cape Town","Bloemfontein","Durban"], correct: 2 },
+    { q: "What is the deepest point of the Blyde River Canyon roughly?", a: ["300m","800m","1400m","2000m"], correct: 1 },
+    { q: "Which SA province has the smallest land area?", a: ["Free State","Gauteng","North West","Mpumalanga"], correct: 1 },
+    { q: "In what year was the Soweto Uprising?", a: ["1960","1976","1980","1994"], correct: 1 },
+    { q: "What is the highest mountain range in South Africa?", a: ["Cederberg","Magaliesberg","Drakensberg","Waterberg"], correct: 2 },
+    { q: "Which SA university is the oldest, founded in 1829?", a: ["Wits","Stellenbosch","UCT (South African College)","Pretoria"], correct: 2 },
+    { q: "How many UNESCO World Heritage Sites does SA have?", a: ["5","8","10","12"], correct: 2 },
+    { q: "Which river forms much of SA's northern border?", a: ["Vaal","Orange","Limpopo","Tugela"], correct: 2 },
+  ],
+};
 
 function TriviaGame() {
+  const [difficulty, setDifficulty] = useState(null);
   const [idx, setIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [answered, setAnswered] = useState(null);
   const [done, setDone] = useState(false);
-  const q = TRIVIA[idx];
+  const questions = difficulty ? TRIVIA[difficulty] : [];
+  const q = questions[idx];
+
+  function start(diff) { setDifficulty(diff); setIdx(0); setScore(0); setAnswered(null); setDone(false); }
+
   function answer(i) {
     if (answered !== null) return;
     setAnswered(i);
     if (i === q.correct) setScore(s => s+1);
     setTimeout(() => {
-      if (idx < TRIVIA.length - 1) { setIdx(i => i+1); setAnswered(null); }
+      if (idx < questions.length - 1) { setIdx(i => i+1); setAnswered(null); }
       else setDone(true);
     }, 1000);
   }
+
+  if (!difficulty) {
+    return (
+      <div style={{ textAlign: "center", padding: "1rem 0" }}>
+        <div style={{ fontSize: "14px", color: G, fontWeight: "700", marginBottom: "16px" }}>Choose difficulty</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxWidth: "220px", margin: "0 auto" }}>
+          <button onClick={() => start("easy")} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", color: "#4ade80", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>😌 Easy</button>
+          <button onClick={() => start("medium")} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", color: "#f59e0b", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>🤔 Medium</button>
+          <button onClick={() => start("hard")} style={{ background: BG3, border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", color: "#ef4444", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>🔥 Hard</button>
+        </div>
+      </div>
+    );
+  }
+
   if (done) return (
     <div style={{ textAlign: "center", padding: "2rem" }}>
       <div style={{ fontSize: "48px", marginBottom: "12px" }}>🇿🇦</div>
-      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "24px", fontWeight: "800", color: G, marginBottom: "8px" }}>{score}/{TRIVIA.length}</div>
-      <div style={{ color: "#6b6760", marginBottom: "16px" }}>{score >= 6 ? "Excellent! You really know SA! 🏆" : score >= 4 ? "Good job! Keep learning!" : "Keep exploring SA!"}</div>
-      <button onClick={() => { setIdx(0); setScore(0); setAnswered(null); setDone(false); }} style={{ background: G, color: "#0a0a0a", border: "none", borderRadius: "8px", padding: "10px 24px", fontWeight: "700", cursor: "pointer" }}>Play Again</button>
+      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "24px", fontWeight: "800", color: G, marginBottom: "8px" }}>{score}/{questions.length}</div>
+      <div style={{ color: "#6b6760", marginBottom: "16px" }}>{score >= questions.length * 0.75 ? "Excellent! You really know SA! 🏆" : score >= questions.length * 0.5 ? "Good job! Keep learning!" : "Keep exploring SA!"}</div>
+      <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+        <button onClick={() => start(difficulty)} style={{ background: G, color: "#0a0a0a", border: "none", borderRadius: "8px", padding: "10px 24px", fontWeight: "700", cursor: "pointer" }}>Play Again</button>
+        <button onClick={() => setDifficulty(null)} style={{ background: BG3, border: `1px solid ${BORDER}`, color: "#a8a49e", borderRadius: "8px", padding: "10px 24px", fontWeight: "700", cursor: "pointer" }}>Change Difficulty</button>
+      </div>
     </div>
   );
   return (
     <div style={{ padding: "0.5rem" }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
-        <div style={{ fontSize: "12px", color: "#6b6760" }}>Question {idx+1}/{TRIVIA.length}</div>
+        <div style={{ fontSize: "12px", color: "#6b6760" }}>Question {idx+1}/{questions.length}</div>
         <div style={{ fontSize: "12px", color: G, fontWeight: "700" }}>Score: {score}</div>
       </div>
       <div style={{ background: BG3, borderRadius: "12px", padding: "1rem", marginBottom: "14px", fontSize: "14px", fontWeight: "600", color: "#f0ede8", lineHeight: 1.5 }}>{q.q}</div>
@@ -2441,14 +2700,31 @@ export default function EntertainmentHub() {
             {!activeGame ? (
               <>
                 <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "18px", fontWeight: "800", color: "#f0ede8", marginBottom: "1rem" }}>🎮 Games</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                  {GAMES.map(g => (
-                    <div key={g.id} onClick={() => setActiveGame(g.id)} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "1.25rem", cursor: "pointer", textAlign: "center" }}>
-                      <div style={{ fontSize: "36px", marginBottom: "8px" }}>{g.icon}</div>
-                      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "14px", fontWeight: "800", color: "#f0ede8", marginBottom: "4px" }}>{g.title}</div>
-                      <div style={{ fontSize: "11px", color: "#6b6760" }}>{g.desc}</div>
-                    </div>
-                  ))}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  {GAMES.map(g => {
+                    const isMultiplayer = g.id === "pokerlive";
+                    return (
+                      <div key={g.id} onClick={() => setActiveGame(g.id)} style={{
+                        background: `linear-gradient(155deg, ${g.color}18, #16161600)`,
+                        border: `1px solid ${g.color}44`, borderRadius: "16px", padding: "1.25rem 1rem", cursor: "pointer",
+                        textAlign: "center", position: "relative", boxShadow: `0 4px 14px ${g.color}22`,
+                        transition: "transform 0.15s",
+                      }}>
+                        {isMultiplayer && (
+                          <span style={{ position: "absolute", top: "8px", right: "8px", background: "linear-gradient(135deg, #4ade80, #22c55e)", color: "#052e12", fontSize: "8px", fontWeight: "800", padding: "3px 7px", borderRadius: "999px", letterSpacing: "0.3px" }}>LIVE</span>
+                        )}
+                        <div style={{
+                          width: "60px", height: "60px", borderRadius: "50%", margin: "0 auto 10px",
+                          background: `radial-gradient(circle, ${g.color}33, ${g.color}0a)`,
+                          border: `1px solid ${g.color}55`,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: "30px", boxShadow: `0 0 16px ${g.color}30`,
+                        }}>{g.icon}</div>
+                        <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "14px", fontWeight: "800", color: "#f0ede8", marginBottom: "4px" }}>{g.title}</div>
+                        <div style={{ fontSize: "11px", color: "#a8a49e" }}>{g.desc}</div>
+                      </div>
+                    );
+                  })}
                 </div>
               </>
             ) : (

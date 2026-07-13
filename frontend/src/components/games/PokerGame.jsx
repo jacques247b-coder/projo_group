@@ -40,6 +40,9 @@ function PokerLobby({ onJoinTable }) {
   const [showCreate, setShowCreate] = useState(false);
   const [newTableName, setNewTableName] = useState("");
   const [loading, setLoading] = useState(true);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const { user } = useAuth();
 
   async function load() {
     try {
@@ -51,6 +54,13 @@ function PokerLobby({ onJoinTable }) {
   }
 
   useEffect(() => { load(); const iv = setInterval(load, 5000); return () => clearInterval(iv); }, []);
+
+  async function loadLeaderboard() {
+    try {
+      const res = await api.get("/games/poker/leaderboard");
+      setLeaderboard(res.leaderboard || []);
+    } catch {}
+  }
 
   async function createTable() {
     try {
@@ -71,6 +81,7 @@ function PokerLobby({ onJoinTable }) {
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: "10px", color: "#6b6760", textTransform: "uppercase" }}>Your Chips</div>
           <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "20px", fontWeight: "800", color: G }}>🪙 {chips.toLocaleString()}</div>
+          <button onClick={() => { setShowLeaderboard(true); loadLeaderboard(); }} style={{ background: "none", border: "none", color: G, fontSize: "10px", cursor: "pointer", textDecoration: "underline", marginTop: "2px", padding: 0 }}>🏆 Leaderboard</button>
         </div>
       </div>
 
@@ -111,6 +122,36 @@ function PokerLobby({ onJoinTable }) {
           </div>
         </div>
       )}
+
+      {showLeaderboard && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }} onClick={() => setShowLeaderboard(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "1.5rem", maxWidth: "380px", width: "100%", maxHeight: "75vh", overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "800", fontSize: "16px", color: G }}>🏆 Chip Leaderboard</div>
+              <button onClick={() => setShowLeaderboard(false)} style={{ background: "transparent", border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "5px 10px", color: "#a8a49e", cursor: "pointer" }}>✕</button>
+            </div>
+            {leaderboard.length === 0 ? (
+              <div style={{ textAlign: "center", color: "#6b6760", padding: "2rem" }}>Loading…</div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                {leaderboard.map((entry, i) => {
+                  const isMe = entry.id === user?.id;
+                  const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`;
+                  return (
+                    <div key={entry.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: isMe ? "rgba(232,184,75,0.1)" : "transparent", border: `1px solid ${isMe ? G : "transparent"}`, borderRadius: "8px", padding: "8px 12px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <span style={{ fontSize: "13px", fontWeight: "700", color: i < 3 ? G : "#6b6760", minWidth: "24px" }}>{medal}</span>
+                        <span style={{ fontSize: "13px", color: isMe ? G : "#f0ede8", fontWeight: isMe ? "700" : "400" }}>{entry.name}{isMe ? " (you)" : ""}</span>
+                      </div>
+                      <span style={{ fontSize: "13px", fontWeight: "700", color: G }}>🪙 {entry.pokerChips.toLocaleString()}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -120,6 +161,7 @@ function PokerTable({ tableId, onLeave }) {
   const { user } = useAuth();
   const [state, setState] = useState(null);
   const [raiseAmount, setRaiseAmount] = useState(0);
+  const [turnSecondsLeft, setTurnSecondsLeft] = useState(null);
   const socketRef = useRef(null);
 
   useEffect(() => {
@@ -135,6 +177,14 @@ function PokerTable({ tableId, onLeave }) {
       sock.disconnect();
     };
   }, [tableId, user?.id]);
+
+  useEffect(() => {
+    if (state?.currentTurnSeat === null || state?.currentTurnSeat === undefined) { setTurnSecondsLeft(null); return; }
+    setTurnSecondsLeft(25);
+    const iv = setInterval(() => setTurnSecondsLeft(s => (s === null ? null : Math.max(0, s - 1))), 1000);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.currentTurnSeat, state?.round]);
 
   function act(action, amount) {
     socketRef.current?.emit("poker:action", { tableId, userId: user?.id, action, amount });
@@ -178,8 +228,13 @@ function PokerTable({ tableId, onLeave }) {
                 background: isTurn ? "rgba(232,184,75,0.2)" : "rgba(0,0,0,0.35)",
                 border: `1px solid ${isTurn ? G : "rgba(255,255,255,0.1)"}`,
                 borderRadius: "10px", padding: "8px 10px", textAlign: "center", minWidth: "90px",
-                opacity: p.status === "FOLDED" ? 0.4 : 1,
+                opacity: p.status === "FOLDED" ? 0.4 : 1, position: "relative",
               }}>
+                {isTurn && turnSecondsLeft !== null && (
+                  <span style={{ position: "absolute", top: "-8px", right: "-8px", background: turnSecondsLeft <= 8 ? "#ef4444" : G, color: "#0a0a0a", fontSize: "9px", fontWeight: "800", width: "20px", height: "20px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {turnSecondsLeft}
+                  </span>
+                )}
                 <div style={{ fontSize: "11px", fontWeight: "700", color: isMe ? G : "#f0ede8" }}>{p.name}{isMe ? " (you)" : ""}</div>
                 <div style={{ fontSize: "10px", color: "#a8a49e" }}>🪙{p.chips}</div>
                 <div style={{ display: "flex", gap: "3px", justifyContent: "center", marginTop: "4px" }}>
@@ -197,7 +252,9 @@ function PokerTable({ tableId, onLeave }) {
       {/* Action controls */}
       {isMyTurn && state.status === "PLAYING" && (
         <div style={{ background: BG2, border: `1px solid ${G}`, borderRadius: "14px", padding: "1rem" }}>
-          <div style={{ fontSize: "12px", color: G, fontWeight: "700", marginBottom: "10px", textAlign: "center" }}>Your turn!</div>
+          <div style={{ fontSize: "12px", color: turnSecondsLeft <= 8 ? "#ef4444" : G, fontWeight: "700", marginBottom: "10px", textAlign: "center" }}>
+            Your turn! {turnSecondsLeft !== null && `(${turnSecondsLeft}s)`}
+          </div>
           <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap" }}>
             <button onClick={() => act("fold")} style={{ flex: 1, background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: "8px", padding: "10px", color: "#f87171", fontWeight: "700", cursor: "pointer" }}>Fold</button>
             {toCall === 0 ? (
@@ -206,6 +263,17 @@ function PokerTable({ tableId, onLeave }) {
               <button onClick={() => act("call")} style={{ flex: 1, background: "#166534", border: "1px solid #4ade80", borderRadius: "8px", padding: "10px", color: "#4ade80", fontWeight: "700", cursor: "pointer" }}>Call {toCall}</button>
             )}
             <button onClick={() => act("allin")} style={{ flex: 1, background: "#4a1a1a", border: "1px solid #f59e0b", borderRadius: "8px", padding: "10px", color: "#f59e0b", fontWeight: "700", cursor: "pointer" }}>All In</button>
+          </div>
+          <div style={{ display: "flex", gap: "6px", marginBottom: "8px" }}>
+            {[
+              { label: "Min", amount: minRaise },
+              { label: "½ Pot", amount: Math.min((me?.currentBet || 0) + Math.round(state.pot / 2), (me?.chips || 0) + (me?.currentBet || 0)) },
+              { label: "Pot", amount: Math.min((me?.currentBet || 0) + state.pot, (me?.chips || 0) + (me?.currentBet || 0)) },
+            ].map(opt => (
+              <button key={opt.label} onClick={() => setRaiseAmount(Math.max(opt.amount, minRaise))} style={{ flex: 1, background: raiseAmount === Math.max(opt.amount, minRaise) ? "rgba(232,184,75,0.2)" : BG3, border: `1px solid ${raiseAmount === Math.max(opt.amount, minRaise) ? G : BORDER}`, borderRadius: "6px", padding: "6px", color: G, fontSize: "11px", fontWeight: "700", cursor: "pointer" }}>
+                {opt.label}
+              </button>
+            ))}
           </div>
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             <input type="range" min={minRaise} max={me?.chips + me?.currentBet || minRaise} value={raiseAmount || minRaise} onChange={e => setRaiseAmount(parseInt(e.target.value))}

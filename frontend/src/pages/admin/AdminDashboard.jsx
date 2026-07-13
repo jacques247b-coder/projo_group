@@ -125,6 +125,7 @@ export default function AdminDashboard() {
   const [showMarketForm, setShowMarketForm] = useState(false);
   const [marketForm, setMarketForm] = useState({ name: "", description: "", category: "", priceZar: "", coverImageUrl: "", fileDataUrl: "", fileName: "" });
   const [marketSubmitting, setMarketSubmitting] = useState(false);
+  const [editingProductId, setEditingProductId] = useState(null);
   const [casinoPartners, setCasinoPartners] = useState([]);
   const [casinoForm, setCasinoForm] = useState({ name: "", logo: "🎰", color: "#00a651", bonus: "", description: "", url: "", terms: "", categories: "", featured: false, isNew: false });
   const [showCasinoForm, setShowCasinoForm] = useState(false);
@@ -364,18 +365,40 @@ export default function AdminDashboard() {
     reader.readAsDataURL(file);
   }
 
+  function startEditProduct(product) {
+    setEditingProductId(product.id);
+    setMarketForm({
+      name: product.name, description: product.description, category: product.category || "",
+      priceZar: String(product.priceZar), coverImageUrl: product.coverImageUrl || "",
+      fileDataUrl: "", fileName: product.fileName, // file itself isn't re-fetched — editing text fields doesn't need it
+    });
+    setShowMarketForm(true);
+  }
+
   async function createMarketProduct() {
-    if (!marketForm.name.trim() || !marketForm.description.trim() || !marketForm.priceZar || !marketForm.fileDataUrl) {
-      return toast.error("Name, description, price, and a file are all required");
+    if (!marketForm.name.trim() || !marketForm.description.trim() || !marketForm.priceZar) {
+      return toast.error("Name, description, and price are all required");
+    }
+    if (!editingProductId && !marketForm.fileDataUrl) {
+      return toast.error("A file is required for a new product");
     }
     setMarketSubmitting(true);
     try {
-      await api.post("/admin/digital-products", marketForm);
-      toast.success("Product added!");
+      if (editingProductId) {
+        await api.put(`/admin/digital-products/${editingProductId}`, {
+          name: marketForm.name, description: marketForm.description, category: marketForm.category,
+          priceZar: marketForm.priceZar, coverImageUrl: marketForm.coverImageUrl,
+        });
+        toast.success("Product updated!");
+      } else {
+        await api.post("/admin/digital-products", marketForm);
+        toast.success("Product added!");
+      }
       setShowMarketForm(false);
+      setEditingProductId(null);
       setMarketForm({ name: "", description: "", category: "", priceZar: "", coverImageUrl: "", fileDataUrl: "", fileName: "" });
       loadAll();
-    } catch (e) { toast.error(e?.error || "Could not create product"); }
+    } catch (e) { toast.error(e?.error || "Could not save product"); }
     finally { setMarketSubmitting(false); }
   }
 
@@ -1320,7 +1343,7 @@ export default function AdminDashboard() {
                 <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "15px", fontWeight: "800", color: G }}>🛍️ Digital Marketplace</div>
                 <div style={{ fontSize: "12px", color: "#6b6760" }}>Templates, ebooks, music, software — sold via PROJO Wallet (PayFast direct checkout coming later)</div>
               </div>
-              <button onClick={() => setShowMarketForm(true)} style={{ background: G, border: "none", borderRadius: "8px", padding: "8px 16px", color: "#0a0a0a", fontWeight: "700", fontSize: "12px", cursor: "pointer" }}>+ Add Product</button>
+              <button onClick={() => { setEditingProductId(null); setMarketForm({ name: "", description: "", category: "", priceZar: "", coverImageUrl: "", fileDataUrl: "", fileName: "" }); setShowMarketForm(true); }} style={{ background: G, border: "none", borderRadius: "8px", padding: "8px 16px", color: "#0a0a0a", fontWeight: "700", fontSize: "12px", cursor: "pointer" }}>+ Add Product</button>
             </div>
 
             {marketProducts.length === 0 ? (
@@ -1341,6 +1364,7 @@ export default function AdminDashboard() {
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
                     <span style={{ fontSize: "10px", fontWeight: "700", color: p.isActive ? "#4ade80" : "#6b6760" }}>{p.isActive ? "LIVE" : "HIDDEN"}</span>
                     <button onClick={() => toggleMarketProduct(p)} style={{ background: "transparent", border: `1px solid ${BORDER}`, borderRadius: "6px", padding: "4px 8px", color: "#a8a49e", fontSize: "10px", cursor: "pointer" }}>{p.isActive ? "Hide" : "Show"}</button>
+                    <button onClick={() => startEditProduct(p)} style={{ background: "transparent", border: `1px solid ${BORDER}`, borderRadius: "6px", padding: "4px 8px", color: G, fontSize: "10px", cursor: "pointer" }}>Edit</button>
                     <button onClick={() => deleteMarketProduct(p.id)} style={{ background: "#7f1d1d", border: "1px solid #ef4444", borderRadius: "6px", padding: "4px 8px", color: "#f87171", fontSize: "10px", cursor: "pointer" }}>Del</button>
                   </div>
                 </div>
@@ -1606,9 +1630,9 @@ export default function AdminDashboard() {
 
         {/* ── ADD DIGITAL PRODUCT ── */}
         {showMarketForm && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }} onClick={() => setShowMarketForm(false)}>
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }} onClick={() => { setShowMarketForm(false); setEditingProductId(null); }}>
             <div onClick={e => e.stopPropagation()} style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "1.5rem", maxWidth: "440px", width: "100%", maxHeight: "85vh", overflowY: "auto" }}>
-              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "800", fontSize: "16px", color: "#f0ede8", marginBottom: "16px" }}>Add Digital Product</div>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: "800", fontSize: "16px", color: "#f0ede8", marginBottom: "16px" }}>{editingProductId ? "Edit Digital Product" : "Add Digital Product"}</div>
 
               <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "5px", textTransform: "uppercase", letterSpacing: "1px" }}>Name *</div>
               <input value={marketForm.name} onChange={e => setMarketForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Instagram Post Templates Pack"
@@ -1642,8 +1666,12 @@ export default function AdminDashboard() {
                   style={{ width: "100%", marginBottom: "12px", color: "#a8a49e", fontSize: "12px" }} />
               )}
 
-              <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "5px", textTransform: "uppercase", letterSpacing: "1px" }}>Product File * (what the buyer downloads, up to 15MB)</div>
-              {marketForm.fileName ? (
+              <div style={{ fontSize: "11px", color: "#6b6760", marginBottom: "5px", textTransform: "uppercase", letterSpacing: "1px" }}>
+                {editingProductId ? "Product File (already uploaded — can't be changed here)" : "Product File * (what the buyer downloads, up to 15MB)"}
+              </div>
+              {editingProductId ? (
+                <div style={{ marginBottom: "16px", background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "8px 12px", fontSize: "12px", color: "#a8a49e" }}>📎 {marketForm.fileName}</div>
+              ) : marketForm.fileName ? (
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px", background: BG3, border: `1px solid ${BORDER}`, borderRadius: "8px", padding: "8px 12px" }}>
                   <span style={{ fontSize: "12px", color: "#f0ede8", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>📎 {marketForm.fileName}</span>
                   <button onClick={() => setMarketForm(f => ({ ...f, fileDataUrl: "", fileName: "" }))} style={{ background: "transparent", border: "none", color: "#6b6760", cursor: "pointer" }}>✕</button>
@@ -1655,9 +1683,9 @@ export default function AdminDashboard() {
 
               <div style={{ display: "flex", gap: "8px" }}>
                 <button onClick={createMarketProduct} disabled={marketSubmitting} style={{ flex: 1, background: G, color: "#0a0a0a", border: "none", borderRadius: "10px", padding: "12px", fontWeight: "800", fontSize: "14px", cursor: "pointer", opacity: marketSubmitting ? 0.6 : 1 }}>
-                  {marketSubmitting ? "Uploading…" : "Add Product"}
+                  {marketSubmitting ? "Saving…" : editingProductId ? "Save Changes" : "Add Product"}
                 </button>
-                <button onClick={() => setShowMarketForm(false)} style={{ flex: 1, background: BG3, color: "#a8a49e", border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", cursor: "pointer" }}>Cancel</button>
+                <button onClick={() => { setShowMarketForm(false); setEditingProductId(null); setMarketForm({ name: "", description: "", category: "", priceZar: "", coverImageUrl: "", fileDataUrl: "", fileName: "" }); }} style={{ flex: 1, background: BG3, color: "#a8a49e", border: `1px solid ${BORDER}`, borderRadius: "10px", padding: "12px", cursor: "pointer" }}>Cancel</button>
               </div>
             </div>
           </div>
