@@ -227,3 +227,16 @@ export const driverAPI = {
   getEarnings: (period) => api.get(`/drivers/earnings?period=${period}`),
   getPendingRides: () => api.get("/drivers/pending-rides"),
 };
+
+export const lovedOnesAPI = {
+  getSubscription: () => api.get("/loved-ones/subscription"),
+  subscribe: () => api.post("/loved-ones/subscribe"),
+  cancel: () => api.post("/loved-ones/cancel"),
+  invite: (phone, label) => api.post("/loved-ones/invite", { phone, label }),
+  getConnections: () => api.get("/loved-ones/connections"),
+  respondToInvite: (id, accept) => api.post(`/loved-ones/connections/${id}/respond`, { accept }),
+  revoke: (id) => api.post(`/loved-ones/connections/${id}/revoke`),
+  getGeofences: () => api.get("/loved-ones/geofences"),
+  createGeofence: (data) => api.post("/loved-ones/geofences", data),
+  deleteGeofence: (id) => api.delete(`/loved-ones/geofences/${id}`),
+};

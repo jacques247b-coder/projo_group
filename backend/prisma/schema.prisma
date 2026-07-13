@@ -290,6 +290,56 @@ model PokerPlayer {
   @@map("poker_players")
 }
 
+// ── Track Your Loved Ones ────────────────────────────────────
+// A subscription product: live location sharing between consenting
+// family/friends, plus panic-alert integration. Consent is enforced at
+// the schema level, not just the UI — a connection only ever shares
+// location once status is ACCEPTED, and either side can set it back to
+// REVOKED at any time, immediately stopping sharing.
+model LovedOnesSubscription {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  status          String   @default("ACTIVE") // ACTIVE | CANCELLED | EXPIRED
+  monthlyPriceZar Float    @default(49)
+  startedAt       DateTime @default(now())
+  renewsAt        DateTime
+  cancelledAt     DateTime?
+  @@map("loved_ones_subscriptions")
+}
+
+model LovedOneConnection {
+  id            String    @id @default(uuid())
+  subscriberId  String    // the person paying for the subscription, who set up the tracking request
+  lovedOneId    String    // the person being asked to share their location — must explicitly accept
+  label         String?   // subscriber's own name for this person, e.g. "Mom"
+  status        String    @default("PENDING") // PENDING | ACCEPTED | DECLINED | REVOKED
+  invitedAt     DateTime  @default(now())
+  respondedAt   DateTime?
+  // Current position — only ever populated/updated while status is
+  // ACCEPTED. Not a full history table (yet); this is live "where are
+  // they right now" sharing, not a surveillance log.
+  lastLat       Float?
+  lastLng       Float?
+  lastLocationAt DateTime?
+  lastBattery   Int?
+  offlineAlertSentAt DateTime? // prevents re-alerting every few minutes for the same offline stretch
+  @@unique([subscriberId, lovedOneId])
+  @@map("loved_one_connections")
+}
+
+model LovedOneGeofence {
+  id           String   @id @default(uuid())
+  subscriberId String   // whose saved place this is
+  lovedOneId   String?  // null = applies to all this subscriber's connections; set = just this one person
+  name         String   // "Home", "School", etc.
+  lat          Float
+  lng          Float
+  radiusMeters Int      @default(150)
+  notifyOnEnter Boolean @default(true)
+  notifyOnExit  Boolean @default(true)
+  createdAt    DateTime @default(now())
+  @@map("loved_one_geofences")
+}
 model PromoCode {
   id              String   @id @default(uuid())
   code            String   @unique
