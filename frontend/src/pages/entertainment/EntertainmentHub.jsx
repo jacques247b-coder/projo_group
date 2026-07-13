@@ -125,6 +125,9 @@ const CONTENT = {
     { id:"fi16", title:"10 Min Abs Workout — No Equipment Needed", videoId:"DHD1-2P4nB8", category:"Fitness", thumb:"https://img.youtube.com/vi/DHD1-2P4nB8/maxresdefault.jpg" },
     { id:"fi17", title:"Joe Wicks — 15 Min HIIT Workout", videoId:"oFkzvg4_HLk", category:"Fitness", thumb:"https://img.youtube.com/vi/oFkzvg4_HLk/maxresdefault.jpg" },
   ],
+  food: [
+    { id:"fd1", title:"The Ultimate Braai Big Five", videoId:"nCk5RxzOz7I", category:"Food", thumb:"https://img.youtube.com/vi/nCk5RxzOz7I/maxresdefault.jpg" },
+  ],
   cooking: [
     { id:"co1",  title:"SA Heritage Day Braai 2025 — Ultimate Platter", videoId:"kGtZ6nfYUNI", category:"Cooking", thumb:"https://img.youtube.com/vi/kGtZ6nfYUNI/maxresdefault.jpg" },
     { id:"co2",  title:"50k Special — Half Lamb on the Braai 2025", videoId:"wpvttX4G-OM", category:"Cooking", thumb:"https://img.youtube.com/vi/wpvttX4G-OM/maxresdefault.jpg" },
@@ -340,6 +343,7 @@ const TABS = [
   { key: "comedy",   label: "😂",  full: "Comedy" },
   { key: "fitness",  label: "💪",  full: "Fitness" },
   { key: "cooking",  label: "🍳",  full: "Cooking" },
+  { key: "food",     label: "🍖",  full: "Food" },
   { key: "wellness", label: "🧘",  full: "Wellness" },
   { key: "learning", label: "📚",  full: "Learn" },
   { key: "news",     label: "📰",  full: "News" },
@@ -349,6 +353,7 @@ const TABS = [
   { key: "casino",      label: "🎰",  full: "18+ Casino" },
   { key: "classifieds", label: "📋",  full: "Classifieds" },
   { key: "marketplace", label: "🛍️",  full: "Marketplace" },
+  { key: "food",        label: "🍖",  full: "Food" },
   { key: "ads",         label: "🏪",  full: "Biz Ads" },
 ];
 
@@ -2780,6 +2785,59 @@ export default function EntertainmentHub() {
             </div>
             <VideoRow title="🔥 Braai & Fire Cooking" items={CONTENT.cooking.slice(0,3)} onPlay={playVideo} />
             <VideoRow title="🍖 SA Traditional Recipes" items={CONTENT.cooking.slice(3)} onPlay={playVideo} />
+          </div>
+        )}
+
+        {/* ── FOOD (PROJO's Recipes) ── */}
+        {tab === "food" && (
+          <div>
+            <div style={{ background: "rgba(232,184,75,0.05)", border: `1px solid ${BORDER}`, borderRadius: "14px", padding: "1rem", marginBottom: "1.25rem" }}>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "15px", fontWeight: "800", color: G, marginBottom: "4px" }}>🍖 PROJO's Recipes</div>
+              <div style={{ fontSize: "12px", color: "#6b6760" }}>Traditional & family favourites — braais, sides, and the recipes that bring everyone to the table</div>
+            </div>
+
+            <VideoRow title="🎥 Featured" items={CONTENT.food} onPlay={playVideo} />
+
+            <div style={{ background: BG2, border: `1px solid ${BORDER}`, borderRadius: "16px", padding: "1.25rem", marginTop: "1.25rem" }}>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "17px", fontWeight: "800", color: "#f0ede8", marginBottom: "10px" }}>🔥 Braai Recipes — The Big Five</div>
+              <div style={{ fontSize: "13px", color: "#d4cfc8", lineHeight: 1.7, marginBottom: "16px" }}>
+                Master the ultimate South African braai with the classic "big five" essentials: Boerewors (the king of the grid), Sosaties (Cape Malay curried skewers), succulent lamb chops, a hot Tomato & Onion Braaibroodjie, and a side of Pap & Chakalaka.
+              </div>
+
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "13px", fontWeight: "800", color: G, marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>The Meats</div>
+              <div style={{ marginBottom: "16px" }}>
+                {[
+                  ["Boerewors", "The crown jewel of any braai. Pick up a high-quality coil from a local butcher or retailer like Checkers and grill over medium-hot coals until cooked through but still juicy."],
+                  ["Lamb Chops", "Season simply with a bit of salt, black pepper, and rosemary or Robertsons Spices. Sear over high heat for that perfect char."],
+                  ["Sosaties", "Marinate cubed lamb or beef in a sweet and spicy Cape Malay curry sauce, skewered with onions and dried apricots."],
+                ].map(([name, desc]) => (
+                  <div key={name} style={{ marginBottom: "10px" }}>
+                    <div style={{ fontSize: "13px", fontWeight: "700", color: "#f0ede8" }}>{name}</div>
+                    <div style={{ fontSize: "12px", color: "#a8a49e", lineHeight: 1.6 }}>{desc}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "13px", fontWeight: "800", color: G, marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>The Sides</div>
+              <div style={{ marginBottom: "16px" }}>
+                {[
+                  ["Braaibroodjie", "South Africa's favourite grilled cheese. Layer white bread with cheese, sliced tomatoes, onions, and a touch of chutney. Grill slowly until the cheese is melted and the bread is perfectly toasted."],
+                  ["Pap and Sous", "A traditional maize porridge (pap) served with a rich, savoury tomato and onion sauce (sous) or spicy Chakalaka."],
+                ].map(([name, desc]) => (
+                  <div key={name} style={{ marginBottom: "10px" }}>
+                    <div style={{ fontSize: "13px", fontWeight: "700", color: "#f0ede8" }}>{name}</div>
+                    <div style={{ fontSize: "12px", color: "#a8a49e", lineHeight: 1.6 }}>{desc}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "13px", fontWeight: "800", color: G, marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>Step-by-Step Cooking Guide</div>
+              <ol style={{ margin: 0, paddingLeft: "20px", fontSize: "12px", color: "#a8a49e", lineHeight: 1.8 }}>
+                <li><strong style={{ color: "#f0ede8" }}>Prepare the Coals:</strong> Build a fire using hardekool or Rooikrans wood. You'll know it's ready when the coals are glowing white-hot.</li>
+                <li><strong style={{ color: "#f0ede8" }}>Grill the Meats:</strong> Place the boerewors on first, followed by the sosaties. Lamb chops cook fast and should go on a bit later so they don't overcook.</li>
+                <li><strong style={{ color: "#f0ede8" }}>The Braaibroodjie:</strong> Use a dedicated hinged grid for the sandwiches and hold them higher above the coals to allow the cheese to melt without burning the bread.</li>
+              </ol>
+            </div>
           </div>
         )}
 
