@@ -88,6 +88,29 @@ exports.bookDelivery = async (req, res) => {
       if (sender) await generateAndSendInvoice({ type: "delivery", data: delivery, user: sender });
     } catch (e) { console.log("[PROJO Invoice] Delivery:", e.message); }
 
+    // Notify every online driver — this never actually existed before.
+    // The driver app has been listening for delivery:new_request this
+    // whole time; nothing was ever sending it, and no push notification
+    // existed either, so deliveries had zero way of ever reaching a
+    // driver at all. Same fix pattern used for ride dispatch earlier.
+    try {
+      const onlineDrivers = await prisma.user.findMany({
+        where: { role: "DRIVER", driverStatus: "ONLINE" },
+        select: { id: true },
+      });
+      const io = req.app.get("io");
+      const { notifyUser } = require("./push.controller");
+      for (const driver of onlineDrivers) {
+        io?.to(`driver:${driver.id}`).emit("delivery:new_request", delivery);
+        notifyUser(driver.id, {
+          title: "📦 New Delivery Request",
+          body: `${pickupAddress} → ${dropoffAddress} · R${finalFare.toFixed(2)}`,
+          data: { url: "/driver" },
+        }).catch(() => {});
+      }
+      console.log(`[PROJO Delivery] Notified ${onlineDrivers.length} online driver(s) of new delivery ${delivery.id}`);
+    } catch (e) { console.log("[PROJO Delivery] Driver notification failed:", e.message); }
+
     res.status(201).json({
       message: discount.discountApplied > 0
         ? `Delivery booked! ${discount.tierName} tier discount of ${discount.discountPct}% applied (R${discount.discountApplied} off)`
@@ -103,6 +126,56 @@ exports.bookDelivery = async (req, res) => {
 };
 
 // GET /api/deliveries
+// POST /api/deliveries/:id/accept — this endpoint never existed at all;
+// the driver app has been trying to call it this whole time and hitting
+// a 404 every single time, meaning no delivery could ever be accepted
+exports.acceptDelivery = async (req, res) => {
+  try {
+    const delivery = await prisma.delivery.update({
+      where: { id: req.params.id },
+      data: { driverId: req.user.id, status: "DRIVER_ASSIGNED" },
+    });
+
+    const io = req.app.get("io");
+    io?.to(`delivery:${delivery.id}`).emit("delivery:driver_assigned", { deliveryId: delivery.id, driverName: req.user.name, driverPhone: req.user.phone });
+    try {
+      const { notifyUser } = require("./push.controller");
+      await notifyUser(delivery.senderId, { title: "📦 Driver Assigned", body: `${req.user.name} is heading to collect your package`, data: { url: "/deliveries" } });
+    } catch (e) { console.log("[PROJO Delivery] Sender push notification failed:", e.message); }
+
+    res.json({ message: "Delivery accepted", delivery });
+  } catch (err) {
+    res.status(500).json({ error: "Could not accept delivery: " + err.message });
+  }
+};
+
+// POST /api/deliveries/:id/status — driver progresses PICKED_UP -> DELIVERED.
+// Without this, a driver who accepted a delivery had genuinely no way to
+// ever mark it complete, permanently stuck unable to go back online.
+exports.updateDriverDeliveryStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const delivery = await prisma.delivery.findUnique({ where: { id: req.params.id } });
+    if (!delivery) return res.status(404).json({ error: "Delivery not found" });
+    if (delivery.driverId !== req.user.id) return res.status(403).json({ error: "Not your delivery" });
+
+    const updated = await prisma.delivery.update({ where: { id: req.params.id }, data: { status } });
+
+    const io = req.app.get("io");
+    io?.to(`delivery:${delivery.id}`).emit("delivery:status_changed", { status });
+    if (status === "DELIVERED") {
+      try {
+        const { notifyUser } = require("./push.controller");
+        await notifyUser(delivery.senderId, { title: "✅ Delivered!", body: `Your package has arrived at ${delivery.dropoffAddress}`, data: { url: "/deliveries" } });
+      } catch (e) { console.log("[PROJO Delivery] Delivered push notification failed:", e.message); }
+    }
+
+    res.json({ message: "Status updated", delivery: updated });
+  } catch (err) {
+    res.status(500).json({ error: "Could not update delivery status" });
+  }
+};
+
 exports.getDeliveries = async (req, res) => {
   try {
     const deliveries = await prisma.delivery.findMany({

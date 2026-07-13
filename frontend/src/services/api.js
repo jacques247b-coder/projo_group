@@ -98,6 +98,8 @@ export const deliveryAPI = {
   bookDelivery: (data) => api.post("/deliveries/book", data),
   trackDelivery: (trackingNumber) => api.get(`/deliveries/track/${trackingNumber}`),
   getDeliveries: () => api.get("/deliveries"),
+  updateStatus: (id, status) => api.post(`/deliveries/${id}/status`, { status }),
+  acceptDelivery: (id) => api.post(`/deliveries/${id}/accept`),
 };
 
 export default api;

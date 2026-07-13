@@ -8,7 +8,7 @@ import { io } from "socket.io-client";
 import toast from "react-hot-toast";
 import Navbar from "../../components/ui/Navbar";
 import RideChat from "../../components/ride/RideChat";
-import { driverAPI, rideAPI } from "../../services/api";
+import { driverAPI, rideAPI, deliveryAPI } from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 
 const G = "#e8b84b";
@@ -309,9 +309,8 @@ export default function DriverDashboard() {
     if (!pendingRide) return;
     try {
       if (pendingRide.type === "delivery") {
-        await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:5000/api"}/deliveries/${pendingRide.id}/accept`,
-          { method: "POST", headers: { Authorization: `Bearer ${localStorage.getItem("projo_token")}` } });
-        setCurrentDelivery(pendingRide);
+        await deliveryAPI.acceptDelivery(pendingRide.id);
+        setCurrentDelivery({ ...pendingRide, status: "DRIVER_ASSIGNED" });
       } else {
         await rideAPI.acceptRide(pendingRide.id);
         setCurrentRide({ ...pendingRide, status: "DRIVER_ASSIGNED" });
@@ -433,6 +432,26 @@ export default function DriverDashboard() {
         toast.success(labels[status] || `Status: ${status}`);
       }
     } catch { toast.error("Could not update status"); }
+  }
+
+  async function updateDeliveryStatus(status) {
+    const delivery = currentDelivery;
+    if (!delivery) return;
+    try {
+      await deliveryAPI.updateStatus(delivery.id, status);
+      socketRef.current?.emit("delivery:status_update", { deliveryId: delivery.id, status });
+
+      if (status === "DELIVERED") {
+        const driverEarning = delivery.fare * 0.8;
+        setShiftEarnings(prev => prev + driverEarning);
+        setShiftRides(prev => prev + 1);
+        setCurrentDelivery(null);
+        toast.success(`Delivery complete! You earned ${fmt(driverEarning)}`);
+      } else {
+        setCurrentDelivery(prev => ({ ...prev, status }));
+        toast.success(status === "PICKED_UP" ? "Marked as picked up" : `Status: ${status}`);
+      }
+    } catch { toast.error("Could not update delivery status"); }
   }
 
   // ── Open navigation ────────────────────────────────────────
@@ -647,6 +666,56 @@ export default function DriverDashboard() {
                     ✅ Confirm Trip Completed
                   </button>
                 </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Active Delivery ── */}
+        {currentDelivery && (
+          <div style={card}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+              <div style={{ fontFamily: "'Syne',sans-serif", fontSize: "16px", fontWeight: "800", color: G }}>Active Delivery</div>
+              <div style={{ fontSize: "12px", fontWeight: "700", padding: "4px 10px", borderRadius: "50px", background: `${STATUS_COLOR[currentDelivery.status] || "#a78bfa"}20`, color: STATUS_COLOR[currentDelivery.status] || "#a78bfa" }}>
+                {currentDelivery.status?.replace(/_/g, " ")}
+              </div>
+            </div>
+
+            <div style={{ background: BG3, borderRadius: "10px", padding: "12px", marginBottom: "12px" }}>
+              <div style={{ fontSize: "12px", marginBottom: "8px" }}>
+                <div style={{ color: "#6b6760", fontSize: "10px", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "2px" }}>Pickup</div>
+                <div style={{ color: "#f0ede8" }}>{currentDelivery.pickupAddress}</div>
+              </div>
+              <div style={{ height: "1px", background: BORDER, margin: "8px 0" }} />
+              <div style={{ fontSize: "12px", marginBottom: "8px" }}>
+                <div style={{ color: "#6b6760", fontSize: "10px", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "2px" }}>Dropoff</div>
+                <div style={{ color: "#f0ede8" }}>{currentDelivery.dropoffAddress}</div>
+              </div>
+              <div style={{ height: "1px", background: BORDER, margin: "8px 0" }} />
+              <div style={{ fontSize: "12px" }}>
+                <div style={{ color: "#6b6760", fontSize: "10px", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "2px" }}>Recipient</div>
+                <div style={{ color: "#f0ede8" }}>{currentDelivery.recipientName} · {currentDelivery.recipientPhone}</div>
+                {currentDelivery.description && <div style={{ color: "#a8a49e", marginTop: "2px" }}>{currentDelivery.description}</div>}
+              </div>
+            </div>
+
+            <div style={{ fontSize: "18px", fontWeight: "800", color: G, fontFamily: "'Syne',sans-serif", marginBottom: "12px" }}>{fmt(currentDelivery.fare)}</div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "12px" }}>
+              <button onClick={() => openNavigation(currentDelivery.pickupLat, currentDelivery.pickupLng, "Pickup")} style={{ background: "#1a3a5c", color: "#60a5fa", border: "1px solid #60a5fa", borderRadius: "10px", padding: "10px", fontWeight: "700", fontSize: "12px", cursor: "pointer" }}>🗺️ Navigate to Pickup</button>
+              <button onClick={() => openNavigation(currentDelivery.dropoffLat, currentDelivery.dropoffLng, "Dropoff")} style={{ background: "#1a3a5c", color: "#60a5fa", border: "1px solid #60a5fa", borderRadius: "10px", padding: "10px", fontWeight: "700", fontSize: "12px", cursor: "pointer" }}>🗺️ Navigate to Dropoff</button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {currentDelivery.status === "DRIVER_ASSIGNED" && (
+                <button onClick={() => updateDeliveryStatus("PICKED_UP")} style={btn("#1a3a5c", "#60a5fa")}>
+                  📦 Picked Up
+                </button>
+              )}
+              {currentDelivery.status === "PICKED_UP" && (
+                <button onClick={() => updateDeliveryStatus("DELIVERED")} style={btn("#4ade80")}>
+                  ✅ Mark as Delivered
+                </button>
               )}
             </div>
           </div>
