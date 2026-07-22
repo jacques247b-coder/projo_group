@@ -48,6 +48,34 @@ import DatingVerificationPage from "./pages/admin/DatingVerificationPage";
 import PanicMonitorPage from "./pages/admin/PanicMonitorPage";
 import PanicWatchPage from "./pages/PanicWatchPage";
 
+// ── Personal Tools ──────────────────────────────────────────
+import NotesPage     from "./pages/tools/NotesPage";
+import TasksPage     from "./pages/tools/TasksPage";
+import CalendarPage  from "./pages/tools/CalendarPage";
+import JournalPage   from "./pages/tools/JournalPage";
+import GoalsPage     from "./pages/tools/GoalsPage";
+import ShoppingPage  from "./pages/tools/ShoppingPage";
+import HealthPage    from "./pages/tools/HealthPage";
+import FitnessPage   from "./pages/tools/FitnessPage";
+import FinancePage   from "./pages/tools/FinancePage";
+import PlacesPage    from "./pages/tools/PlacesPage";
+import VaultPage     from "./pages/tools/VaultPage";
+
+// ── Community ───────────────────────────────────────────────
+import GiveawayPage    from "./pages/community/GiveawayPage";
+import DonationsPage   from "./pages/community/DonationsPage";
+import CarpoolPage     from "./pages/community/CarpoolPage";
+import NoticeboardPage from "./pages/community/NoticeboardPage";
+
+// ── Civic ───────────────────────────────────────────────────
+import RoadHazardsPage    from "./pages/civic/RoadHazardsPage";
+import UtilityTrackerPage from "./pages/civic/UtilityTrackerPage";
+import MunicipalScorecard from "./pages/civic/MunicipalScorecard";
+
+// ── New Admin ───────────────────────────────────────────────
+import AdminCharities      from "./pages/admin/AdminCharities";
+import AdminMunicipalities from "./pages/admin/AdminMunicipalities";
+
 // Protected route wrapper
 function Protected({ children, roles }) {
   const { user, loading } = useAuth();
@@ -225,6 +253,34 @@ function AppRoutes() {
 
       {/* Driver signup — public */}
       <Route path="/driver/signup" element={<DriverSignupPage />} />
+
+      {/* ── Personal Tools ── */}
+      <Route path="/notes"    element={<Protected><NotesPage /></Protected>} />
+      <Route path="/tasks"    element={<Protected><TasksPage /></Protected>} />
+      <Route path="/calendar" element={<Protected><CalendarPage /></Protected>} />
+      <Route path="/journal"  element={<Protected><JournalPage /></Protected>} />
+      <Route path="/goals"    element={<Protected><GoalsPage /></Protected>} />
+      <Route path="/shopping" element={<Protected><ShoppingPage /></Protected>} />
+      <Route path="/health"   element={<Protected><HealthPage /></Protected>} />
+      <Route path="/fitness"  element={<Protected><FitnessPage /></Protected>} />
+      <Route path="/finance"  element={<Protected><FinancePage /></Protected>} />
+      <Route path="/places"   element={<Protected><PlacesPage /></Protected>} />
+      <Route path="/vault"    element={<Protected><VaultPage /></Protected>} />
+
+      {/* ── Community ── */}
+      <Route path="/giveaway"    element={<Protected><GiveawayPage /></Protected>} />
+      <Route path="/donations"   element={<Protected><DonationsPage /></Protected>} />
+      <Route path="/carpool"     element={<Protected><CarpoolPage /></Protected>} />
+      <Route path="/noticeboard" element={<Protected><NoticeboardPage /></Protected>} />
+
+      {/* ── Civic ── */}
+      <Route path="/road-hazards"              element={<Protected><RoadHazardsPage /></Protected>} />
+      <Route path="/utility-tracker"           element={<Protected><UtilityTrackerPage /></Protected>} />
+      <Route path="/scorecard/:municipalityId" element={<MunicipalScorecard />} />
+
+      {/* ── New Admin queues ── */}
+      <Route path="/admin/charities"      element={<Protected roles={["ADMIN"]}><AdminCharities /></Protected>} />
+      <Route path="/admin/municipalities" element={<Protected roles={["ADMIN"]}><AdminMunicipalities /></Protected>} />
 
       {/* 404 */}
       <Route path="*" element={<Navigate to="/" replace />} />
