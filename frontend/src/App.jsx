@@ -7,7 +7,6 @@ import ProductsShopPage from "./pages/shop/ProductsShopPage";
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { subscribeToPush } from "./services/pushNotifications";
 import "leaflet/dist/leaflet.css";
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -70,45 +69,36 @@ function Protected({ children, roles }) {
 }
 
 function AppRoutes() {
-  const { user } = useAuth();
   const [showPushModal, setShowPushModal] = React.useState(false);
 
   React.useEffect(() => {
-    // Push notifications are mandatory — show this every time until the
-    // user has actually granted permission. No dismiss/snooze option.
+    // Show push modal after login if not already accepted
     const checkPushModal = () => {
+      const accepted = localStorage.getItem("projo_push_accepted");
+      if (accepted) return; // Already accepted, never show again
+
       const permission = window.Notification?.permission;
       if (permission === "granted") {
         localStorage.setItem("projo_push_accepted", "true");
-        // Permission being granted at the browser level does NOT guarantee
-        // a currently-valid subscription is saved server-side — e.g. if
-        // VAPID keys were regenerated after the original subscribe, or the
-        // subscription simply expired. Silently refresh it in the
-        // background (no modal shown, permission's already granted so
-        // there's no prompt to interrupt) so it stays valid without
-        // making the user go through the UI again.
-        // Only attempt this if actually logged in — subscribeToPush() posts
-        // to an authenticated endpoint. Running this unconditionally meant
-        // it also fired on the public /login page whenever notification
-        // permission was already granted, hit a 401 with no token, and the
-        // app's own 'session expired, redirect to login' handler sent it to
-        // /login — which it was already on, reloading the page, which ran
-        // this same effect again: an infinite reload loop.
-        if (localStorage.getItem("projo_token")) {
-          subscribeToPush().catch(() => {});
-        }
         return;
       }
-      // Notifications require being logged in (the subscription has to be
-      // saved against a real account) — showing this on public pages like
-      // /login would only ever fail. Only prompt once actually signed in.
-      if (!localStorage.getItem("projo_token")) return;
+
+      const dismissedAt = localStorage.getItem("projo_push_dismissed_at");
+      const remindDays = parseInt(localStorage.getItem("projo_push_remind_days") || "0");
+
+      if (dismissedAt) {
+        const daysSince = (Date.now() - parseInt(dismissedAt)) / (1000 * 60 * 60 * 24);
+        const waitDays = remindDays || 0; // 0 = remind every login, 7 = remind weekly
+        if (daysSince < waitDays) return;
+      }
+
       // Show modal after 3 seconds to let the page load
       setTimeout(() => setShowPushModal(true), 3000);
     };
 
     checkPushModal();
-  }, [user]);
+  }, []);
+  const { user } = useAuth();
 
   const homeRoute = !user ? "/home"
     : user.role === "DRIVER" ? "/driver"
