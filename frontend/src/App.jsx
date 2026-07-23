@@ -72,6 +72,10 @@ import RoadHazardsPage    from "./pages/civic/RoadHazardsPage";
 import UtilityTrackerPage from "./pages/civic/UtilityTrackerPage";
 import MunicipalScorecard from "./pages/civic/MunicipalScorecard";
 
+// ── Schools ─────────────────────────────────────────────────
+import SchoolsHubPage    from "./pages/schools/SchoolsHubPage";
+import SchoolNoticeboard from "./pages/schools/SchoolNoticeboard";
+
 // ── New Admin ───────────────────────────────────────────────
 import AdminCharities      from "./pages/admin/AdminCharities";
 import AdminMunicipalities from "./pages/admin/AdminMunicipalities";
@@ -281,6 +285,10 @@ function AppRoutes() {
       {/* ── New Admin queues ── */}
       <Route path="/admin/charities"      element={<Protected roles={["ADMIN"]}><AdminCharities /></Protected>} />
       <Route path="/admin/municipalities" element={<Protected roles={["ADMIN"]}><AdminMunicipalities /></Protected>} />
+
+      {/* ── Schools ── */}
+      <Route path="/schools"     element={<Protected><SchoolsHubPage /></Protected>} />
+      <Route path="/schools/:id" element={<Protected><SchoolNoticeboard /></Protected>} />
 
       {/* 404 */}
       <Route path="*" element={<Navigate to="/" replace />} />
