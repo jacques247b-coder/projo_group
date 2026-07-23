@@ -56,6 +56,11 @@ model User {
   insurancePolicyNumber String?
 
   worldCoins          WorldCoins?
+  worldItemPurchases  WorldItemPurchase[]
+  worldLoginStreak    WorldLoginStreak?
+  watchPartiesHosted  WatchParty[]       @relation("WatchPartyHost")
+  watchPartyMembers   WatchPartyMember[]
+  watchPartyMessages  WatchPartyMessage[]
   worldCoinTxns        WorldCoinTransaction[]
   worldFriendsAsUser   WorldFriend[] @relation("WorldFriendUser")
   worldFriendsAsFriend WorldFriend[] @relation("WorldFriendFriend")
@@ -970,4 +975,94 @@ model WorldCoinTransaction {
   referenceId String?  // ride/delivery/transaction ID
   createdAt   DateTime @default(now())
   @@map("world_coin_transactions")
+}
+
+
+// â”€â”€ PROJO WORLD v3 ADDITIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+model WorldCatalogItem {
+  id            String   @id @default(uuid())
+  category      String   // FURNITURE | CLOTHING | GIFT | COIN_PACK | UPGRADE
+  subCategory   String?  // Living Room, Bedroom, Tops, etc.
+  name          String
+  description   String?
+  icon          String
+  coinCost      Int?     // null = real money purchase
+  realPriceZar  Float?   // for coin packs only
+  coinsGranted  Int?     // coins given when bought (for coin packs)
+  bonusCoins    Int?     // bonus on top
+  isSpecialOffer Boolean @default(false)
+  offerEndsAt   DateTime?
+  isActive      Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  addedById     String?  // admin user id
+  notified      Boolean  @default(false) // push sent?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  purchases     WorldItemPurchase[]
+  @@map("world_catalog_items")
+}
+
+model WorldItemPurchase {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields:[userId], references:[id])
+  itemId    String
+  item      WorldCatalogItem @relation(fields:[itemId], references:[id])
+  paidCoins Int?
+  paidZar   Float?
+  paymentRef String?
+  createdAt DateTime @default(now())
+  @@map("world_item_purchases")
+}
+
+model WorldLoginStreak {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  user          User     @relation(fields:[userId], references:[id])
+  currentStreak Int      @default(0)
+  todayProgress Int      @default(0) // 0-5, 5 = earned coin
+  lastLoginDate String?  // YYYY-MM-DD
+  totalDaysLogged Int    @default(0)
+  coinsFromLogins Int    @default(0)
+  updatedAt     DateTime @updatedAt
+  @@map("world_login_streaks")
+}
+
+model WatchParty {
+  id          String   @id @default(uuid())
+  hostId      String
+  host        User     @relation("WatchPartyHost", fields:[hostId], references:[id])
+  videoUrl    String
+  videoTitle  String?
+  channelName String?
+  isLive      Boolean  @default(true)
+  startedAt   DateTime @default(now())
+  endedAt     DateTime?
+  members     WatchPartyMember[]
+  messages    WatchPartyMessage[]
+  @@map("watch_parties")
+}
+
+model WatchPartyMember {
+  id           String     @id @default(uuid())
+  partyId      String
+  party        WatchParty @relation(fields:[partyId], references:[id])
+  userId       String
+  user         User       @relation(fields:[userId], references:[id])
+  joinedAt     DateTime   @default(now())
+  @@unique([partyId, userId])
+  @@map("watch_party_members")
+}
+
+model WatchPartyMessage {
+  id        String     @id @default(uuid())
+  partyId   String
+  party     WatchParty @relation(fields:[partyId], references:[id])
+  userId    String
+  user      User       @relation(fields:[userId], references:[id])
+  body      String
+  reaction  String?
+  createdAt DateTime   @default(now())
+  @@map("watch_party_messages")
 }

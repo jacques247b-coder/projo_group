@@ -42,6 +42,7 @@ app.use("/api/community",    require("./routes/community.routes"));
 app.use("/api/tools",     require("./routes/tools.routes"));
 app.use("/api/community", require("./routes/community.new.routes"));
 app.use("/api/civic",     require("./routes/civic.routes"));
+app.use("/api/world", require("./routes/world-catalog.routes"));
 app.use("/api/world", require("./routes/world.routes"));
 app.use("/api/schools", require("./routes/schools.routes"));
 app.use("/api/panic",        require("./routes/panic.routes"));
