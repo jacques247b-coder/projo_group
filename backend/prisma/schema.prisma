@@ -55,6 +55,8 @@ model User {
   insuranceProvider    String?
   insurancePolicyNumber String?
 
+  schoolFollows        SchoolFollow[]
+  schoolCarpoolsPosted SchoolCarpool[] @relation("SchoolCarpoolPostedBy")
   @@map("users")
 }
 // One row per subscribed device/browser — replaces the old single
@@ -832,4 +834,82 @@ model PanicSitRep {
   createdAt   DateTime @default(now())
   @@index([alertId, createdAt])
   @@map("panic_sitreps")
+}
+
+
+// â”€â”€ SCHOOLS HUB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+model School {
+  id            String          @id @default(uuid())
+  name          String
+  type          String          @default("Primary")
+  address       String
+  suburb        String
+  phone         String?
+  email         String?
+  website       String?
+  principalName String?
+  logoUrl       String?
+  verified      Boolean         @default(false)
+  verifiedAt    DateTime?
+  active        Boolean         @default(true)
+  adminEmail    String?         @unique
+  adminPassword String?
+  adminToken    String?
+  notices       SchoolNotice[]
+  followers     SchoolFollow[]
+  carpools      SchoolCarpool[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  @@map("schools")
+}
+
+model SchoolNotice {
+  id            String    @id @default(uuid())
+  schoolId      String
+  school        School    @relation(fields:[schoolId], references:[id])
+  title         String
+  body          String    @db.Text
+  type          String    @default("General")
+  attachmentUrl String?
+  imageUrl      String?
+  eventDate     DateTime?
+  eventTime     String?
+  eventVenue    String?
+  urgent        Boolean   @default(false)
+  pinned        Boolean   @default(false)
+  expiresAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  @@map("school_notices")
+}
+
+model SchoolFollow {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields:[userId], references:[id])
+  schoolId  String
+  school    School   @relation(fields:[schoolId], references:[id])
+  createdAt DateTime @default(now())
+  @@unique([userId, schoolId])
+  @@map("school_follows")
+}
+
+model SchoolCarpool {
+  id             String   @id @default(uuid())
+  schoolId       String
+  school         School   @relation(fields:[schoolId], references:[id])
+  postedById     String
+  postedBy       User     @relation("SchoolCarpoolPostedBy", fields:[postedById], references:[id])
+  suburb         String
+  morningTime    String
+  afternoonTime  String
+  daysAvailable  String   @default("Mon-Fri")
+  seatsAvailable Int      @default(3)
+  phone          String
+  notes          String?
+  status         String   @default("ACTIVE")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  @@map("school_carpools")
 }
