@@ -55,6 +55,12 @@ model User {
   insuranceProvider    String?
   insurancePolicyNumber String?
 
+  worldCoins          WorldCoins?
+  worldCoinTxns        WorldCoinTransaction[]
+  worldFriendsAsUser   WorldFriend[] @relation("WorldFriendUser")
+  worldFriendsAsFriend WorldFriend[] @relation("WorldFriendFriend")
+  giftsSent            WorldGift[]   @relation("WorldGiftFrom")
+  giftsReceived        WorldGift[]   @relation("WorldGiftTo")
   schoolFollows        SchoolFollow[]
   schoolCarpoolsPosted SchoolCarpool[] @relation("SchoolCarpoolPostedBy")
   @@map("users")
@@ -912,4 +918,56 @@ model SchoolCarpool {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   @@map("school_carpools")
+}
+
+
+// â”€â”€ PROJO WORLD ADDITIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+model WorldFriend {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation("WorldFriendUser", fields:[userId], references:[id])
+  friendId   String
+  friend     User     @relation("WorldFriendFriend", fields:[friendId], references:[id])
+  status     String   @default("PENDING") // PENDING | ACCEPTED | BLOCKED
+  createdAt  DateTime @default(now())
+  @@unique([userId, friendId])
+  @@map("world_friends")
+}
+
+model WorldGift {
+  id          String   @id @default(uuid())
+  fromUserId  String
+  fromUser    User     @relation("WorldGiftFrom", fields:[fromUserId], references:[id])
+  toUserId    String
+  toUser      User     @relation("WorldGiftTo", fields:[toUserId], references:[id])
+  giftType    String   // PARCEL | FLOWERS | CAKE | BALLOON | TROPHY | MYSTERY
+  message     String?
+  coinCost    Int
+  opened      Boolean  @default(false)
+  openedAt    DateTime?
+  createdAt   DateTime @default(now())
+  @@map("world_gifts")
+}
+
+model WorldCoins {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields:[userId], references:[id])
+  balance         Int      @default(0)
+  lifetimeEarned  Int      @default(0)
+  lifetimeSpent   Int      @default(0)
+  updatedAt       DateTime @updatedAt
+  @@map("world_coins")
+}
+
+model WorldCoinTransaction {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields:[userId], references:[id])
+  amount      Int      // positive = earn, negative = spend
+  reason      String   // REAL_SPEND | DANCE | CHAT | EXPLORE | GIFT_SENT | GIFT_RECEIVED | DAILY_LOGIN | RIDE | DELIVERY
+  referenceId String?  // ride/delivery/transaction ID
+  createdAt   DateTime @default(now())
+  @@map("world_coin_transactions")
 }
